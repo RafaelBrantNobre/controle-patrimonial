@@ -15,10 +15,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Administrador de teste, só para o ambiente local (senha: password).
+        // Usuários de teste, só para o ambiente local. Senha dos dois: password.
         User::factory()->administrador()->create([
             'nome' => 'Administrador de Teste',
             'email' => 'admin@example.com',
+        ]);
+
+        User::factory()->create([
+            'nome' => 'Consulta de Teste',
+            'email' => 'consulta@example.com',
         ]);
     }
 }
