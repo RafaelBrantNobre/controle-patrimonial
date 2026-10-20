@@ -1,93 +1,235 @@
 # Controle Patrimonial
 
+Sistema de controle patrimonial do CEAD/Unimontes. Registra os bens do prédio, onde cada um está e em que situação se encontra, para apoiar a declaração de patrimônio feita a cada semestre.
 
+O repositório tem dois projetos:
 
-## Getting started
+| Pasta | O que é | Tecnologia | Endereço local |
+| --- | --- | --- | --- |
+| `backend/` | API, regras de negócio e banco de dados | Laravel 13 (PHP) e MySQL 8.4 | http://localhost:8000 |
+| `frontend/` | Telas do sistema | React 19, Vite e TypeScript | http://localhost:5173 |
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Sumário
 
-## Add your files
+1. [O que instalar antes](#1-o-que-instalar-antes)
+2. [Subir o ambiente do zero](#2-subir-o-ambiente-do-zero)
+3. [Dia a dia](#3-dia-a-dia)
+4. [Variáveis de ambiente](#4-variáveis-de-ambiente)
+5. [Branches](#5-branches)
+6. [Padrão de commit](#6-padrão-de-commit)
+7. [Revisão por merge request](#7-revisão-por-merge-request)
+8. [Problemas comuns](#8-problemas-comuns)
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## 1. O que instalar antes
+
+| Programa | Versão | Para que serve | Como conferir |
+| --- | --- | --- | --- |
+| Git | qualquer versão recente | baixar e versionar o código | `git --version` |
+| PHP | 8.4 ou mais nova | rodar o back-end | `php -v` |
+| Composer | 2 | instalar as bibliotecas do back-end | `composer -V` |
+| Node.js | 22 ou mais nova (o npm vem junto) | rodar o front-end | `node -v` |
+| Docker Desktop | qualquer versão recente | rodar o banco MySQL | `docker --version` |
+
+Observações:
+
+- O PHP precisa da extensão `pdo_mysql` ligada. Para conferir, rode `php -m` e procure `pdo_mysql` na lista.
+- O Docker Desktop precisa estar aberto antes de subir o banco.
+- Os comandos deste README funcionam no PowerShell do Windows.
+
+## 2. Subir o ambiente do zero
+
+São três terminais no fim: um para o back-end, um para o front-end e um livre para o Git.
+
+### 2.1 Baixar o código
+
+```powershell
+git clone https://gitlab.com/cead-2026/controle-patrimonial.git
+cd controle-patrimonial
+git checkout develop
+```
+
+### 2.2 Back-end e banco
+
+```powershell
+cd backend
+copy .env.example .env
+```
+
+Abra o arquivo `backend/.env` e preencha a linha `DB_PASSWORD=` com uma senha qualquer, escolhida por você. Ela vale só para o banco da sua máquina. Exemplo: `DB_PASSWORD=minhasenha123`.
+
+Depois, ainda dentro de `backend`:
+
+```powershell
+docker compose up -d
+composer install
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
+
+O que cada comando faz:
+
+- `docker compose up -d` cria e liga o banco MySQL, usando o nome, o usuário e a senha que estão no `.env`. Na primeira vez, espere uns 30 segundos antes do próximo passo, porque o banco demora a ficar pronto.
+- `composer install` baixa as bibliotecas do back-end.
+- `php artisan key:generate` gera a chave de segurança da aplicação e grava no `.env`.
+- `php artisan migrate` cria as tabelas no banco.
+- `php artisan serve` liga a API em http://localhost:8000. Deixe este terminal aberto.
+
+Para conferir, abra http://localhost:8000/api/status no navegador. A resposta deve trazer `"conectado": true`.
+
+### 2.3 Front-end
+
+Em outro terminal, a partir da pasta do repositório:
+
+```powershell
+cd frontend
+copy .env.example .env
+npm install
+npm run dev
+```
+
+- `npm install` baixa as bibliotecas do front-end.
+- `npm run dev` liga o front-end em http://localhost:5173. Deixe este terminal aberto.
+
+### 2.4 Conferir se deu certo
+
+Abra http://localhost:5173. A página mostra três linhas e as três devem estar em verde:
+
+- Front-end: no ar
+- Back-end: respondendo
+- Banco de dados: conectado
+
+Se alguma estiver em vermelho, a própria página diz o que conferir. Veja também a seção [Problemas comuns](#8-problemas-comuns).
+
+## 3. Dia a dia
+
+Depois da primeira vez, para voltar a trabalhar basta:
+
+| Onde | Comando | O que faz |
+| --- | --- | --- |
+| `backend/` | `docker compose up -d` | liga o banco |
+| `backend/` | `php artisan serve` | liga a API |
+| `frontend/` | `npm run dev` | liga o front-end |
+
+Outros comandos úteis:
+
+| Onde | Comando | O que faz |
+| --- | --- | --- |
+| `backend/` | `docker compose stop` | desliga o banco, sem apagar os dados |
+| `backend/` | `docker compose down -v` | apaga o banco e todos os dados locais |
+| `backend/` | `php artisan migrate` | aplica tabelas novas, depois de um `git pull` |
+| `backend/` | `php artisan migrate:fresh --seed` | recria o banco do zero, com os dados de exemplo |
+| `backend/` | `php artisan test` | roda os testes do back-end |
+| `backend/` | `vendor/bin/pint` | formata o código PHP |
+| `frontend/` | `npm run build` | confere se o front-end compila sem erro |
+| `frontend/` | `npm run lint` | aponta problemas no código do front-end |
+
+Depois de um `git pull`, rode `composer install` no back-end e `npm install` no front-end se alguém tiver adicionado bibliotecas.
+
+## 4. Variáveis de ambiente
+
+Cada projeto tem um arquivo `.env.example`, que é o modelo, e um arquivo `.env`, que é a cópia de cada pessoa.
+
+- O `.env.example` vai para o Git e nunca contém senha, chave ou token.
+- O `.env` fica só na sua máquina. Ele está no `.gitignore` e não deve ser enviado.
+- Ao criar uma variável nova, adicione a linha também no `.env.example`, com o valor vazio ou um valor de exemplo, e avise no merge request.
+
+Principais variáveis:
+
+| Arquivo | Variável | Para que serve |
+| --- | --- | --- |
+| `backend/.env` | `APP_KEY` | chave de segurança, gerada por `php artisan key:generate` |
+| `backend/.env` | `FRONTEND_URL` | endereço do front-end autorizado a chamar a API |
+| `backend/.env` | `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `DB_PORT` | dados do banco, usados pelo Laravel e pelo Docker |
+| `frontend/.env` | `VITE_API_URL` | endereço da API que o front-end consome |
+
+## 5. Branches
+
+| Branch | Para que serve |
+| --- | --- |
+| `main` | versão estável, a que pode ser apresentada ou publicada |
+| `develop` | versão em desenvolvimento, onde as tarefas prontas se juntam |
+| `feature/nome-da-tarefa` | trabalho de uma tarefa do quadro |
+
+Regras:
+
+- Ninguém envia commit direto para `main` nem para `develop`.
+- Toda tarefa começa em uma branch `feature/`, criada a partir da `develop` atualizada.
+- O nome da branch descreve a tarefa, em minúsculas, sem acento e com hífen. Exemplos: `feature/cadastro-de-bens`, `feature/tela-de-login`.
+- A `develop` vai para a `main` por merge request, ao fim de cada marco do projeto.
+
+Começar uma tarefa:
+
+```powershell
+git checkout develop
+git pull
+git checkout -b feature/nome-da-tarefa
+```
+
+## 6. Padrão de commit
+
+Formato:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/cead-2026/controle-patrimonial.git
-git branch -M main
-git push -uf origin main
+tipo(escopo): descrição curta
 ```
 
-## Integrate with your tools
+- **tipo**: um dos tipos da tabela abaixo.
+- **escopo**: opcional. Use `back` ou `front` quando o commit mexe em um projeto só.
+- **descrição**: em português, com letra minúscula, verbo no infinitivo e sem ponto final. Deve caber em uma linha.
 
-* [Set up project integrations](https://gitlab.com/cead-2026/controle-patrimonial/-/settings/integrations)
+| Tipo | Quando usar |
+| --- | --- |
+| `feat` | funcionalidade nova |
+| `fix` | correção de erro |
+| `docs` | documentação |
+| `style` | formatação, sem mudar o comportamento |
+| `refactor` | reorganização do código, sem mudar o comportamento |
+| `test` | testes |
+| `chore` | configuração, dependências e tarefas de manutenção |
 
-## Collaborate with your team
+Exemplos:
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```
+feat(back): criar cadastro de bens
+feat(front): adicionar tela de login
+fix(back): corrigir validação do número de patrimônio
+docs: atualizar passos de instalação
+chore: atualizar dependências
+```
 
-## Test and Deploy
+Faça commits pequenos, cada um com uma mudança só. Fica mais fácil revisar e desfazer.
 
-Use the built-in continuous integration in GitLab.
+## 7. Revisão por merge request
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+No GitLab, o pedido de revisão se chama merge request. É o mesmo que o pull request do GitHub.
 
-***
+1. Termine a tarefa na sua branch `feature/` e envie: `git push -u origin feature/nome-da-tarefa`.
+2. No GitLab, abra um merge request da sua branch para a `develop`.
+3. No título, use o mesmo padrão dos commits. Na descrição, diga o que foi feito, como testar e qual tarefa do quadro ele atende.
+4. Marque o outro desenvolvedor como revisor.
+5. O revisor baixa a branch, sobe o ambiente, testa e lê o código. Se achar algo, comenta no merge request.
+6. O autor corrige na mesma branch e envia de novo.
+7. Com a aprovação, o merge é feito e a branch `feature/` é apagada.
 
-# Editing this README
+Regras:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+- Nenhum merge request entra sem a aprovação do outro desenvolvedor.
+- Quem escreveu o código não aprova o próprio merge request.
+- Antes de pedir revisão, confira que `php artisan test` e `npm run build` passam.
+- Merge request pequeno é revisado mais rápido. Prefira um por tarefa do quadro.
 
-## Suggestions for a good README
+## 8. Problemas comuns
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+| Sintoma | O que fazer |
+| --- | --- |
+| `docker compose up -d` reclama que `DB_PASSWORD` não foi definida | preencha `DB_PASSWORD` em `backend/.env` |
+| `docker compose up -d` diz que a porta 3306 já está em uso | já existe um MySQL na máquina. Troque `DB_PORT` para `3307` em `backend/.env` e rode o comando de novo |
+| `docker` não é reconhecido ou não conecta | abra o Docker Desktop e espere ele terminar de iniciar |
+| `php artisan migrate` dá `Connection refused` | o banco ainda está iniciando. Espere uns 30 segundos e tente de novo. Confira com `docker compose ps` |
+| `php artisan migrate` dá `Access denied` | a senha do `.env` foi trocada depois de o banco ter sido criado. Rode `docker compose down -v` e depois `docker compose up -d` |
+| `php artisan migrate` dá `could not find driver` | falta ligar a extensão `pdo_mysql` no `php.ini` |
+| a página do front-end mostra o back-end sem resposta | confira se `php artisan serve` está rodando e se `VITE_API_URL` em `frontend/.env` está certo. Depois de mudar o `.env`, pare e rode `npm run dev` de novo |
+| `npm run dev` diz que a porta 5173 está em uso | feche o outro terminal que já está rodando o front-end |
