@@ -21,6 +21,7 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 6. [Padrão de commit](#6-padrão-de-commit)
 7. [Revisão por merge request](#7-revisão-por-merge-request)
 8. [Problemas comuns](#8-problemas-comuns)
+9. [Login e perfis de acesso](#9-login-e-perfis-de-acesso)
 
 ## 1. O que instalar antes
 
@@ -144,6 +145,7 @@ Principais variáveis:
 | --- | --- | --- |
 | `backend/.env` | `APP_KEY` | chave de segurança, gerada por `php artisan key:generate` |
 | `backend/.env` | `FRONTEND_URL` | endereço do front-end autorizado a chamar a API |
+| `backend/.env` | `SANCTUM_EXPIRACAO_MINUTOS` | por quanto tempo o login vale, em minutos (padrão 480, um turno de 8 horas) |
 | `backend/.env` | `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `DB_PORT` | dados do banco, usados pelo Laravel e pelo Docker |
 | `frontend/.env` | `VITE_API_URL` | endereço da API que o front-end consome |
 
@@ -238,3 +240,52 @@ Regras:
 | `php artisan migrate` dá `could not find driver` | falta ligar a extensão `pdo_mysql` no `php.ini` |
 | a página do front-end mostra o back-end sem resposta | confira se `php artisan serve` está rodando e se `VITE_API_URL` em `frontend/.env` está certo. Depois de mudar o `.env`, pare e rode `npm run dev` de novo |
 | `npm run dev` diz que a porta 5173 está em uso | feche o outro terminal que já está rodando o front-end |
+
+## 9. Login e perfis de acesso
+
+O login é feito por token. A API devolve um token quando o e-mail e a senha estão certos, e o front-end envia esse token em todas as requisições seguintes, no cabeçalho `Authorization: Bearer <token>`. Não há cookie nem sessão.
+
+### 9.1 Usuários de teste
+
+Criados por `php artisan migrate:fresh --seed`, só no ambiente local. A senha dos dois é `password`.
+
+| E-mail | Perfil | O que pode |
+| --- | --- | --- |
+| `admin@example.com` | administrador | tudo: consultar, cadastrar, editar, mover, mudar status, dar baixa, importar |
+| `consulta@example.com` | consulta | só consultar e gerar relatório |
+
+### 9.2 Rotas de acesso
+
+| Método e rota | Precisa de token | O que faz |
+| --- | --- | --- |
+| `POST /api/login` | não | recebe `email` e `senha` e devolve `token`, `tipo`, `expira_em` e `usuario` |
+| `GET /api/usuario` | sim | devolve o usuário conectado. Serve para o front saber se o token guardado ainda vale |
+| `POST /api/logout` | sim | apaga o token usado na requisição. Logins em outros computadores continuam valendo |
+
+O objeto `usuario` traz `id`, `nome`, `email`, `perfil`, `perfil_rotulo` e `pode_alterar`. O front usa `pode_alterar` para esconder botões de cadastro e edição do perfil consulta.
+
+Respostas de erro que o front precisa tratar:
+
+| Código | Quando acontece | O que o front faz |
+| --- | --- | --- |
+| 422 | e-mail ou senha errados, ou campo vazio | mostra a mensagem que veio em `errors` |
+| 401 | sem token, token vencido ou apagado | apaga o token guardado e volta para a tela de login |
+| 403 | usuário desativado, ou perfil sem permissão para a ação | mostra a mensagem que veio em `message` |
+| 429 | mais de 5 tentativas de login em um minuto | mostra a mensagem que veio em `message` |
+
+Todas as mensagens já vêm em português, prontas para aparecer na tela.
+
+### 9.3 Como proteger uma rota nova
+
+Em `backend/routes/api.php` as rotas ficam em três grupos. Toda rota nova entra em um deles:
+
+| Grupo | Quem acessa | Exemplos |
+| --- | --- | --- |
+| 1. Públicas | qualquer um, sem login | `status`, `login` |
+| 2. Leitura | administrador e consulta | listar bens, ver ficha, gerar relatório |
+| 3. Alteração | só administrador | cadastrar, editar, mover, mudar status, dar baixa, importar |
+
+Na dúvida, a rota vai para o grupo 3. Esconder um botão na tela não basta: a regra que vale é a do back-end (RN10).
+
+Dentro de um controller, o usuário conectado está em `$request->user()`. Para gravar quem fez uma mudança de sala ou de status (RN09), use `$request->user()->id`.
+
