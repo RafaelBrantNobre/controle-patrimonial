@@ -157,7 +157,7 @@ Principais variáveis:
 
 Regras:
 
-- Ninguém envia commit direto para `main` nem para `develop`.
+- Ninguém envia commit direto para `main` nem para `develop`. Tudo entra por merge request.
 - Toda tarefa começa em uma branch `feature/`, criada a partir da `develop` atualizada.
 - O nome da branch descreve a tarefa, em minúsculas, sem acento e com hífen. Exemplos: `feature/cadastro-de-bens`, `feature/tela-de-login`.
 - A `develop` vai para a `main` por merge request, ao fim de cada marco do projeto.
@@ -208,20 +208,21 @@ Faça commits pequenos, cada um com uma mudança só. Fica mais fácil revisar e
 
 No GitLab, o pedido de revisão se chama merge request. É o mesmo que o pull request do GitHub.
 
+Toda tarefa entra na `develop` por merge request, mesmo quando não há outro revisor. O merge request registra o que mudou, quando e em qual tarefa.
+
 1. Termine a tarefa na sua branch `feature/` e envie: `git push -u origin feature/nome-da-tarefa`.
 2. No GitLab, abra um merge request da sua branch para a `develop`.
 3. No título, use o mesmo padrão dos commits. Na descrição, diga o que foi feito, como testar e qual tarefa do quadro ele atende.
-4. Marque o outro desenvolvedor como revisor.
-5. O revisor baixa a branch, sobe o ambiente, testa e lê o código. Se achar algo, comenta no merge request.
-6. O autor corrige na mesma branch e envia de novo.
-7. Com a aprovação, o merge é feito e a branch `feature/` é apagada.
+4. Revise o próprio diff na aba **Changes**, como se o código fosse de outra pessoa.
+5. Se a tarefa afeta o trabalho do outro desenvolvedor, marque-o como revisor e espere a aprovação dele (veja as regras abaixo).
+6. Faça o merge sem marcar *Squash commits*, para os commits da tarefa ficarem no histórico. A branch `feature/` pode ser apagada.
 
 Regras:
 
-- Nenhum merge request entra sem a aprovação do outro desenvolvedor.
-- Quem escreveu o código não aprova o próprio merge request.
-- Antes de pedir revisão, confira que `php artisan test` e `npm run build` passam.
-- Merge request pequeno é revisado mais rápido. Prefira um por tarefa do quadro.
+- Quem é responsável pela tarefa no quadro aprova e faz o merge dela.
+- A exceção é a mudança que afeta o trabalho do outro desenvolvedor, por exemplo algo que ele vai usar no código dele ou que muda a forma de subir o ambiente. Nesse caso, o outro revisa antes do merge.
+- Antes do merge, confira que `php artisan test` e `npm run build` passam.
+- Merge request pequeno é mais fácil de revisar. Prefira um por tarefa do quadro.
 
 ## 8. Problemas comuns
 
