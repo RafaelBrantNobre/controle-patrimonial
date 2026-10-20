@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 /*
 | Usuário do sistema. A classe mantém o nome User porque o Laravel a usa na
@@ -21,7 +22,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     // O Laravel lê o padrão do banco só depois de salvar. Repetir aqui faz um
     // usuário novo, ainda não salvo, já nascer com perfil consulta e ativo.
@@ -33,7 +34,7 @@ class User extends Authenticatable
     // A coluna da senha se chama "senha", e não "password" como o Laravel espera.
     protected $authPasswordName = 'senha';
 
-    // A tabela não tem a coluna remember_token (o login será por token, tarefa 2.4).
+    // A tabela não tem a coluna remember_token: o login é por token (tarefa 2.4).
     protected $rememberTokenName = '';
 
     public function eAdministrador(): bool
