@@ -79,6 +79,8 @@ O que cada comando faz:
 
 Para conferir, abra http://localhost:8000/api/status no navegador. A resposta deve trazer `"conectado": true`.
 
+Para ter um usuário de teste no banco local, rode também `php artisan db:seed`. Ele cria o administrador `admin@example.com`, com a senha `password`. Esse usuário existe só no banco da sua máquina.
+
 ### 2.3 Front-end
 
 Em outro terminal, a partir da pasta do repositório:
@@ -155,7 +157,7 @@ Principais variáveis:
 
 Regras:
 
-- Ninguém envia commit direto para `main` nem para `develop`.
+- Ninguém envia commit direto para `main` nem para `develop`. Tudo entra por merge request.
 - Toda tarefa começa em uma branch `feature/`, criada a partir da `develop` atualizada.
 - O nome da branch descreve a tarefa, em minúsculas, sem acento e com hífen. Exemplos: `feature/cadastro-de-bens`, `feature/tela-de-login`.
 - A `develop` vai para a `main` por merge request, ao fim de cada marco do projeto.
@@ -206,30 +208,33 @@ Faça commits pequenos, cada um com uma mudança só. Fica mais fácil revisar e
 
 No GitLab, o pedido de revisão se chama merge request. É o mesmo que o pull request do GitHub.
 
+Toda tarefa entra na `develop` por merge request, mesmo quando não há outro revisor. O merge request registra o que mudou, quando e em qual tarefa.
+
 1. Termine a tarefa na sua branch `feature/` e envie: `git push -u origin feature/nome-da-tarefa`.
 2. No GitLab, abra um merge request da sua branch para a `develop`.
 3. No título, use o mesmo padrão dos commits. Na descrição, diga o que foi feito, como testar e qual tarefa do quadro ele atende.
-4. Marque o outro desenvolvedor como revisor.
-5. O revisor baixa a branch, sobe o ambiente, testa e lê o código. Se achar algo, comenta no merge request.
-6. O autor corrige na mesma branch e envia de novo.
-7. Com a aprovação, o merge é feito e a branch `feature/` é apagada.
+4. Revise o próprio diff na aba **Changes**, como se o código fosse de outra pessoa.
+5. Se a tarefa afeta o trabalho do outro desenvolvedor, marque-o como revisor e espere a aprovação dele (veja as regras abaixo).
+6. Faça o merge sem marcar *Squash commits*, para os commits da tarefa ficarem no histórico. A branch `feature/` pode ser apagada.
 
 Regras:
 
-- Nenhum merge request entra sem a aprovação do outro desenvolvedor.
-- Quem escreveu o código não aprova o próprio merge request.
-- Antes de pedir revisão, confira que `php artisan test` e `npm run build` passam.
-- Merge request pequeno é revisado mais rápido. Prefira um por tarefa do quadro.
+- Quem é responsável pela tarefa no quadro aprova e faz o merge dela.
+- A exceção é a mudança que afeta o trabalho do outro desenvolvedor, por exemplo algo que ele vai usar no código dele ou que muda a forma de subir o ambiente. Nesse caso, o outro revisa antes do merge.
+- Antes do merge, confira que `php artisan test` e `npm run build` passam.
+- Merge request pequeno é mais fácil de revisar. Prefira um por tarefa do quadro.
 
 ## 8. Problemas comuns
 
 | Sintoma | O que fazer |
 | --- | --- |
 | `docker compose up -d` reclama que `DB_PASSWORD` não foi definida | preencha `DB_PASSWORD` em `backend/.env` |
-| `docker compose up -d` diz que a porta 3306 já está em uso | já existe um MySQL na máquina. Troque `DB_PORT` para `3307` em `backend/.env` e rode o comando de novo |
-| `docker` não é reconhecido ou não conecta | abra o Docker Desktop e espere ele terminar de iniciar |
+| `docker compose up -d` diz que a porta 3306 já está em uso | já existe um MySQL instalado na máquina, como o do XAMPP. Troque `DB_PORT` para `3307` em `backend/.env` e rode o comando de novo |
+| `docker` não é reconhecido ou dá erro com `dockerDesktopLinuxEngine` | o Docker Desktop está fechado. Abra e espere aparecer **Engine running** |
+| o Docker Desktop fica parado em **Starting the Docker Engine** | feche o Docker Desktop. No PowerShell como administrador, rode `wsl --shutdown` e `wsl --update` e abra o Docker de novo. Se continuar, confira no Gerenciador de Tarefas, em Desempenho e CPU, se a Virtualização está habilitada |
 | `php artisan migrate` dá `Connection refused` | o banco ainda está iniciando. Espere uns 30 segundos e tente de novo. Confira com `docker compose ps` |
-| `php artisan migrate` dá `Access denied` | a senha do `.env` foi trocada depois de o banco ter sido criado. Rode `docker compose down -v` e depois `docker compose up -d` |
+| `php artisan migrate` dá `Access denied` e `docker compose ps` mostra a lista vazia | o banco do Docker está desligado e quem respondeu foi outro MySQL instalado na máquina. Troque `DB_PORT` para `3307` em `backend/.env`, rode `docker compose up -d`, espere o `healthy` no `docker compose ps` e rode `php artisan config:clear` antes do `migrate` |
+| `php artisan migrate` dá `Access denied` e `docker compose ps` mostra o banco `healthy` | a senha do `.env` foi trocada depois de o banco ter sido criado, e o MySQL guarda a senha da primeira vez. Rode `docker compose down -v` e depois `docker compose up -d`. Isso apaga os dados do banco local |
 | `php artisan migrate` dá `could not find driver` | falta ligar a extensão `pdo_mysql` no `php.ini` |
 | a página do front-end mostra o back-end sem resposta | confira se `php artisan serve` está rodando e se `VITE_API_URL` em `frontend/.env` está certo. Depois de mudar o `.env`, pare e rode `npm run dev` de novo |
 | `npm run dev` diz que a porta 5173 está em uso | feche o outro terminal que já está rodando o front-end |
