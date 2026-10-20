@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\PerfilUsuario;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -24,14 +25,14 @@ class UserFactory extends Factory
             'nome' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'senha' => static::$senha ??= Hash::make('password'),
-            'perfil' => 'consulta',
+            'perfil' => PerfilUsuario::Consulta,
             'ativo' => true,
         ];
     }
 
     public function administrador(): static
     {
-        return $this->state(fn () => ['perfil' => 'administrador']);
+        return $this->state(fn () => ['perfil' => PerfilUsuario::Administrador]);
     }
 
     public function inativo(): static
