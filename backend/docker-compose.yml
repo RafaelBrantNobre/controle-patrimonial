@@ -1,0 +1,32 @@
+# Banco de dados do ambiente de desenvolvimento.
+# Uso (dentro da pasta backend):  docker compose up -d
+# Os valores vêm do arquivo .env desta mesma pasta.
+
+name: controle-patrimonial
+
+services:
+  banco:
+    image: mysql:8.4
+    container_name: controle-patrimonial-banco
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:?Defina DB_DATABASE no arquivo .env}
+      MYSQL_USER: ${DB_USERNAME:?Defina DB_USERNAME no arquivo .env}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      TZ: America/Sao_Paulo
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "127.0.0.1:${DB_PORT:-3306}:3306"
+    volumes:
+      - dados-do-banco:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  dados-do-banco:
