@@ -5,6 +5,7 @@
 .env
 .env.*
 !.env.example
+.gitignore
 
 # Sistema operacional e editores
 .DS_Store
@@ -16,3 +17,5 @@ Thumbs.db
 # Dependências, caso alguém instale na raiz por engano
 /vendor
 /node_modules
+README.md
+php

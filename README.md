@@ -97,13 +97,7 @@ npm run dev
 
 ### 2.4 Conferir se deu certo
 
-Abra http://localhost:5173. A página mostra três linhas e as três devem estar em verde:
-
-- Front-end: no ar
-- Back-end: respondendo
-- Banco de dados: conectado
-
-Se alguma estiver em vermelho, a própria página diz o que conferir. Veja também a seção [Problemas comuns](#8-problemas-comuns).
+Abra http://localhost:5173 para visualizar o exemplo de login. Expanda **Conexão com o back-end** abaixo do formulário para verificar o Laravel e o banco. O envio do formulário é demonstrativo e ainda não autentica usuários. Veja a seção 9 para entender a implementação.
 
 ## 3. Dia a dia
 
@@ -238,3 +232,36 @@ Regras:
 | `php artisan migrate` dá `could not find driver` | falta ligar a extensão `pdo_mysql` no `php.ini` |
 | a página do front-end mostra o back-end sem resposta | confira se `php artisan serve` está rodando e se `VITE_API_URL` em `frontend/.env` está certo. Depois de mudar o `.env`, pare e rode `npm run dev` de novo |
 | `npm run dev` diz que a porta 5173 está em uso | feche o outro terminal que já está rodando o front-end |
+
+## 9. Exemplo de login com React, Vite e Tailwind
+
+A página inicial agora é um exemplo de login responsivo. Execute `npm run dev` na pasta `frontend` e abra http://localhost:5173.
+
+### Qual é o papel de cada ferramenta?
+
+- **React** define os elementos da tela e suas interações em `frontend/src/App.tsx`.
+- **Tailwind CSS** estiliza esses elementos com classes no atributo `className`. Por exemplo, `rounded-xl` arredonda as bordas, `px-4` adiciona espaço interno horizontal e `hover:bg-teal-900` muda a cor ao passar o mouse. O prefixo `lg:` aplica uma regra a partir de telas grandes.
+- **Vite** inicia o servidor de desenvolvimento e atualiza a página enquanto você edita. No build, transforma TypeScript, React e CSS em arquivos para publicação na pasta `frontend/dist`. Você continua escrevendo suas telas em React.
+- **Laravel** executa a API e acessa o banco. O navegador chama a API usando o serviço em `frontend/src/services/api.ts` e o endereço `VITE_API_URL`.
+
+O fluxo é: navegador → tela React estilizada com Tailwind → requisição HTTP → API Laravel → banco de dados.
+
+### Onde o Tailwind foi configurado?
+
+1. `frontend/package.json`: dependências `tailwindcss` e `@tailwindcss/vite`.
+2. `frontend/vite.config.ts`: plugin `tailwindcss()` junto do plugin React.
+3. `frontend/src/index.css`: `@import "tailwindcss";` carrega o Tailwind.
+4. `frontend/src/main.tsx`: importa esse CSS para a aplicação.
+5. `frontend/src/App.tsx`: usa as classes do Tailwind no formulário.
+
+Configuração baseada na documentação oficial: https://tailwindcss.com/docs/installation/using-vite
+
+### O que o exemplo faz?
+
+O formulário valida campos obrigatórios e o formato do e-mail pelo navegador, permite mostrar/ocultar a senha e exibe uma mensagem ao enviar. **Ele ainda não autentica e não envia as credenciais.** Não há uma rota de login implementada no Laravel. Qualquer e-mail com formato válido e senha preenchida permite testar a interação, sem criar uma sessão.
+
+A opção **Conexão com o back-end** consulta a rota real `GET /api/status`, preservando a verificação do Laravel e do banco. A tela pode ser visualizada mesmo com a API desligada.
+
+Para implementar o login real, será necessário criar a autenticação no Laravel (validação, sessão e proteção das rotas), conectar o envio do formulário e tratar as respostas de sucesso e erro. O Laravel será responsável por conferir a senha; essa verificação nunca deve ficar no React.
+
+Use Node.js 22.12 ou superior para os comandos do front-end. Se houver mais de uma instalação no Windows, confira `node -v` e `Get-Command node -All`: a primeira no PATH é a utilizada.
