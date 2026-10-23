@@ -44,6 +44,14 @@ class Sala extends Model
         return $this->hasMany(Bem::class);
     }
 
+    /** Se algum bem já entrou ou saiu desta sala por uma mudança (tarefa 2.8). */
+    public function apareceNoHistorico(): bool
+    {
+        return Movimentacao::where('sala_origem_id', $this->id)
+            ->orWhere('sala_destino_id', $this->id)
+            ->exists();
+    }
+
     #[Scope]
     protected function ativas(Builder $query): void
     {

@@ -110,7 +110,7 @@ class BemController extends Controller
      */
     public function show(Bem $bem): BemResource
     {
-        return new BemResource($bem->load(['sala.andar', 'tipoPatrimonio', 'usuarioUltimaMudanca']));
+        return new BemResource($bem->load(Bem::RELACOES_DA_FICHA));
     }
 
     /**
@@ -121,7 +121,7 @@ class BemController extends Controller
     {
         $bem = DB::transaction(fn () => Bem::create($request->validated()));
 
-        return new BemResource($bem->load(['sala.andar', 'tipoPatrimonio', 'usuarioUltimaMudanca']));
+        return new BemResource($bem->load(Bem::RELACOES_DA_FICHA));
     }
 
     /**
@@ -132,6 +132,6 @@ class BemController extends Controller
     {
         $bem->update($request->safe()->except(['sala_id', 'status']));
 
-        return new BemResource($bem->load(['sala.andar', 'tipoPatrimonio', 'usuarioUltimaMudanca']));
+        return new BemResource($bem->load(Bem::RELACOES_DA_FICHA));
     }
 }

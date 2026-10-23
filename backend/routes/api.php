@@ -3,6 +3,7 @@
 use App\Http\Controllers\AndarController;
 use App\Http\Controllers\AutenticacaoController;
 use App\Http\Controllers\BemController;
+use App\Http\Controllers\MudancaDeBemController;
 use App\Http\Controllers\SalaController;
 use App\Http\Controllers\TipoPatrimonioController;
 use Illuminate\Support\Facades\DB;
@@ -85,7 +86,11 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
         // Bens (2.6): cadastrar e editar. Não há exclusão: a saída é a baixa (RN07).
         Route::apiResource('bens', BemController::class)->only(['store', 'update'])->parameters(['bens' => 'bem']);
 
-        // Mudança de sala, status e baixa (2.8) e importação da planilha (2.12) entram aqui.
+        // Mudança de sala e de status, incluindo a baixa (2.8).
+        Route::patch('/bens/{bem}/sala', [MudancaDeBemController::class, 'mudarSala']);
+        Route::patch('/bens/{bem}/status', [MudancaDeBemController::class, 'alterarStatus']);
+
+        // Importação da planilha (2.12) entra aqui.
 
     });
 });

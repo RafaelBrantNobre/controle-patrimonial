@@ -31,6 +31,8 @@ class BemResource extends JsonResource
             'tipo_patrimonio' => new TipoPatrimonioResource($this->whenLoaded('tipoPatrimonio')),
             'sala_id' => $this->sala_id,
             'sala' => new SalaResource($this->whenLoaded('sala')),
+            // Só na ficha: a mudança de sala mais recente, com a sala de onde o bem veio.
+            'ultima_movimentacao' => new MovimentacaoResource($this->whenLoaded('ultimaMovimentacao')),
             'descricao' => $this->descricao,
             'marca' => $this->marca,
             'origem' => $this->origem,
