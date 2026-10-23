@@ -22,8 +22,7 @@ class BemFactory extends Factory
     {
         return [
             'numero_patrimonio' => fake()->unique()->numerify('#######-#'),
-            // Provisório: a regra definitiva de geração do código fica na tarefa 2.6.
-            'codigo_interno' => 'CP-'.fake()->unique()->numerify('#####'),
+            // codigo_interno fica de fora: o model gera, como CP-000001 (tarefa 2.6).
             'tipo_patrimonio_id' => TipoPatrimonio::factory(),
             'sala_id' => Sala::factory(),
             'descricao' => fake()->randomElement(['azul giratória', 'L cinza', '2 portas', 'preto', null]),

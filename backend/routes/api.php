@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AndarController;
 use App\Http\Controllers\AutenticacaoController;
+use App\Http\Controllers\BemController;
 use App\Http\Controllers\SalaController;
 use App\Http\Controllers\TipoPatrimonioController;
 use Illuminate\Support\Facades\DB;
@@ -66,8 +67,11 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
     Route::apiResource('salas', SalaController::class)->only(['index', 'show'])->parameters(['salas' => 'sala']);
     Route::apiResource('tipos-patrimonio', TipoPatrimonioController::class)->only(['index', 'show'])->parameters(['tipos-patrimonio' => 'tipo']);
 
-    // Consultas de bens (2.6) e relatório (2.10) entram aqui.
-    // Exemplo: Route::get('/bens', [BemController::class, 'index']);
+    // Bens (2.6): consultar, filtrar, ver a ficha e listar os bens de uma sala.
+    Route::apiResource('bens', BemController::class)->only(['index', 'show'])->parameters(['bens' => 'bem']);
+    Route::get('/salas/{sala}/bens', [BemController::class, 'daSala']);
+
+    // Relatório (2.10) entra aqui.
 
     // 3. Alteração: só administrador -----------------------------------------
     Route::middleware('perfil:administrador')->group(function () {
@@ -78,9 +82,10 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
         Route::apiResource('salas', SalaController::class)->except(['index', 'show'])->parameters(['salas' => 'sala']);
         Route::apiResource('tipos-patrimonio', TipoPatrimonioController::class)->except(['index', 'show'])->parameters(['tipos-patrimonio' => 'tipo']);
 
-        // Cadastros e edições de bens (2.6), mudança de sala, status e baixa (2.8)
-        // e importação da planilha (2.12) entram aqui.
-        // Exemplo: Route::post('/bens', [BemController::class, 'store']);
+        // Bens (2.6): cadastrar e editar. Não há exclusão: a saída é a baixa (RN07).
+        Route::apiResource('bens', BemController::class)->only(['store', 'update'])->parameters(['bens' => 'bem']);
+
+        // Mudança de sala, status e baixa (2.8) e importação da planilha (2.12) entram aqui.
 
     });
 });

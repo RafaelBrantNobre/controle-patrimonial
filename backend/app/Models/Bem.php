@@ -9,12 +9,14 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 /*
 | O item patrimonial, entidade central do sistema.
 | Bem nunca é apagado: a saída do patrimônio ativo é a baixa (RN07).
-| A geração do codigo_interno e as regras de mudança de sala e de status
-| ficam nas tarefas 2.6 e 2.8.
+| Todo bem recebe um codigo_interno gerado pelo sistema (PD07), como
+| CP-000123, tenha ou não número de patrimônio.
+| As regras de mudança de sala e de status ficam na tarefa 2.8.
 */
 #[Table('bem')]
 #[Fillable([
@@ -44,6 +46,37 @@ class Bem extends Model
         'status' => 'em_uso',
         'quantidade' => 1,
     ];
+
+    /** Prefixo do código interno: CP de Controle Patrimonial. */
+    public const PREFIXO_CODIGO = 'CP-';
+
+    /*
+    | O código interno sai do id, que só existe depois de gravar. Por isso o
+    | bem é gravado com um código provisório e, logo em seguida, recebe o
+    | definitivo. Quem cria o bem deve fazer isso dentro de uma transação,
+    | para o provisório nunca ficar no banco se algo falhar no meio.
+    | Um código informado na criação, como na carga da planilha, é mantido.
+    */
+    protected static function booted(): void
+    {
+        static::creating(function (Bem $bem) {
+            if (blank($bem->codigo_interno)) {
+                $bem->codigo_interno = 'TMP-'.Str::random(16);
+            }
+        });
+
+        static::created(function (Bem $bem) {
+            if (str_starts_with($bem->codigo_interno, 'TMP-')) {
+                $bem->codigo_interno = self::codigoParaId($bem->id);
+                $bem->saveQuietly();
+            }
+        });
+    }
+
+    public static function codigoParaId(int $id): string
+    {
+        return self::PREFIXO_CODIGO.str_pad((string) $id, 6, '0', STR_PAD_LEFT);
+    }
 
     /**
      * @return BelongsTo<TipoPatrimonio, $this>
