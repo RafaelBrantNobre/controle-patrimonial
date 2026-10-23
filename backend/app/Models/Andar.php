@@ -21,6 +21,13 @@ class Andar extends Model
     /** @use HasFactory<AndarFactory> */
     use HasFactory;
 
+    // O Laravel lê o padrão do banco só depois de salvar. Repetir aqui faz o
+    // andar recém-cadastrado já sair ativo e com ordem 0 na resposta da API.
+    protected $attributes = [
+        'ordem' => 0,
+        'ativo' => true,
+    ];
+
     /**
      * @return HasMany<Sala, $this>
      */

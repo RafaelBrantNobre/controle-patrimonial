@@ -22,6 +22,7 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 7. [Revisão por merge request](#7-revisão-por-merge-request)
 8. [Problemas comuns](#8-problemas-comuns)
 9. [Login e perfis de acesso](#9-login-e-perfis-de-acesso)
+10. [Andares, salas e tipos de patrimônio](#10-andares-salas-e-tipos-de-patrimônio)
 
 ## 1. O que instalar antes
 
@@ -289,3 +290,59 @@ Na dúvida, a rota vai para o grupo 3. Esconder um botão na tela não basta: a 
 
 Dentro de um controller, o usuário conectado está em `$request->user()`. Para gravar quem fez uma mudança de sala ou de status (RN09), use `$request->user()->id`.
 
+## 10. Andares, salas e tipos de patrimônio
+
+Cadastros que sustentam o resto do sistema: todo bem fica numa sala, que fica num andar, e tem um tipo (tarefa 2.5). As três rotas seguem o mesmo formato.
+
+### 10.1 Rotas
+
+| Método e rota | Quem acessa | O que faz |
+| --- | --- | --- |
+| `GET /api/andares` | administrador e consulta | lista os andares, na ordem do relatório (campo `ordem`) |
+| `GET /api/andares/{id}` | administrador e consulta | devolve um andar |
+| `POST /api/andares` | administrador | cadastra. Campos: `nome` (obrigatório), `ordem` e `ativo` |
+| `PUT` ou `PATCH /api/andares/{id}` | administrador | edita. Só os campos enviados mudam |
+| `DELETE /api/andares/{id}` | administrador | exclui, se o andar não tiver salas |
+| `GET /api/salas` | administrador e consulta | lista as salas, agrupadas por andar e em ordem de nome |
+| `GET /api/salas/{id}` | administrador e consulta | devolve uma sala, com o andar dela |
+| `POST /api/salas` | administrador | cadastra. Campos: `andar_id` e `nome` (obrigatórios), `descricao` e `ativo` |
+| `PUT` ou `PATCH /api/salas/{id}` | administrador | edita. Só os campos enviados mudam |
+| `DELETE /api/salas/{id}` | administrador | exclui, se a sala não tiver bens |
+| `GET /api/tipos-patrimonio` | administrador e consulta | lista os tipos, em ordem alfabética |
+| `GET /api/tipos-patrimonio/{id}` | administrador e consulta | devolve um tipo |
+| `POST /api/tipos-patrimonio` | administrador | cadastra. Campos: `nome` (obrigatório) e `ativo` |
+| `PUT` ou `PATCH /api/tipos-patrimonio/{id}` | administrador | edita. Só os campos enviados mudam |
+| `DELETE /api/tipos-patrimonio/{id}` | administrador | exclui, se o tipo não tiver bens |
+
+Inativar e reativar é uma edição: `PATCH` com `{"ativo": false}` ou `{"ativo": true}`.
+
+### 10.2 Listagens
+
+As listagens aceitam estes filtros na URL, que podem ser combinados:
+
+| Filtro | Onde vale | Exemplo |
+| --- | --- | --- |
+| `busca` | as três | `?busca=suporte` traz os nomes que contêm "suporte" |
+| `ativo` | as três | `?ativo=1` só os ativos, `?ativo=0` só os inativos. Sem o filtro, vêm todos |
+| `andar_id` | salas | `?andar_id=2` só as salas do andar 2 |
+| `pagina` | as três | `?pagina=2`. Começa em 1 |
+| `por_pagina` | as três | `?por_pagina=50`. Padrão 20, máximo 100 |
+
+Nas telas de cadastro de bem, use `?ativo=1` para montar as listas de escolha, porque sala e tipo inativos não recebem bens novos.
+
+A resposta traz os itens em `data`, os links de navegação em `links` e a contagem em `meta` (`total`, `current_page`, `last_page`, `per_page`). Cada andar traz `salas_count`, e cada sala e tipo traz `bens_count`. O front pode usar esses números para mostrar o botão de excluir só quando ele vai funcionar.
+
+### 10.3 Regras
+
+- Nome do andar e nome do tipo não se repetem. No MySQL, "Cadeira" e "cadeira" contam como o mesmo nome.
+- Nome da sala não se repete dentro do mesmo andar. Duas "Sala 05" em andares diferentes são permitidas.
+- Sala ativa só existe em andar ativo. Não dá para cadastrar ou reativar uma sala num andar inativo, nem inativar um andar que ainda tem salas ativas.
+- Andar com salas, e sala ou tipo com bens, não são excluídos (RN08). O caminho é inativar.
+
+Respostas de erro, além das da seção 9.2:
+
+| Código | Quando acontece | O que o front faz |
+| --- | --- | --- |
+| 404 | o registro não existe, por exemplo porque foi excluído | mostra a mensagem que veio em `message` e atualiza a lista |
+| 409 | tentativa de excluir andar com salas, ou sala ou tipo com bens | mostra a mensagem que veio em `message`, que sugere inativar |
+| 422 | campo obrigatório vazio, nome repetido ou regra de ativo descumprida | mostra a mensagem que veio em `errors`, ao lado do campo |
