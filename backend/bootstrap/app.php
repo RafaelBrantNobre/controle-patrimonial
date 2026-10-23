@@ -7,6 +7,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -33,6 +34,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'message' => 'Você não está conectado ou sua sessão expirou. Entre de novo para continuar.',
                 ], 401);
+            }
+        });
+
+        // Registro que não existe, como /api/salas/999 (tarefa 2.5, RNF08).
+        // Sem isto, a resposta traria o nome da classe do model, em inglês.
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'message' => 'O registro procurado não foi encontrado. Ele pode ter sido excluído. Atualize a página e tente de novo.',
+                ], 404);
             }
         });
     })->create();
