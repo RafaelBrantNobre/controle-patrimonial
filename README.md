@@ -23,6 +23,7 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 8. [Problemas comuns](#8-problemas-comuns)
 9. [Login e perfis de acesso](#9-login-e-perfis-de-acesso)
 10. [Andares, salas e tipos de patrimônio](#10-andares-salas-e-tipos-de-patrimônio)
+11. [Bens patrimoniais](#11-bens-patrimoniais)
 
 ## 1. O que instalar antes
 
@@ -346,3 +347,53 @@ Respostas de erro, além das da seção 9.2:
 | 404 | o registro não existe, por exemplo porque foi excluído | mostra a mensagem que veio em `message` e atualiza a lista |
 | 409 | tentativa de excluir andar com salas, ou sala ou tipo com bens | mostra a mensagem que veio em `message`, que sugere inativar |
 | 422 | campo obrigatório vazio, nome repetido ou regra de ativo descumprida | mostra a mensagem que veio em `errors`, ao lado do campo |
+
+## 11. Bens patrimoniais
+
+Cadastro e consulta dos bens (tarefa 2.6). Mudar de sala, mudar de situação e dar baixa são a tarefa 2.8.
+
+### 11.1 Rotas
+
+| Método e rota | Quem acessa | O que faz |
+| --- | --- | --- |
+| `GET /api/bens` | administrador e consulta | lista os bens, com busca, filtros e ordenação (11.3) |
+| `GET /api/bens/{id}` | administrador e consulta | ficha do bem, com tipo, sala, andar e quem fez a última mudança |
+| `GET /api/salas/{id}/bens` | administrador e consulta | todos os bens de uma sala, sem paginação, agrupados por tipo. Serve para a conferência sala a sala |
+| `POST /api/bens` | administrador | cadastra um bem |
+| `PUT` ou `PATCH /api/bens/{id}` | administrador | edita os dados do bem. Só os campos enviados mudam |
+
+Não há rota para excluir bem. A saída do patrimônio é a baixa (RN07).
+
+### 11.2 Campos
+
+| Campo | Cadastro | Edição | Observação |
+| --- | --- | --- | --- |
+| `tipo_patrimonio_id` | obrigatório | pode mudar | tipo inativo não recebe bens novos |
+| `sala_id` | obrigatório | não muda | sala inativa não recebe bens novos |
+| `numero_patrimonio` | opcional | pode mudar | número da plaqueta, até 20 caracteres. Não se repete (RN01) |
+| `descricao`, `marca`, `origem` | opcionais | podem mudar | em branco quando o bem não tem |
+| `quantidade` | opcional, padrão 1 | pode mudar | de 1 a 9999 (PD08) |
+| `status` | opcional, padrão `em_uso` | não muda | no cadastro: `em_uso`, `sem_uso` ou `avariado`. A baixa é registrada depois |
+| `observacao` | opcional | pode mudar | texto livre |
+
+O `codigo_interno` é gerado pelo sistema no formato `CP-000123` e não pode ser informado nem editado. Ele existe para todo bem, tenha ou não plaqueta (PD07).
+
+Na edição, `sala_id` e `status` podem vir no formulário desde que iguais aos atuais. Se forem diferentes, a resposta é 422, indicando a opção de mudar de sala ou de situação.
+
+A resposta de um bem traz também `status_rotulo` (texto pronto para a tela), `baixado` (para sinalizar o bem baixado que ainda está no prédio, RN05), `data_ultima_mudanca`, `baixa_data`, `baixa_observacao`, `cadastrado_em` e `atualizado_em`.
+
+### 11.3 Consulta
+
+Filtros de `GET /api/bens`, todos opcionais e combináveis:
+
+| Filtro | Exemplo | O que faz |
+| --- | --- | --- |
+| `numero` | `?numero=1634456-1` | número de patrimônio ou código interno exato (RF12) |
+| `busca` | `?busca=lenovo` | parte do número, do código, da descrição ou da marca |
+| `andar_id`, `sala_id`, `tipo_patrimonio_id` | `?andar_id=2&tipo_patrimonio_id=5` | só os bens daquele andar, sala ou tipo (RF13) |
+| `status` | `?status=sem_uso,avariado` | uma ou mais situações, separadas por vírgula |
+| `ordenar` | `?ordenar=numero` | `local` (padrão: andar, sala e tipo, a ordem do levantamento), `numero`, `codigo`, `tipo`, `status` ou `cadastro` |
+| `direcao` | `?direcao=desc` | `asc` (padrão) ou `desc` |
+| `pagina`, `por_pagina` | `?pagina=2&por_pagina=50` | como nas listagens da seção 10 |
+
+Bens baixados aparecem na lista, com `baixado: true`. Para escondê-los, filtre pelas outras situações: `?status=em_uso,sem_uso,avariado`.
