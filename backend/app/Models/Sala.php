@@ -22,6 +22,12 @@ class Sala extends Model
     /** @use HasFactory<SalaFactory> */
     use HasFactory;
 
+    // O Laravel lê o padrão do banco só depois de salvar. Repetir aqui faz a
+    // sala recém-cadastrada já sair ativa na resposta da API.
+    protected $attributes = [
+        'ativo' => true,
+    ];
+
     /**
      * @return BelongsTo<Andar, $this>
      */

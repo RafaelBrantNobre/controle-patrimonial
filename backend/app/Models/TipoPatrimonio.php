@@ -21,6 +21,12 @@ class TipoPatrimonio extends Model
     /** @use HasFactory<TipoPatrimonioFactory> */
     use HasFactory;
 
+    // O Laravel lê o padrão do banco só depois de salvar. Repetir aqui faz o
+    // tipo recém-cadastrado já sair ativo na resposta da API.
+    protected $attributes = [
+        'ativo' => true,
+    ];
+
     /**
      * @return HasMany<Bem, $this>
      */
