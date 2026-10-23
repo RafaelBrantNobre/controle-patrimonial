@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 /*
@@ -16,7 +18,8 @@ use Illuminate\Support\Str;
 | Bem nunca é apagado: a saída do patrimônio ativo é a baixa (RN07).
 | Todo bem recebe um codigo_interno gerado pelo sistema (PD07), como
 | CP-000123, tenha ou não número de patrimônio.
-| As regras de mudança de sala e de status ficam na tarefa 2.8.
+| Mudar de sala e de status passa por mudarDeSala() e alterarStatus()
+| (tarefa 2.8), que gravam quem fez e quando (RN09).
 */
 #[Table('bem')]
 #[Fillable([
@@ -45,6 +48,16 @@ class Bem extends Model
     protected $attributes = [
         'status' => 'em_uso',
         'quantidade' => 1,
+    ];
+
+    /** Relações carregadas na ficha do bem (RF15), para ela sair igual em todas as rotas. */
+    public const RELACOES_DA_FICHA = [
+        'sala.andar',
+        'tipoPatrimonio',
+        'usuarioUltimaMudanca',
+        'ultimaMovimentacao.salaOrigem.andar',
+        'ultimaMovimentacao.salaDestino.andar',
+        'ultimaMovimentacao.usuario',
     ];
 
     /** Prefixo do código interno: CP de Controle Patrimonial. */
@@ -95,6 +108,26 @@ class Bem extends Model
     }
 
     /**
+     * Mudanças de sala do bem, da mais recente para a mais antiga (tarefa 2.8).
+     *
+     * @return HasMany<Movimentacao, $this>
+     */
+    public function movimentacoes(): HasMany
+    {
+        return $this->hasMany(Movimentacao::class)->latest('data')->latest('id');
+    }
+
+    /**
+     * A mudança de sala mais recente. A ficha usa para mostrar de onde o bem veio.
+     *
+     * @return HasOne<Movimentacao, $this>
+     */
+    public function ultimaMovimentacao(): HasOne
+    {
+        return $this->hasOne(Movimentacao::class)->latestOfMany('id');
+    }
+
+    /**
      * Quem fez a última mudança de sala ou de status (RN09).
      *
      * @return BelongsTo<User, $this>
@@ -107,6 +140,51 @@ class Bem extends Model
     public function estaBaixado(): bool
     {
         return $this->status === StatusBem::Baixado;
+    }
+
+    /*
+    | Mudanças da tarefa 2.8. As regras (RN04, sala ativa, status diferente
+    | do atual) são conferidas antes, na validação da requisição. Aqui só se
+    | grava a mudança, sempre com a data e o usuário que a fez (RN09).
+    */
+
+    /**
+     * Muda o bem de sala (RF17) e grava a mudança na tabela movimentacao,
+     * com origem, destino, usuário e momento. Quem chama deve usar uma
+     * transação, para o bem e o histórico mudarem juntos.
+     */
+    public function mudarDeSala(Sala $destino, User $usuario): void
+    {
+        $this->movimentacoes()->create([
+            'sala_origem_id' => $this->sala_id,
+            'sala_destino_id' => $destino->id,
+            'usuario_id' => $usuario->id,
+            'data' => now(),
+        ]);
+
+        $this->sala_id = $destino->id;
+        $this->registrarMudanca($usuario);
+        $this->save();
+    }
+
+    /**
+     * Altera o status (RF19). Na baixa, grava a data e a observação (RF20).
+     * Ao sair de baixado, os dados da baixa são apagados, porque deixam de
+     * valer: é o caminho para desfazer uma baixa registrada por engano.
+     */
+    public function alterarStatus(StatusBem $novo, User $usuario, ?string $baixaData = null, ?string $baixaObservacao = null): void
+    {
+        $this->status = $novo;
+        $this->baixa_data = $novo === StatusBem::Baixado ? $baixaData : null;
+        $this->baixa_observacao = $novo === StatusBem::Baixado ? $baixaObservacao : null;
+        $this->registrarMudanca($usuario);
+        $this->save();
+    }
+
+    private function registrarMudanca(User $usuario): void
+    {
+        $this->data_ultima_mudanca = now()->toDateString();
+        $this->usuario_ultima_mudanca_id = $usuario->id;
     }
 
     protected function casts(): array

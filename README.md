@@ -24,6 +24,7 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 9. [Login e perfis de acesso](#9-login-e-perfis-de-acesso)
 10. [Andares, salas e tipos de patrimônio](#10-andares-salas-e-tipos-de-patrimônio)
 11. [Bens patrimoniais](#11-bens-patrimoniais)
+12. [Mudança de sala, situação e baixa](#12-mudança-de-sala-situação-e-baixa)
 
 ## 1. O que instalar antes
 
@@ -397,3 +398,29 @@ Filtros de `GET /api/bens`, todos opcionais e combináveis:
 | `pagina`, `por_pagina` | `?pagina=2&por_pagina=50` | como nas listagens da seção 10 |
 
 Bens baixados aparecem na lista, com `baixado: true`. Para escondê-los, filtre pelas outras situações: `?status=em_uso,sem_uso,avariado`.
+
+## 12. Mudança de sala, situação e baixa
+
+Operações que mudam onde o bem está ou em que situação ele se encontra (tarefa 2.8). Só o administrador faz. Toda mudança grava a data (`data_ultima_mudanca`) e quem a fez (`usuario_ultima_mudanca`), que o relatório usa para apontar o que se mexeu no período (RN09).
+
+### 12.1 Rotas
+
+| Método e rota | Corpo | O que faz |
+| --- | --- | --- |
+| `PATCH /api/bens/{id}/sala` | `{"sala_id": 5}` | muda o bem de sala e grava a mudança no histórico (tabela `movimentacao`) |
+| `PATCH /api/bens/{id}/status` | `{"status": "avariado"}` | muda a situação para `em_uso`, `sem_uso` ou `avariado` |
+| `PATCH /api/bens/{id}/status` | `{"status": "baixado", "baixa_data": "2026-10-23", "baixa_observacao": "Processo 123"}` | registra a baixa |
+
+As duas rotas devolvem o bem atualizado, no mesmo formato da ficha (seção 11).
+
+### 12.2 Regras
+
+- Bem baixado não muda de sala (RN04).
+- O destino precisa ser outra sala, e ativa.
+- A nova situação precisa ser diferente da atual.
+- Na baixa, `baixa_data` é obrigatória, no formato `ano-mês-dia`, e não pode ser futura. `baixa_observacao` é opcional, enquanto a PD06 não define quais dados da baixa registrar. Fora da baixa, os dois campos não são aceitos.
+- O bem baixado continua aparecendo nas listas, com `baixado: true` (RN05).
+- Para desfazer uma baixa registrada por engano, mude a situação para outra. Os dados da baixa são apagados, e a mudança fica registrada com data e usuário.
+- Cada mudança de sala vira uma linha na tabela `movimentacao`, com sala de origem, sala de destino, usuário e momento. Só mudanças de sala entram nela: as de situação ficam registradas no próprio bem.
+- A ficha do bem traz a mudança mais recente em `ultima_movimentacao` (`sala_origem`, `sala_destino`, `data` e `usuario`), e vem `null` se o bem nunca mudou de sala. Mostrar o histórico inteiro na ficha e no relatório é a tarefa 3.1.
+- Sala que aparece no histórico, como origem ou destino, não pode ser excluída, mesmo sem bens. O caminho é inativar.

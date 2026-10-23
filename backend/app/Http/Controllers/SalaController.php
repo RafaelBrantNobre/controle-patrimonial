@@ -70,12 +70,19 @@ class SalaController extends Controller
     /**
      * DELETE /api/salas/{sala}
      * Só exclui sala sem bens. Com bens, o caminho é inativar (RN08).
+     * Também não exclui sala que aparece no histórico de mudanças de bens.
      */
     public function destroy(Sala $sala): JsonResponse
     {
         if ($sala->bens()->exists()) {
             return response()->json([
                 'message' => 'Esta sala tem bens cadastrados e não pode ser excluída. Se ela não é mais usada, inative-a.',
+            ], 409);
+        }
+
+        if ($sala->apareceNoHistorico()) {
+            return response()->json([
+                'message' => 'Esta sala aparece no histórico de mudanças de bens e não pode ser excluída. Se ela não é mais usada, inative-a.',
             ], 409);
         }
 
