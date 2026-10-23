@@ -25,6 +25,7 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 10. [Andares, salas e tipos de patrimônio](#10-andares-salas-e-tipos-de-patrimônio)
 11. [Bens patrimoniais](#11-bens-patrimoniais)
 12. [Mudança de sala, situação e baixa](#12-mudança-de-sala-situação-e-baixa)
+13. [Relatório do levantamento](#13-relatório-do-levantamento)
 
 ## 1. O que instalar antes
 
@@ -424,3 +425,48 @@ As duas rotas devolvem o bem atualizado, no mesmo formato da ficha (seção 11).
 - Cada mudança de sala vira uma linha na tabela `movimentacao`, com sala de origem, sala de destino, usuário e momento. Só mudanças de sala entram nela: as de situação ficam registradas no próprio bem.
 - A ficha do bem traz a mudança mais recente em `ultima_movimentacao` (`sala_origem`, `sala_destino`, `data` e `usuario`), e vem `null` se o bem nunca mudou de sala. Mostrar o histórico inteiro na ficha e no relatório é a tarefa 3.1.
 - Sala que aparece no histórico, como origem ou destino, não pode ser excluída, mesmo sem bens. O caminho é inativar.
+
+## 13. Relatório do levantamento
+
+O relatório da conferência patrimonial do semestre (tarefa 2.10). Administrador e consulta podem gerar e exportar.
+
+### 13.1 Rotas
+
+| Método e rota | O que devolve |
+| --- | --- |
+| `GET /api/relatorio?inicio=2026-07-01&fim=2026-12-31` | os bens agrupados por andar e sala, com totais |
+| `GET /api/relatorio/planilha?inicio=2026-07-01&fim=2026-12-31` | o mesmo conteúdo em planilha (arquivo `.csv`) |
+
+`inicio` e `fim` são obrigatórios, no formato `ano-mês-dia`. As duas rotas aceitam os mesmos filtros opcionais, que podem ser combinados:
+
+| Filtro | Exemplo | O que faz |
+| --- | --- | --- |
+| `andar_id`, `sala_id`, `tipo_patrimonio_id` | `&andar_id=2` | só os bens daquele andar, sala ou tipo |
+| `status` | `&status=sem_uso,avariado` | uma ou mais situações, separadas por vírgula |
+| `apenas_mudancas` | `&apenas_mudancas=1` | só os bens que mudaram no período |
+
+### 13.2 O que o relatório mostra
+
+- Todos os bens que passam nos filtros, inclusive os baixados (RN05). O período **não** corta a lista: ele define o que aparece em destaque.
+- A ordem é a da conferência física: andar (campo `ordem`), sala, tipo e número de patrimônio.
+- Cada bem traz número de patrimônio, código interno, tipo, descrição, marca, quantidade, situação, data da última mudança, data da baixa e observação.
+- `mudou_no_periodo` é `true` quando o bem mudou de sala ou de situação dentro do período. `mudou_de_sala_no_periodo` diz se foi de sala, e `veio_da_sala` traz a sala de onde ele saiu na primeira mudança do período.
+- `totais` traz o total de bens, quantos mudaram, quantos mudaram de sala e quantos há em cada situação.
+
+Formato da resposta em JSON:
+
+```
+periodo: { inicio, fim }
+totais: { bens, mudaram_no_periodo, mudaram_de_sala_no_periodo, por_status: { em_uso, sem_uso, avariado, baixado } }
+andares: [ { id, nome, total, salas: [ { id, nome, total, bens: [ ... ] } ] } ]
+```
+
+Limite conhecido: a mudança de sala sempre aparece, porque cada uma fica gravada na tabela `movimentacao`. A mudança de situação não tem histórico próprio. Por isso, num período passado, se o bem mudou de situação dentro dele e mudou de novo depois, essa mudança não aparece em destaque. No levantamento do semestre corrente, que vai até hoje, isso não acontece.
+
+### 13.3 Planilha
+
+- Arquivo `levantamento_<inicio>_a_<fim>.csv`, em UTF-8 com BOM e separado por ponto e vírgula. O Excel em português abre direto, com acentos e colunas certos.
+- Uma linha por bem, com as colunas: Andar, Sala, Nº de patrimônio, Código interno, Tipo, Descrição, Marca, Quantidade, Situação, Última mudança, Mudou no período (Sim ou Não), Veio da sala, Data da baixa e Observação. Datas no formato `dd/mm/aaaa`.
+- Texto que começa com `=`, `+`, `-` ou `@` sai com um apóstrofo na frente, para o Excel não executá-lo como fórmula.
+- O front recebe o arquivo pela API com o token, como as outras chamadas. O nome do arquivo vem no cabeçalho `Content-Disposition`, que o CORS libera para leitura.
+- A exportação em PDF no modelo da Unimontes é a tarefa 3.4.
