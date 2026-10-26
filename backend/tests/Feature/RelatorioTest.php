@@ -7,7 +7,9 @@ use App\Models\Sala;
 use App\Models\TipoPatrimonio;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
+use OpenSpout\Reader\XLSX\Reader as XlsxReader;
 
 /*
 | Testes do relatório do levantamento (tarefa 2.10).
@@ -46,7 +48,7 @@ test('o período é obrigatório e o fim não pode ser antes do início', functi
 
 test('o perfil consulta gera o relatório e a planilha', function () {
     $this->getJson('/api/relatorio?'.PERIODO)->assertOk();
-    $this->get('/api/relatorio/planilha?'.PERIODO)->assertOk();
+    baixarPlanilha();
 });
 
 test('sem login o relatório não responde', function () {
@@ -173,47 +175,104 @@ test('os filtros de andar, sala, tipo, situação e só mudanças se combinam', 
 
 // --- Planilha (RF26) --------------------------------------------------------
 
-test('a planilha sai em CSV para o Excel, com cabeçalho e uma linha por bem', function () {
+/**
+ * Baixa a planilha e devolve o conteúdo de cada aba, como [nome => linhas].
+ *
+ * @return array<string, array<int, array<int, mixed>>>
+ */
+function baixarPlanilha(string $filtros = ''): array
+{
+    $resposta = test()->get('/api/relatorio/planilha?'.PERIODO.$filtros)
+        ->assertOk()
+        ->assertDownload('levantamento_2026-07-01_a_2026-12-31.xlsx');
+
+    $caminho = $resposta->baseResponse->getFile()->getPathname();
+    $leitor = new XlsxReader;
+    $leitor->open($caminho);
+
+    $abas = [];
+    foreach ($leitor->getSheetIterator() as $aba) {
+        foreach ($aba->getRowIterator() as $linha) {
+            $abas[$aba->getName()][] = $linha->toArray();
+        }
+    }
+
+    $leitor->close();
+    unlink($caminho);
+
+    return $abas;
+}
+
+test('a planilha é um Excel com a aba Principal e uma aba por sala', function () {
+    $terreo = Andar::factory()->create(['nome' => 'Térreo', 'ordem' => 0]);
+    $recepcao = Sala::factory()->for($terreo)->create(['nome' => 'Recepção']);
+    $suporte = Sala::factory()->for($terreo)->create(['nome' => 'Sala 05 - Suporte TI']);
+    Bem::factory()->count(2)->for($recepcao)->create();
+    Bem::factory()->for($suporte)->create();
+
+    $abas = baixarPlanilha();
+
+    expect(array_keys($abas))->toBe(['Principal', 'Recepção', 'Sala 05 - Suporte TI'])
+        ->and($abas['Principal'])->toHaveCount(4)
+        ->and($abas['Recepção'])->toHaveCount(3)
+        ->and($abas['Principal'][0][0])->toBe('Patrimônio')
+        ->and(end($abas['Principal'][0]))->toBe('Conferido por');
+});
+
+test('cada linha traz os dados do bem, com o número de patrimônio como texto', function () {
     $sala = Sala::factory()->for(Andar::factory()->state(['nome' => 'Térreo']))->create(['nome' => 'Recepção']);
     Bem::factory()->for($sala)->for(TipoPatrimonio::factory()->state(['nome' => 'Cadeira']), 'tipoPatrimonio')->create([
-        'numero_patrimonio' => '1634456-1',
+        'numero_patrimonio' => '85015792',
+        'descricao' => 'azul giratória',
         'data_ultima_mudanca' => '2026-08-05',
         'status' => StatusBem::SemUso,
     ]);
+    Bem::factory()->for($sala)->semPlaqueta()->create();
 
-    $resposta = $this->get('/api/relatorio/planilha?'.PERIODO)
-        ->assertOk()
-        ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
-        ->assertDownload('levantamento_2026-07-01_a_2026-12-31.csv');
+    $linhas = baixarPlanilha()['Principal'];
+    $comPlaqueta = collect($linhas)->firstWhere(0, '85015792');
+    $semPlaqueta = collect($linhas)->firstWhere(0, 'sem patrimônio');
 
-    $conteudo = $resposta->streamedContent();
-    $linhas = array_map(fn ($linha) => str_getcsv($linha, ';', '"', ''), explode("\n", trim(substr($conteudo, 3))));
-
-    expect(substr($conteudo, 0, 3))->toBe("\xEF\xBB\xBF")
-        ->and($linhas[0][0])->toBe('Andar')
-        ->and($linhas[0][10])->toBe('Mudou no período')
-        ->and($linhas)->toHaveCount(2)
-        ->and(array_slice($linhas[1], 0, 3))->toBe(['Térreo', 'Recepção', '1634456-1'])
-        ->and($linhas[1][8])->toBe('Sem uso')
-        ->and($linhas[1][9])->toBe('05/08/2026')
-        ->and($linhas[1][10])->toBe('Sim');
+    expect($comPlaqueta)->not->toBeNull()
+        ->and($comPlaqueta[2])->toBe('Cadeira')
+        ->and($comPlaqueta[3])->toBe('azul giratória')
+        ->and($comPlaqueta[5])->toBe('Recepção')
+        ->and($comPlaqueta[6])->toBe('Térreo')
+        ->and($comPlaqueta[7])->toBe('Sem uso')
+        ->and($comPlaqueta[9]->format('Y-m-d'))->toBe('2026-08-05')
+        ->and($comPlaqueta[10])->toBe('Sim')
+        ->and($semPlaqueta[1])->toMatch('/^CP-\d{6}$/');
 });
 
-test('texto que viraria fórmula no Excel sai protegido na planilha', function () {
-    Bem::factory()->create(['observacao' => '=HYPERLINK("http://exemplo.com","clique")', 'marca' => '@SOMA']);
+test('texto que começa com = sai como texto, e não como fórmula', function () {
+    Bem::factory()->create(['observacao' => '=HYPERLINK("http://exemplo.com","clique")']);
 
-    $conteudo = $this->get('/api/relatorio/planilha?'.PERIODO)->streamedContent();
-    $linha = str_getcsv(explode("\n", trim(substr($conteudo, 3)))[1], ';', '"', '');
+    $linha = baixarPlanilha()['Principal'][1];
 
-    expect($linha[13])->toBe('\'=HYPERLINK("http://exemplo.com","clique")')
-        ->and($linha[6])->toBe("'@SOMA");
+    expect($linha[13])->toBe('=HYPERLINK("http://exemplo.com","clique")');
+});
+
+test('salas com o mesmo nome em andares diferentes ganham abas diferentes', function () {
+    Bem::factory()->for(Sala::factory()->for(Andar::factory()->state(['nome' => 'Térreo', 'ordem' => 0]))->state(['nome' => 'Sala 05']))->create();
+    Bem::factory()->for(Sala::factory()->for(Andar::factory()->state(['nome' => '1º andar', 'ordem' => 1]))->state(['nome' => 'Sala 05']))->create();
+    Bem::factory()->for(Sala::factory()->state(['nome' => 'Sala: arquivo [antigo] com um nome bem comprido demais']))->create();
+
+    $nomes = array_keys(baixarPlanilha());
+
+    expect($nomes)->toContain('Sala 05', 'Sala 05 - 1º andar')
+        ->and(collect($nomes)->every(fn ($nome) => mb_strlen($nome) <= 31 && ! Str::contains($nome, ['\\', '/', '?', '*', ':', '[', ']'])))->toBeTrue();
 });
 
 test('a planilha respeita os filtros', function () {
     Bem::factory()->create();
     Bem::factory()->avariado()->create();
 
-    $conteudo = $this->get('/api/relatorio/planilha?'.PERIODO.'&status=avariado')->streamedContent();
+    expect(baixarPlanilha('&status=avariado')['Principal'])->toHaveCount(2);
+});
 
-    expect(explode("\n", trim($conteudo)))->toHaveCount(2);
+test('relatório sem bens gera a planilha só com o cabeçalho', function () {
+    $abas = baixarPlanilha();
+
+    expect(array_keys($abas))->toBe(['Principal'])
+        ->and($abas['Principal'])->toHaveCount(1);
 });
