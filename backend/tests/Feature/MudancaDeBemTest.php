@@ -72,7 +72,7 @@ test('bem que nunca mudou de sala não tem histórico', function () {
     $bem = Bem::factory()->create();
 
     $this->getJson("/api/bens/{$bem->id}")->assertJsonPath('data.ultima_movimentacao', null);
-    $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'avariado'])->assertOk();
+    $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'sem_uso'])->assertOk();
 
     expect(Movimentacao::count())->toBe(0);
 });
@@ -116,10 +116,10 @@ test('o status muda e grava a data e quem mudou', function () {
     administradorConectado('Christine');
     $bem = Bem::factory()->create();
 
-    $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'avariado'])
+    $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'sem_uso'])
         ->assertOk()
-        ->assertJsonPath('data.status', 'avariado')
-        ->assertJsonPath('data.status_rotulo', 'Avariado')
+        ->assertJsonPath('data.status', 'sem_uso')
+        ->assertJsonPath('data.status_rotulo', 'Sem uso')
         ->assertJsonPath('data.data_ultima_mudanca', '2026-10-23')
         ->assertJsonPath('data.usuario_ultima_mudanca.nome', 'Christine');
 });
@@ -134,7 +134,7 @@ test('o status novo precisa ser diferente do atual e da lista', function () {
 
     $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'perdido'])
         ->assertUnprocessable()
-        ->assertJsonPath('errors.status.0', 'A situação deve ser em uso, sem uso, avariado ou baixado.');
+        ->assertJsonPath('errors.status.0', 'A situação de uso deve ser em uso, sem uso ou baixado.');
 });
 
 // --- Baixa (RF20, RN05) -----------------------------------------------------
@@ -180,7 +180,7 @@ test('dados da baixa só valem para o status baixado', function () {
     administradorConectado();
     $bem = Bem::factory()->create();
 
-    $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'avariado', 'baixa_data' => '2026-10-20'])
+    $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'sem_uso', 'baixa_data' => '2026-10-20'])
         ->assertUnprocessable()
         ->assertJsonPath('errors.baixa_data.0', 'A data da baixa só é informada quando a nova situação é baixado.');
 });
@@ -208,7 +208,7 @@ test('o perfil consulta não muda sala nem status', function () {
     $destino = Sala::factory()->create();
 
     $this->patchJson("/api/bens/{$bem->id}/sala", ['sala_id' => $destino->id])->assertForbidden();
-    $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'avariado'])->assertForbidden();
+    $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'sem_uso'])->assertForbidden();
 
     $bem->refresh();
     expect($bem->sala_id)->not->toBe($destino->id)

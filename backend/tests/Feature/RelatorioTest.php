@@ -118,7 +118,7 @@ test('aparece em destaque o bem que mudou de sala no período, com a sala de ond
 
 test('aparece em destaque o bem que mudou de situação no período', function () {
     $bem = Bem::factory()->create();
-    mudarEm('2026-10-01', fn ($usuario) => $bem->alterarStatus(StatusBem::Avariado, $usuario));
+    mudarEm('2026-10-01', fn ($usuario) => $bem->alterarStatus(StatusBem::SemUso, $usuario));
 
     $this->getJson('/api/relatorio?'.PERIODO)
         ->assertJsonPath('andares.0.salas.0.bens.0.mudou_no_periodo', true)
@@ -159,7 +159,7 @@ test('os filtros de andar, sala, tipo, situação e só mudanças se combinam', 
     $suporte = Sala::factory()->for($primeiro)->create();
     $computador = TipoPatrimonio::factory()->create();
     Bem::factory()->for($recepcao)->for($computador, 'tipoPatrimonio')->create();
-    Bem::factory()->for($suporte)->for($computador, 'tipoPatrimonio')->avariado()->create();
+    Bem::factory()->for($suporte)->for($computador, 'tipoPatrimonio')->semUso()->create();
     $mudou = Bem::factory()->for($suporte)->create();
     mudarEm('2026-09-01', fn ($usuario) => $mudou->alterarStatus(StatusBem::SemUso, $usuario));
 
@@ -168,7 +168,7 @@ test('os filtros de andar, sala, tipo, situação e só mudanças se combinam', 
     expect($total("andar_id={$primeiro->id}"))->toBe(2)
         ->and($total("sala_id={$recepcao->id}"))->toBe(1)
         ->and($total("tipo_patrimonio_id={$computador->id}"))->toBe(2)
-        ->and($total('status=avariado,sem_uso'))->toBe(2)
+        ->and($total('status=sem_uso,baixado'))->toBe(2)
         ->and($total("andar_id={$primeiro->id}&tipo_patrimonio_id={$computador->id}"))->toBe(1)
         ->and($total('apenas_mudancas=1'))->toBe(1);
 });
@@ -239,8 +239,9 @@ test('cada linha traz os dados do bem, com o número de patrimônio como texto',
         ->and($comPlaqueta[5])->toBe('Recepção')
         ->and($comPlaqueta[6])->toBe('Térreo')
         ->and($comPlaqueta[7])->toBe('Sem uso')
-        ->and($comPlaqueta[9]->format('Y-m-d'))->toBe('2026-08-05')
-        ->and($comPlaqueta[10])->toBe('Sim')
+        ->and($comPlaqueta[8])->toBe('Indeterminado')
+        ->and($comPlaqueta[10]->format('Y-m-d'))->toBe('2026-08-05')
+        ->and($comPlaqueta[11])->toBe('Sim')
         ->and($semPlaqueta[1])->toMatch('/^CP-\d{6}$/');
 });
 
@@ -249,7 +250,7 @@ test('texto que começa com = sai como texto, e não como fórmula', function ()
 
     $linha = baixarPlanilha()['Principal'][1];
 
-    expect($linha[13])->toBe('=HYPERLINK("http://exemplo.com","clique")');
+    expect($linha[14])->toBe('=HYPERLINK("http://exemplo.com","clique")');
 });
 
 test('salas com o mesmo nome em andares diferentes ganham abas diferentes', function () {
@@ -265,9 +266,9 @@ test('salas com o mesmo nome em andares diferentes ganham abas diferentes', func
 
 test('a planilha respeita os filtros', function () {
     Bem::factory()->create();
-    Bem::factory()->avariado()->create();
+    Bem::factory()->semUso()->create();
 
-    expect(baixarPlanilha('&status=avariado')['Principal'])->toHaveCount(2);
+    expect(baixarPlanilha('&status=sem_uso')['Principal'])->toHaveCount(2);
 });
 
 test('relatório sem bens gera a planilha só com o cabeçalho', function () {
