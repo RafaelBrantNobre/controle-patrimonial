@@ -3,14 +3,18 @@
 namespace App\Enums;
 
 /*
-| Situação do bem (página 03, seção 12). O banco guarda o texto do "value";
-| esta lista é a única fonte dos valores válidos. A lista final depende da PD03.
+| Situação de uso do bem: se ele está sendo usado, parado ou já baixado.
+| A condição física (quebrado, ruim, novo) é outra informação, o estado de
+| conservação (EstadoConservacao). Um computador quebrado fica "sem uso",
+| com conservação "péssimo" ou "sucata".
+|
+| O banco guarda o texto do "value" na coluna status; esta lista é a única
+| fonte dos valores válidos.
 */
 enum StatusBem: string
 {
     case EmUso = 'em_uso';
     case SemUso = 'sem_uso';
-    case Avariado = 'avariado';
     case Baixado = 'baixado';
 
     /** Texto para mostrar nas telas e no relatório. */
@@ -19,7 +23,6 @@ enum StatusBem: string
         return match ($this) {
             self::EmUso => 'Em uso',
             self::SemUso => 'Sem uso',
-            self::Avariado => 'Avariado',
             self::Baixado => 'Baixado',
         };
     }

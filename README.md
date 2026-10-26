@@ -22,6 +22,10 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 7. [Revisão por merge request](#7-revisão-por-merge-request)
 8. [Problemas comuns](#8-problemas-comuns)
 9. [Login e perfis de acesso](#9-login-e-perfis-de-acesso)
+10. [Andares, salas e tipos de patrimônio](#10-andares-salas-e-tipos-de-patrimônio)
+11. [Bens patrimoniais](#11-bens-patrimoniais)
+12. [Mudança de sala, situação e baixa](#12-mudança-de-sala-situação-e-baixa)
+13. [Relatório do levantamento](#13-relatório-do-levantamento)
 
 ## 1. O que instalar antes
 
@@ -35,7 +39,7 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 
 Observações:
 
-- O PHP precisa da extensão `pdo_mysql` ligada. Para conferir, rode `php -m` e procure `pdo_mysql` na lista.
+- O PHP precisa das extensões `pdo_mysql` e `zip` ligadas. Para conferir, rode `php -m` e procure as duas na lista. A `zip` é usada para gerar a planilha do relatório (seção 13).
 - O Docker Desktop precisa estar aberto antes de subir o banco.
 - Os comandos deste README funcionam no PowerShell do Windows.
 
@@ -238,6 +242,7 @@ Regras:
 | `php artisan migrate` dá `Access denied` e `docker compose ps` mostra a lista vazia | o banco do Docker está desligado e quem respondeu foi outro MySQL instalado na máquina. Troque `DB_PORT` para `3307` em `backend/.env`, rode `docker compose up -d`, espere o `healthy` no `docker compose ps` e rode `php artisan config:clear` antes do `migrate` |
 | `php artisan migrate` dá `Access denied` e `docker compose ps` mostra o banco `healthy` | a senha do `.env` foi trocada depois de o banco ter sido criado, e o MySQL guarda a senha da primeira vez. Rode `docker compose down -v` e depois `docker compose up -d`. Isso apaga os dados do banco local |
 | `php artisan migrate` dá `could not find driver` | falta ligar a extensão `pdo_mysql` no `php.ini` |
+| `composer install` reclama de `ext-zip`, ou a planilha do relatório dá erro 500 | falta ligar a extensão `zip` no `php.ini`: tire o `;` da linha `;extension=zip` e abra o terminal de novo |
 | a página do front-end mostra o back-end sem resposta | confira se `php artisan serve` está rodando e se `VITE_API_URL` em `frontend/.env` está certo. Depois de mudar o `.env`, pare e rode `npm run dev` de novo |
 | `npm run dev` diz que a porta 5173 está em uso | feche o outro terminal que já está rodando o front-end |
 
@@ -289,3 +294,192 @@ Na dúvida, a rota vai para o grupo 3. Esconder um botão na tela não basta: a 
 
 Dentro de um controller, o usuário conectado está em `$request->user()`. Para gravar quem fez uma mudança de sala ou de status (RN09), use `$request->user()->id`.
 
+## 10. Andares, salas e tipos de patrimônio
+
+Cadastros que sustentam o resto do sistema: todo bem fica numa sala, que fica num andar, e tem um tipo (tarefa 2.5). As três rotas seguem o mesmo formato.
+
+### 10.1 Rotas
+
+| Método e rota | Quem acessa | O que faz |
+| --- | --- | --- |
+| `GET /api/andares` | administrador e consulta | lista os andares, na ordem do relatório (campo `ordem`) |
+| `GET /api/andares/{id}` | administrador e consulta | devolve um andar |
+| `POST /api/andares` | administrador | cadastra. Campos: `nome` (obrigatório), `ordem` e `ativo` |
+| `PUT` ou `PATCH /api/andares/{id}` | administrador | edita. Só os campos enviados mudam |
+| `DELETE /api/andares/{id}` | administrador | exclui, se o andar não tiver salas |
+| `GET /api/salas` | administrador e consulta | lista as salas, agrupadas por andar e em ordem de nome |
+| `GET /api/salas/{id}` | administrador e consulta | devolve uma sala, com o andar dela |
+| `POST /api/salas` | administrador | cadastra. Campos: `andar_id` e `nome` (obrigatórios), `descricao` e `ativo` |
+| `PUT` ou `PATCH /api/salas/{id}` | administrador | edita. Só os campos enviados mudam |
+| `DELETE /api/salas/{id}` | administrador | exclui, se a sala não tiver bens |
+| `GET /api/tipos-patrimonio` | administrador e consulta | lista os tipos, em ordem alfabética |
+| `GET /api/tipos-patrimonio/{id}` | administrador e consulta | devolve um tipo |
+| `POST /api/tipos-patrimonio` | administrador | cadastra. Campos: `nome` (obrigatório) e `ativo` |
+| `PUT` ou `PATCH /api/tipos-patrimonio/{id}` | administrador | edita. Só os campos enviados mudam |
+| `DELETE /api/tipos-patrimonio/{id}` | administrador | exclui, se o tipo não tiver bens |
+
+Inativar e reativar é uma edição: `PATCH` com `{"ativo": false}` ou `{"ativo": true}`.
+
+### 10.2 Listagens
+
+As listagens aceitam estes filtros na URL, que podem ser combinados:
+
+| Filtro | Onde vale | Exemplo |
+| --- | --- | --- |
+| `busca` | as três | `?busca=suporte` traz os nomes que contêm "suporte" |
+| `ativo` | as três | `?ativo=1` só os ativos, `?ativo=0` só os inativos. Sem o filtro, vêm todos |
+| `andar_id` | salas | `?andar_id=2` só as salas do andar 2 |
+| `pagina` | as três | `?pagina=2`. Começa em 1 |
+| `por_pagina` | as três | `?por_pagina=50`. Padrão 20, máximo 100 |
+
+Nas telas de cadastro de bem, use `?ativo=1` para montar as listas de escolha, porque sala e tipo inativos não recebem bens novos.
+
+A resposta traz os itens em `data`, os links de navegação em `links` e a contagem em `meta` (`total`, `current_page`, `last_page`, `per_page`). Cada andar traz `salas_count`, e cada sala e tipo traz `bens_count`. O front pode usar esses números para mostrar o botão de excluir só quando ele vai funcionar.
+
+### 10.3 Regras
+
+- Nome do andar e nome do tipo não se repetem. No MySQL, "Cadeira" e "cadeira" contam como o mesmo nome.
+- Nome da sala não se repete dentro do mesmo andar. Duas "Sala 05" em andares diferentes são permitidas.
+- Sala ativa só existe em andar ativo. Não dá para cadastrar ou reativar uma sala num andar inativo, nem inativar um andar que ainda tem salas ativas.
+- Andar com salas, e sala ou tipo com bens, não são excluídos (RN08). O caminho é inativar.
+
+Respostas de erro, além das da seção 9.2:
+
+| Código | Quando acontece | O que o front faz |
+| --- | --- | --- |
+| 404 | o registro não existe, por exemplo porque foi excluído | mostra a mensagem que veio em `message` e atualiza a lista |
+| 409 | tentativa de excluir andar com salas, ou sala ou tipo com bens | mostra a mensagem que veio em `message`, que sugere inativar |
+| 422 | campo obrigatório vazio, nome repetido ou regra de ativo descumprida | mostra a mensagem que veio em `errors`, ao lado do campo |
+
+## 11. Bens patrimoniais
+
+Cadastro e consulta dos bens (tarefa 2.6). Mudar de sala, mudar de situação e dar baixa são a tarefa 2.8.
+
+### 11.1 Rotas
+
+| Método e rota | Quem acessa | O que faz |
+| --- | --- | --- |
+| `GET /api/bens` | administrador e consulta | lista os bens, com busca, filtros e ordenação (11.3) |
+| `GET /api/bens/{id}` | administrador e consulta | ficha do bem, com tipo, sala, andar e quem fez a última mudança |
+| `GET /api/salas/{id}/bens` | administrador e consulta | todos os bens de uma sala, sem paginação, agrupados por tipo. Serve para a conferência sala a sala |
+| `POST /api/bens` | administrador | cadastra um bem |
+| `PUT` ou `PATCH /api/bens/{id}` | administrador | edita os dados do bem. Só os campos enviados mudam |
+
+Não há rota para excluir bem. A saída do patrimônio é a baixa (RN07).
+
+### 11.2 Campos
+
+| Campo | Cadastro | Edição | Observação |
+| --- | --- | --- | --- |
+| `tipo_patrimonio_id` | obrigatório | pode mudar | tipo inativo não recebe bens novos |
+| `sala_id` | obrigatório | não muda | sala inativa não recebe bens novos |
+| `numero_patrimonio` | opcional | pode mudar | número da plaqueta, até 20 caracteres. Não se repete (RN01) |
+| `descricao`, `marca`, `origem` | opcionais | podem mudar | em branco quando o bem não tem |
+| `quantidade` | opcional, padrão 1 | pode mudar | de 1 a 9999 (PD08) |
+| `status` | opcional, padrão `em_uso` | não muda | situação de uso. No cadastro: `em_uso` ou `sem_uso`. A baixa é registrada depois |
+| `estado_conservacao` | opcional, padrão `indeterminado` | pode mudar | condição física: `novo`, `bom`, `regular`, `pessimo`, `sucata` ou `indeterminado` |
+| `observacao` | opcional | pode mudar | texto livre |
+
+O `codigo_interno` é gerado pelo sistema no formato `CP-000123` e não pode ser informado nem editado. Ele existe para todo bem, tenha ou não plaqueta (PD07).
+
+**Situação de uso e estado de conservação são independentes.** A situação diz se o bem está sendo usado (em uso, sem uso ou baixado). A conservação diz em que condição física ele está, na mesma escala da planilha de conferência. Um bem pode estar em uso e péssimo, ou sem uso e novo. Um bem quebrado fica `sem_uso` com conservação `pessimo` ou `sucata`. A conservação muda pela edição normal do bem e não conta como mudança de situação.
+
+Na edição, `sala_id` e `status` podem vir no formulário desde que iguais aos atuais. Se forem diferentes, a resposta é 422, indicando a opção de mudar de sala ou de situação.
+
+A resposta de um bem traz também `status_rotulo` (texto pronto para a tela), `baixado` (para sinalizar o bem baixado que ainda está no prédio, RN05), `data_ultima_mudanca`, `baixa_data`, `baixa_observacao`, `cadastrado_em` e `atualizado_em`.
+
+### 11.3 Consulta
+
+Filtros de `GET /api/bens`, todos opcionais e combináveis:
+
+| Filtro | Exemplo | O que faz |
+| --- | --- | --- |
+| `numero` | `?numero=1634456-1` | número de patrimônio ou código interno exato (RF12) |
+| `busca` | `?busca=lenovo` | parte do número, do código, da descrição ou da marca |
+| `andar_id`, `sala_id`, `tipo_patrimonio_id` | `?andar_id=2&tipo_patrimonio_id=5` | só os bens daquele andar, sala ou tipo (RF13) |
+| `status` | `?status=em_uso,sem_uso` | uma ou mais situações de uso, separadas por vírgula |
+| `estado_conservacao` | `?estado_conservacao=pessimo,sucata` | um ou mais estados de conservação, separados por vírgula |
+| `ordenar` | `?ordenar=numero` | `local` (padrão: andar, sala e tipo, a ordem do levantamento), `numero`, `codigo`, `tipo`, `status`, `conservacao` ou `cadastro` |
+| `direcao` | `?direcao=desc` | `asc` (padrão) ou `desc` |
+| `pagina`, `por_pagina` | `?pagina=2&por_pagina=50` | como nas listagens da seção 10 |
+
+Bens baixados aparecem na lista, com `baixado: true`. Para escondê-los, filtre pelas outras situações: `?status=em_uso,sem_uso`.
+
+## 12. Mudança de sala, situação e baixa
+
+Operações que mudam onde o bem está ou em que situação ele se encontra (tarefa 2.8). Só o administrador faz. Toda mudança grava a data (`data_ultima_mudanca`) e quem a fez (`usuario_ultima_mudanca`), que o relatório usa para apontar o que se mexeu no período (RN09).
+
+### 12.1 Rotas
+
+| Método e rota | Corpo | O que faz |
+| --- | --- | --- |
+| `PATCH /api/bens/{id}/sala` | `{"sala_id": 5}` | muda o bem de sala e grava a mudança no histórico (tabela `movimentacao`) |
+| `PATCH /api/bens/{id}/status` | `{"status": "sem_uso"}` | muda a situação de uso para `em_uso` ou `sem_uso` |
+| `PATCH /api/bens/{id}/status` | `{"status": "baixado", "baixa_data": "2026-10-23", "baixa_observacao": "Processo 123"}` | registra a baixa |
+
+As duas rotas devolvem o bem atualizado, no mesmo formato da ficha (seção 11).
+
+### 12.2 Regras
+
+- Bem baixado não muda de sala (RN04).
+- O destino precisa ser outra sala, e ativa.
+- A nova situação precisa ser diferente da atual.
+- Na baixa, `baixa_data` é obrigatória, no formato `ano-mês-dia`, e não pode ser futura. `baixa_observacao` é opcional, enquanto a PD06 não define quais dados da baixa registrar. Fora da baixa, os dois campos não são aceitos.
+- O bem baixado continua aparecendo nas listas, com `baixado: true` (RN05).
+- Para desfazer uma baixa registrada por engano, mude a situação para outra. Os dados da baixa são apagados, e a mudança fica registrada com data e usuário.
+- Cada mudança de sala vira uma linha na tabela `movimentacao`, com sala de origem, sala de destino, usuário e momento. Só mudanças de sala entram nela: as de situação ficam registradas no próprio bem.
+- A ficha do bem traz a mudança mais recente em `ultima_movimentacao` (`sala_origem`, `sala_destino`, `data` e `usuario`), e vem `null` se o bem nunca mudou de sala. Mostrar o histórico inteiro na ficha e no relatório é a tarefa 3.1.
+- Sala que aparece no histórico, como origem ou destino, não pode ser excluída, mesmo sem bens. O caminho é inativar.
+
+## 13. Relatório do levantamento
+
+O relatório da conferência patrimonial do semestre (tarefa 2.10). Administrador e consulta podem gerar e exportar.
+
+### 13.1 Rotas
+
+| Método e rota | O que devolve |
+| --- | --- |
+| `GET /api/relatorio?inicio=2026-07-01&fim=2026-12-31` | os bens agrupados por andar e sala, com totais |
+| `GET /api/relatorio/planilha?inicio=2026-07-01&fim=2026-12-31` | o mesmo conteúdo em planilha do Excel (arquivo `.xlsx`) |
+
+`inicio` e `fim` são obrigatórios, no formato `ano-mês-dia`. As duas rotas aceitam os mesmos filtros opcionais, que podem ser combinados:
+
+| Filtro | Exemplo | O que faz |
+| --- | --- | --- |
+| `andar_id`, `sala_id`, `tipo_patrimonio_id` | `&andar_id=2` | só os bens daquele andar, sala ou tipo |
+| `status` | `&status=em_uso,sem_uso` | uma ou mais situações de uso, separadas por vírgula |
+| `estado_conservacao` | `&estado_conservacao=pessimo,sucata` | um ou mais estados de conservação, separados por vírgula |
+| `apenas_mudancas` | `&apenas_mudancas=1` | só os bens que mudaram no período |
+
+### 13.2 O que o relatório mostra
+
+- Todos os bens que passam nos filtros, inclusive os baixados (RN05). O período **não** corta a lista: ele define o que aparece em destaque.
+- A ordem é a da conferência física: andar (campo `ordem`), sala, tipo e número de patrimônio.
+- Cada bem traz número de patrimônio, código interno, tipo, descrição, marca, quantidade, situação de uso, estado de conservação, data da última mudança, data da baixa e observação.
+- `mudou_no_periodo` é `true` quando o bem mudou de sala ou de situação dentro do período. `mudou_de_sala_no_periodo` diz se foi de sala, e `veio_da_sala` traz a sala de onde ele saiu na primeira mudança do período.
+- `totais` traz o total de bens, quantos mudaram, quantos mudaram de sala e quantos há em cada situação de uso e em cada estado de conservação.
+
+Formato da resposta em JSON:
+
+```
+periodo: { inicio, fim }
+totais: { bens, mudaram_no_periodo, mudaram_de_sala_no_periodo, por_status: { em_uso, sem_uso, baixado }, por_estado_conservacao: { novo, bom, regular, pessimo, sucata, indeterminado } }
+andares: [ { id, nome, total, salas: [ { id, nome, total, bens: [ ... ] } ] } ]
+```
+
+Limite conhecido: a mudança de sala sempre aparece, porque cada uma fica gravada na tabela `movimentacao`. A mudança de situação não tem histórico próprio. Por isso, num período passado, se o bem mudou de situação dentro dele e mudou de novo depois, essa mudança não aparece em destaque. No levantamento do semestre corrente, que vai até hoje, isso não acontece.
+
+### 13.3 Planilha
+
+A planilha segue a que o setor já usa (`Patrimônios CEAD`, novembro de 2024):
+
+- Arquivo `levantamento_<inicio>_a_<fim>.xlsx`.
+- Aba **Principal** com todos os bens e filtro nas colunas, e **uma aba por sala**, para a conferência sala a sala. Todas as abas têm o cabeçalho congelado. Se duas salas tiverem o mesmo nome em andares diferentes, a segunda aba leva o andar no nome.
+- Colunas: Patrimônio, Código interno, Tipo, Descrição, Marca, Local do patrimônio, Andar, Situação de uso, Estado de conservação, Quantidade, Última mudança, Mudou no período, Veio da sala, Data da baixa, Observação e Conferido por.
+- **Conferido por** vem em branco, para a equipe preencher na conferência, como a coluna Nome da planilha atual.
+- Os bens que mudaram no período ficam com fundo amarelo.
+- O número de patrimônio sai como texto, sem virar `8.5015792E7`. Bem sem plaqueta aparece como `sem patrimônio`, com o código interno ao lado. As datas saem como data do Excel, então dá para ordenar e filtrar por elas.
+- Todo texto é gravado como texto. Um valor que começa com `=` não roda como fórmula.
+- O front recebe o arquivo pela API com o token, como as outras chamadas. O nome do arquivo vem no cabeçalho `Content-Disposition`, que o CORS libera para leitura.
+- Gerada com a biblioteca OpenSpout (licença MIT), que precisa da extensão `zip` do PHP.
+- A exportação em PDF no modelo da Unimontes é a tarefa 3.4.

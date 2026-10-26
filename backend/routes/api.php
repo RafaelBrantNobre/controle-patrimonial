@@ -1,6 +1,12 @@
 <?php
 
+use App\Http\Controllers\AndarController;
 use App\Http\Controllers\AutenticacaoController;
+use App\Http\Controllers\BemController;
+use App\Http\Controllers\MudancaDeBemController;
+use App\Http\Controllers\RelatorioController;
+use App\Http\Controllers\SalaController;
+use App\Http\Controllers\TipoPatrimonioController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -58,15 +64,36 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
     Route::get('/usuario', [AutenticacaoController::class, 'usuario']);
     Route::post('/logout', [AutenticacaoController::class, 'logout']); // RF02
 
-    // Consultas de locais, tipos e bens (2.5 e 2.6) e relatório (2.10) entram aqui.
-    // Exemplo: Route::get('/bens', [BemController::class, 'index']);
+    // Locais e tipos (2.5): listar e ver um.
+    Route::apiResource('andares', AndarController::class)->only(['index', 'show'])->parameters(['andares' => 'andar']);
+    Route::apiResource('salas', SalaController::class)->only(['index', 'show'])->parameters(['salas' => 'sala']);
+    Route::apiResource('tipos-patrimonio', TipoPatrimonioController::class)->only(['index', 'show'])->parameters(['tipos-patrimonio' => 'tipo']);
+
+    // Bens (2.6): consultar, filtrar, ver a ficha e listar os bens de uma sala.
+    Route::apiResource('bens', BemController::class)->only(['index', 'show'])->parameters(['bens' => 'bem']);
+    Route::get('/salas/{sala}/bens', [BemController::class, 'daSala']);
+
+    // Relatório do levantamento (2.10): na tela e em planilha.
+    Route::get('/relatorio', [RelatorioController::class, 'index']);
+    Route::get('/relatorio/planilha', [RelatorioController::class, 'planilha']);
 
     // 3. Alteração: só administrador -----------------------------------------
     Route::middleware('perfil:administrador')->group(function () {
 
-        // Cadastros e edições (2.5 e 2.6), mudança de sala, status e baixa (2.8)
-        // e importação da planilha (2.12) entram aqui.
-        // Exemplo: Route::post('/bens', [BemController::class, 'store']);
+        // Locais e tipos (2.5): cadastrar, editar, inativar e excluir.
+        // Inativar e reativar é um PATCH com {"ativo": false} ou {"ativo": true}.
+        Route::apiResource('andares', AndarController::class)->except(['index', 'show'])->parameters(['andares' => 'andar']);
+        Route::apiResource('salas', SalaController::class)->except(['index', 'show'])->parameters(['salas' => 'sala']);
+        Route::apiResource('tipos-patrimonio', TipoPatrimonioController::class)->except(['index', 'show'])->parameters(['tipos-patrimonio' => 'tipo']);
+
+        // Bens (2.6): cadastrar e editar. Não há exclusão: a saída é a baixa (RN07).
+        Route::apiResource('bens', BemController::class)->only(['store', 'update'])->parameters(['bens' => 'bem']);
+
+        // Mudança de sala e de status, incluindo a baixa (2.8).
+        Route::patch('/bens/{bem}/sala', [MudancaDeBemController::class, 'mudarSala']);
+        Route::patch('/bens/{bem}/status', [MudancaDeBemController::class, 'alterarStatus']);
+
+        // Importação da planilha (2.12) entra aqui.
 
     });
 });

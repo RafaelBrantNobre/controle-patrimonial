@@ -17,7 +17,8 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    // Deixa o front ler o nome do arquivo da planilha do relatório (tarefa 2.10).
+    'exposed_headers' => ['Content-Disposition'],
 
     'max_age' => 0,
 
