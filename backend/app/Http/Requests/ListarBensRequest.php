@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\EstadoConservacao;
 use App\Enums\StatusBem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -10,12 +11,13 @@ use Illuminate\Validation\Rule;
 | Valida os filtros da consulta de bens (tarefa 2.6, RF12 e RF13).
 | Todos são opcionais e podem ser combinados.
 |
-| status aceita um valor ou vários separados por vírgula: ?status=sem_uso,avariado
+| status e estado_conservacao aceitam um valor ou vários separados por
+| vírgula: ?status=em_uso,sem_uso&estado_conservacao=pessimo,sucata
 */
 class ListarBensRequest extends FormRequest
 {
     /** Ordenações aceitas em ?ordenar=. "local" é a ordem do levantamento. */
-    public const ORDENACOES = ['local', 'numero', 'codigo', 'tipo', 'status', 'cadastro'];
+    public const ORDENACOES = ['local', 'numero', 'codigo', 'tipo', 'status', 'conservacao', 'cadastro'];
 
     public function authorize(): bool
     {
@@ -24,10 +26,12 @@ class ListarBensRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if (is_string($this->query('status'))) {
-            $this->merge([
-                'status' => array_values(array_filter(array_map('trim', explode(',', $this->query('status'))))),
-            ]);
+        foreach (['status', 'estado_conservacao'] as $campo) {
+            if (is_string($this->query($campo))) {
+                $this->merge([
+                    $campo => array_values(array_filter(array_map('trim', explode(',', $this->query($campo))))),
+                ]);
+            }
         }
     }
 
@@ -44,6 +48,8 @@ class ListarBensRequest extends FormRequest
             'tipo_patrimonio_id' => ['sometimes', 'nullable', 'integer'],
             'status' => ['sometimes', 'array'],
             'status.*' => [Rule::enum(StatusBem::class)],
+            'estado_conservacao' => ['sometimes', 'array'],
+            'estado_conservacao.*' => [Rule::enum(EstadoConservacao::class)],
             'ordenar' => ['sometimes', 'nullable', Rule::in(self::ORDENACOES)],
             'direcao' => ['sometimes', 'nullable', Rule::in(['asc', 'desc'])],
         ];
@@ -61,7 +67,9 @@ class ListarBensRequest extends FormRequest
             'sala_id.integer' => 'A sala do filtro não é válida.',
             'tipo_patrimonio_id.integer' => 'O tipo do filtro não é válido.',
             'status.array' => 'A situação do filtro não é válida.',
-            'status.*.enum' => 'A situação do filtro deve ser em_uso, sem_uso, avariado ou baixado.',
+            'status.*.enum' => 'A situação de uso do filtro deve ser em_uso, sem_uso ou baixado.',
+            'estado_conservacao.array' => 'O estado de conservação do filtro não é válido.',
+            'estado_conservacao.*.enum' => 'O estado de conservação do filtro deve ser novo, bom, regular, pessimo, sucata ou indeterminado.',
             'ordenar.in' => 'A ordenação deve ser uma destas: '.implode(', ', self::ORDENACOES).'.',
             'direcao.in' => 'A direção da ordenação deve ser asc ou desc.',
         ];

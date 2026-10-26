@@ -17,10 +17,13 @@ class AndarFactory extends Factory
      */
     public function definition(): array
     {
-        $ordem = fake()->unique()->numberBetween(0, 50);
+        // Do 10º andar em diante, para nunca repetir os nomes que os testes
+        // usam de propósito, como "Térreo", "1º andar" e "2º andar". O nome
+        // do andar é único, e a repetição fazia testes falharem ao acaso.
+        $ordem = fake()->unique()->numberBetween(10, 99);
 
         return [
-            'nome' => $ordem === 0 ? 'Térreo' : "{$ordem}º andar",
+            'nome' => "{$ordem}º andar",
             'ordem' => $ordem,
             'ativo' => true,
         ];

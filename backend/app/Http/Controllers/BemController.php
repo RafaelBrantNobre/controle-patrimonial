@@ -29,6 +29,7 @@ class BemController extends Controller
         'codigo' => ['bem.codigo_interno'],
         'tipo' => ['tipo_patrimonio.nome', 'bem.numero_patrimonio'],
         'status' => ['bem.status', 'andar.ordem', 'sala.nome'],
+        'conservacao' => ['bem.estado_conservacao', 'andar.ordem', 'sala.nome'],
         'cadastro' => ['bem.created_at'],
     ];
 
@@ -38,7 +39,8 @@ class BemController extends Controller
      *   ?numero=      número de patrimônio ou código interno exato (RF12)
      *   ?busca=       parte do número, do código, da descrição ou da marca
      *   ?andar_id=, ?sala_id=, ?tipo_patrimonio_id=, ?status= (RF13)
-     *   ?ordenar=     local (padrão), numero, codigo, tipo, status, cadastro
+     *   ?estado_conservacao=  um ou mais estados, separados por vírgula
+     *   ?ordenar=     local (padrão), numero, codigo, tipo, status, conservacao, cadastro
      *   ?direcao=     asc (padrão) ou desc
      * Bens baixados aparecem, sinalizados em "baixado" (RN05).
      */
@@ -70,6 +72,7 @@ class BemController extends Controller
             ->when($filtros['sala_id'] ?? null, fn ($query, int $salaId) => $query->where('bem.sala_id', $salaId))
             ->when($filtros['tipo_patrimonio_id'] ?? null, fn ($query, int $tipoId) => $query->where('bem.tipo_patrimonio_id', $tipoId))
             ->when($filtros['status'] ?? null, fn ($query, array $status) => $query->whereIn('bem.status', $status))
+            ->when($filtros['estado_conservacao'] ?? null, fn ($query, array $estados) => $query->whereIn('bem.estado_conservacao', $estados))
             ->tap(function ($query) use ($filtros, $direcao) {
                 foreach (self::ORDENACOES[$filtros['ordenar'] ?? 'local'] as $coluna) {
                     $query->orderBy($coluna, $direcao);

@@ -4,6 +4,7 @@ use App\Http\Controllers\AndarController;
 use App\Http\Controllers\AutenticacaoController;
 use App\Http\Controllers\BemController;
 use App\Http\Controllers\MudancaDeBemController;
+use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\SalaController;
 use App\Http\Controllers\TipoPatrimonioController;
 use Illuminate\Support\Facades\DB;
@@ -72,7 +73,9 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
     Route::apiResource('bens', BemController::class)->only(['index', 'show'])->parameters(['bens' => 'bem']);
     Route::get('/salas/{sala}/bens', [BemController::class, 'daSala']);
 
-    // Relatório (2.10) entra aqui.
+    // Relatório do levantamento (2.10): na tela e em planilha.
+    Route::get('/relatorio', [RelatorioController::class, 'index']);
+    Route::get('/relatorio/planilha', [RelatorioController::class, 'planilha']);
 
     // 3. Alteração: só administrador -----------------------------------------
     Route::middleware('perfil:administrador')->group(function () {

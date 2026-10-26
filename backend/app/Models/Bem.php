@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EstadoConservacao;
 use App\Enums\StatusBem;
 use Database\Factories\BemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -18,6 +19,8 @@ use Illuminate\Support\Str;
 | Bem nunca é apagado: a saída do patrimônio ativo é a baixa (RN07).
 | Todo bem recebe um codigo_interno gerado pelo sistema (PD07), como
 | CP-000123, tenha ou não número de patrimônio.
+| status é a situação de uso (em uso, sem uso, baixado) e estado_conservacao
+| é a condição física (novo a sucata). Uma não depende da outra.
 | Mudar de sala e de status passa por mudarDeSala() e alterarStatus()
 | (tarefa 2.8), que gravam quem fez e quando (RN09).
 */
@@ -32,6 +35,7 @@ use Illuminate\Support\Str;
     'origem',
     'quantidade',
     'status',
+    'estado_conservacao',
     'observacao',
     'data_ultima_mudanca',
     'usuario_ultima_mudanca_id',
@@ -44,9 +48,11 @@ class Bem extends Model
     use HasFactory;
 
     // O Laravel lê o padrão do banco só depois de salvar. Repetir aqui faz um
-    // bem novo, ainda não salvo, já nascer em uso e com quantidade 1.
+    // bem novo, ainda não salvo, já nascer em uso, com conservação
+    // indeterminada e quantidade 1.
     protected $attributes = [
         'status' => 'em_uso',
+        'estado_conservacao' => 'indeterminado',
         'quantidade' => 1,
     ];
 
@@ -191,6 +197,7 @@ class Bem extends Model
     {
         return [
             'status' => StatusBem::class,
+            'estado_conservacao' => EstadoConservacao::class,
             'quantidade' => 'integer',
             'data_ultima_mudanca' => 'date',
             'baixa_data' => 'date',

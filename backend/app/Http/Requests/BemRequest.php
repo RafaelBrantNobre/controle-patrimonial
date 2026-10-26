@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\EstadoConservacao;
 use App\Enums\StatusBem;
 use App\Models\Bem;
 use App\Models\Sala;
@@ -14,7 +15,8 @@ use Illuminate\Validation\Validator;
 | Valida o cadastro (RF10) e a edição (RF11) de bem (tarefa 2.6).
 |
 | Obrigatórios no cadastro: tipo e sala. O resto é opcional, porque nem todo
-| bem tem plaqueta (PD07), descrição, marca ou origem.
+| bem tem plaqueta (PD07), descrição, marca ou origem. O estado de
+| conservação começa indeterminado e muda pela edição, sem as regras da 2.8.
 |
 | Sala e status ficam fora da edição: mudar de sala, mudar de status e dar
 | baixa têm regras próprias (RN04, RN09) e são a tarefa 2.8. A edição aceita
@@ -45,6 +47,8 @@ class BemRequest extends FormRequest
             'status' => $cadastro
                 ? ['sometimes', Rule::enum(StatusBem::class)->except(StatusBem::Baixado)]
                 : ['sometimes', Rule::enum(StatusBem::class)],
+            // Condição física. Opcional: sem ela, o bem fica indeterminado até a conferência.
+            'estado_conservacao' => ['sometimes', Rule::enum(EstadoConservacao::class)],
             'descricao' => ['sometimes', 'nullable', 'string', 'max:120'],
             'marca' => ['sometimes', 'nullable', 'string', 'max:80'],
             'origem' => ['sometimes', 'nullable', 'string', 'max:120'],
@@ -124,7 +128,8 @@ class BemRequest extends FormRequest
             'sala_id.required' => 'Escolha a sala onde o bem está.',
             'sala_id.integer' => 'Escolha a sala onde o bem está.',
             'sala_id.exists' => 'A sala escolhida não existe. Atualize a página e escolha de novo.',
-            'status.enum' => 'Escolha a situação do bem: em uso, sem uso ou avariado. A baixa é registrada depois do cadastro.',
+            'status.enum' => 'Escolha a situação de uso do bem: em uso ou sem uso. A baixa é registrada depois do cadastro.',
+            'estado_conservacao.enum' => 'Escolha o estado de conservação: novo, bom, regular, péssimo, sucata ou indeterminado.',
             'descricao.string' => 'A descrição deve ser um texto.',
             'descricao.max' => 'A descrição pode ter no máximo 120 caracteres.',
             'marca.string' => 'A marca deve ser um texto.',

@@ -30,7 +30,7 @@ class MudancaDeBemController extends Controller
 
     /**
      * PATCH /api/bens/{bem}/status
-     * Corpo: {"status": "avariado"}
+     * Corpo: {"status": "sem_uso"}
      * Baixa: {"status": "baixado", "baixa_data": "2026-10-23", "baixa_observacao": "Processo 123"}
      */
     public function alterarStatus(AlterarStatusRequest $request, Bem $bem): BemResource

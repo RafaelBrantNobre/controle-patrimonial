@@ -139,7 +139,7 @@ test('o bem não nasce baixado: a baixa é registrada depois', function () {
         'status' => 'baixado',
     ])
         ->assertUnprocessable()
-        ->assertJsonPath('errors.status.0', 'Escolha a situação do bem: em uso, sem uso ou avariado. A baixa é registrada depois do cadastro.');
+        ->assertJsonPath('errors.status.0', 'Escolha a situação de uso do bem: em uso ou sem uso. A baixa é registrada depois do cadastro.');
 });
 
 // --- Edição (RF11) ----------------------------------------------------------
@@ -173,7 +173,7 @@ test('a edição não muda sala nem status, que são da tarefa 2.8', function ()
     $bem = Bem::factory()->create();
     $outraSala = Sala::factory()->create();
 
-    $this->patchJson("/api/bens/{$bem->id}", ['sala_id' => $outraSala->id, 'status' => 'avariado'])
+    $this->patchJson("/api/bens/{$bem->id}", ['sala_id' => $outraSala->id, 'status' => 'sem_uso'])
         ->assertUnprocessable()
         ->assertJsonPath('errors.sala_id.0', 'A sala não muda na edição do bem. Use a opção de mudar o bem de sala.')
         ->assertJsonPath('errors.status.0', 'A situação não muda na edição do bem. Use a opção de alterar a situação.');
@@ -258,14 +258,14 @@ test('os filtros de andar, sala, tipo e situação se combinam (RF13)', function
 
     Bem::factory()->for($recepcao)->for($computador, 'tipoPatrimonio')->create();
     Bem::factory()->for($suporte)->for($computador, 'tipoPatrimonio')->create();
-    Bem::factory()->for($suporte)->for($computador, 'tipoPatrimonio')->avariado()->create();
+    Bem::factory()->for($suporte)->for($computador, 'tipoPatrimonio')->semUso()->create();
     Bem::factory()->for($laboratorio)->for($cadeira, 'tipoPatrimonio')->baixado()->create();
 
     expect($this->getJson("/api/bens?andar_id={$primeiro->id}")->json('meta.total'))->toBe(3)
         ->and($this->getJson("/api/bens?sala_id={$suporte->id}")->json('meta.total'))->toBe(2)
         ->and($this->getJson("/api/bens?tipo_patrimonio_id={$computador->id}")->json('meta.total'))->toBe(3)
         ->and($this->getJson("/api/bens?andar_id={$primeiro->id}&tipo_patrimonio_id={$computador->id}&status=em_uso")->json('meta.total'))->toBe(1)
-        ->and($this->getJson('/api/bens?status=avariado,baixado')->json('meta.total'))->toBe(2);
+        ->and($this->getJson('/api/bens?status=sem_uso,baixado')->json('meta.total'))->toBe(2);
 });
 
 test('bem baixado continua na lista, sinalizado (RN05)', function () {
@@ -283,7 +283,7 @@ test('filtro de situação ou ordenação inválidos respondem com mensagem clar
 
     $this->getJson('/api/bens?status=perdido')
         ->assertUnprocessable()
-        ->assertJsonPath('errors', fn (array $erros) => collect($erros)->flatten()->contains('A situação do filtro deve ser em_uso, sem_uso, avariado ou baixado.'));
+        ->assertJsonPath('errors', fn (array $erros) => collect($erros)->flatten()->contains('A situação de uso do filtro deve ser em_uso, sem_uso ou baixado.'));
 
     $this->getJson('/api/bens?ordenar=preco')->assertUnprocessable();
 });
