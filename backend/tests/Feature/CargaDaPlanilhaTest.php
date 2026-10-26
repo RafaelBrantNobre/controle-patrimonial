@@ -20,12 +20,15 @@ use OpenSpout\Writer\XLSX\Writer;
 
 uses(RefreshDatabase::class);
 
+// Cada teste grava os relatórios numa pasta temporária própria, e não em
+// storage/app/carga, para nunca apagar o relatório de uma carga de verdade.
 beforeEach(function () {
-    File::deleteDirectory(storage_path('app/carga'));
+    $this->pastaDeTeste = sys_get_temp_dir().DIRECTORY_SEPARATOR.'carga-teste-'.uniqid();
+    $this->app->useStoragePath($this->pastaDeTeste);
 });
 
 afterEach(function () {
-    File::deleteDirectory(storage_path('app/carga'));
+    File::deleteDirectory($this->pastaDeTeste);
 });
 
 /**
