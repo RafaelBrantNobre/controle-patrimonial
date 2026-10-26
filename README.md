@@ -39,7 +39,7 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 
 Observações:
 
-- O PHP precisa da extensão `pdo_mysql` ligada. Para conferir, rode `php -m` e procure `pdo_mysql` na lista.
+- O PHP precisa das extensões `pdo_mysql` e `zip` ligadas. Para conferir, rode `php -m` e procure as duas na lista. A `zip` é usada para gerar a planilha do relatório (seção 13).
 - O Docker Desktop precisa estar aberto antes de subir o banco.
 - Os comandos deste README funcionam no PowerShell do Windows.
 
@@ -242,6 +242,7 @@ Regras:
 | `php artisan migrate` dá `Access denied` e `docker compose ps` mostra a lista vazia | o banco do Docker está desligado e quem respondeu foi outro MySQL instalado na máquina. Troque `DB_PORT` para `3307` em `backend/.env`, rode `docker compose up -d`, espere o `healthy` no `docker compose ps` e rode `php artisan config:clear` antes do `migrate` |
 | `php artisan migrate` dá `Access denied` e `docker compose ps` mostra o banco `healthy` | a senha do `.env` foi trocada depois de o banco ter sido criado, e o MySQL guarda a senha da primeira vez. Rode `docker compose down -v` e depois `docker compose up -d`. Isso apaga os dados do banco local |
 | `php artisan migrate` dá `could not find driver` | falta ligar a extensão `pdo_mysql` no `php.ini` |
+| `composer install` reclama de `ext-zip`, ou a planilha do relatório dá erro 500 | falta ligar a extensão `zip` no `php.ini`: tire o `;` da linha `;extension=zip` e abra o terminal de novo |
 | a página do front-end mostra o back-end sem resposta | confira se `php artisan serve` está rodando e se `VITE_API_URL` em `frontend/.env` está certo. Depois de mudar o `.env`, pare e rode `npm run dev` de novo |
 | `npm run dev` diz que a porta 5173 está em uso | feche o outro terminal que já está rodando o front-end |
 
@@ -435,7 +436,7 @@ O relatório da conferência patrimonial do semestre (tarefa 2.10). Administrado
 | Método e rota | O que devolve |
 | --- | --- |
 | `GET /api/relatorio?inicio=2026-07-01&fim=2026-12-31` | os bens agrupados por andar e sala, com totais |
-| `GET /api/relatorio/planilha?inicio=2026-07-01&fim=2026-12-31` | o mesmo conteúdo em planilha (arquivo `.csv`) |
+| `GET /api/relatorio/planilha?inicio=2026-07-01&fim=2026-12-31` | o mesmo conteúdo em planilha do Excel (arquivo `.xlsx`) |
 
 `inicio` e `fim` são obrigatórios, no formato `ano-mês-dia`. As duas rotas aceitam os mesmos filtros opcionais, que podem ser combinados:
 
@@ -465,8 +466,15 @@ Limite conhecido: a mudança de sala sempre aparece, porque cada uma fica gravad
 
 ### 13.3 Planilha
 
-- Arquivo `levantamento_<inicio>_a_<fim>.csv`, em UTF-8 com BOM e separado por ponto e vírgula. O Excel em português abre direto, com acentos e colunas certos.
-- Uma linha por bem, com as colunas: Andar, Sala, Nº de patrimônio, Código interno, Tipo, Descrição, Marca, Quantidade, Situação, Última mudança, Mudou no período (Sim ou Não), Veio da sala, Data da baixa e Observação. Datas no formato `dd/mm/aaaa`.
-- Texto que começa com `=`, `+`, `-` ou `@` sai com um apóstrofo na frente, para o Excel não executá-lo como fórmula.
+A planilha segue a que o setor já usa (`Patrimônios CEAD`, novembro de 2024):
+
+- Arquivo `levantamento_<inicio>_a_<fim>.xlsx`.
+- Aba **Principal** com todos os bens e filtro nas colunas, e **uma aba por sala**, para a conferência sala a sala. Todas as abas têm o cabeçalho congelado. Se duas salas tiverem o mesmo nome em andares diferentes, a segunda aba leva o andar no nome.
+- Colunas: Patrimônio, Código interno, Tipo, Descrição, Marca, Local do patrimônio, Andar, Estado do patrimônio, Quantidade, Última mudança, Mudou no período, Veio da sala, Data da baixa, Observação e Conferido por.
+- **Conferido por** vem em branco, para a equipe preencher na conferência, como a coluna Nome da planilha atual.
+- Os bens que mudaram no período ficam com fundo amarelo.
+- O número de patrimônio sai como texto, sem virar `8.5015792E7`. Bem sem plaqueta aparece como `sem patrimônio`, com o código interno ao lado. As datas saem como data do Excel, então dá para ordenar e filtrar por elas.
+- Todo texto é gravado como texto. Um valor que começa com `=` não roda como fórmula.
 - O front recebe o arquivo pela API com o token, como as outras chamadas. O nome do arquivo vem no cabeçalho `Content-Disposition`, que o CORS libera para leitura.
+- Gerada com a biblioteca OpenSpout (licença MIT), que precisa da extensão `zip` do PHP.
 - A exportação em PDF no modelo da Unimontes é a tarefa 3.4.
