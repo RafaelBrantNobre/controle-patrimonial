@@ -376,10 +376,13 @@ Não há rota para excluir bem. A saída do patrimônio é a baixa (RN07).
 | `numero_patrimonio` | opcional | pode mudar | número da plaqueta, até 20 caracteres. Não se repete (RN01) |
 | `descricao`, `marca`, `origem` | opcionais | podem mudar | em branco quando o bem não tem |
 | `quantidade` | opcional, padrão 1 | pode mudar | de 1 a 9999 (PD08) |
-| `status` | opcional, padrão `em_uso` | não muda | no cadastro: `em_uso`, `sem_uso` ou `avariado`. A baixa é registrada depois |
+| `status` | opcional, padrão `em_uso` | não muda | situação de uso. No cadastro: `em_uso` ou `sem_uso`. A baixa é registrada depois |
+| `estado_conservacao` | opcional, padrão `indeterminado` | pode mudar | condição física: `novo`, `bom`, `regular`, `pessimo`, `sucata` ou `indeterminado` |
 | `observacao` | opcional | pode mudar | texto livre |
 
 O `codigo_interno` é gerado pelo sistema no formato `CP-000123` e não pode ser informado nem editado. Ele existe para todo bem, tenha ou não plaqueta (PD07).
+
+**Situação de uso e estado de conservação são independentes.** A situação diz se o bem está sendo usado (em uso, sem uso ou baixado). A conservação diz em que condição física ele está, na mesma escala da planilha de conferência. Um bem pode estar em uso e péssimo, ou sem uso e novo. Um bem quebrado fica `sem_uso` com conservação `pessimo` ou `sucata`. A conservação muda pela edição normal do bem e não conta como mudança de situação.
 
 Na edição, `sala_id` e `status` podem vir no formulário desde que iguais aos atuais. Se forem diferentes, a resposta é 422, indicando a opção de mudar de sala ou de situação.
 
@@ -394,12 +397,13 @@ Filtros de `GET /api/bens`, todos opcionais e combináveis:
 | `numero` | `?numero=1634456-1` | número de patrimônio ou código interno exato (RF12) |
 | `busca` | `?busca=lenovo` | parte do número, do código, da descrição ou da marca |
 | `andar_id`, `sala_id`, `tipo_patrimonio_id` | `?andar_id=2&tipo_patrimonio_id=5` | só os bens daquele andar, sala ou tipo (RF13) |
-| `status` | `?status=sem_uso,avariado` | uma ou mais situações, separadas por vírgula |
-| `ordenar` | `?ordenar=numero` | `local` (padrão: andar, sala e tipo, a ordem do levantamento), `numero`, `codigo`, `tipo`, `status` ou `cadastro` |
+| `status` | `?status=em_uso,sem_uso` | uma ou mais situações de uso, separadas por vírgula |
+| `estado_conservacao` | `?estado_conservacao=pessimo,sucata` | um ou mais estados de conservação, separados por vírgula |
+| `ordenar` | `?ordenar=numero` | `local` (padrão: andar, sala e tipo, a ordem do levantamento), `numero`, `codigo`, `tipo`, `status`, `conservacao` ou `cadastro` |
 | `direcao` | `?direcao=desc` | `asc` (padrão) ou `desc` |
 | `pagina`, `por_pagina` | `?pagina=2&por_pagina=50` | como nas listagens da seção 10 |
 
-Bens baixados aparecem na lista, com `baixado: true`. Para escondê-los, filtre pelas outras situações: `?status=em_uso,sem_uso,avariado`.
+Bens baixados aparecem na lista, com `baixado: true`. Para escondê-los, filtre pelas outras situações: `?status=em_uso,sem_uso`.
 
 ## 12. Mudança de sala, situação e baixa
 
@@ -410,7 +414,7 @@ Operações que mudam onde o bem está ou em que situação ele se encontra (tar
 | Método e rota | Corpo | O que faz |
 | --- | --- | --- |
 | `PATCH /api/bens/{id}/sala` | `{"sala_id": 5}` | muda o bem de sala e grava a mudança no histórico (tabela `movimentacao`) |
-| `PATCH /api/bens/{id}/status` | `{"status": "avariado"}` | muda a situação para `em_uso`, `sem_uso` ou `avariado` |
+| `PATCH /api/bens/{id}/status` | `{"status": "sem_uso"}` | muda a situação de uso para `em_uso` ou `sem_uso` |
 | `PATCH /api/bens/{id}/status` | `{"status": "baixado", "baixa_data": "2026-10-23", "baixa_observacao": "Processo 123"}` | registra a baixa |
 
 As duas rotas devolvem o bem atualizado, no mesmo formato da ficha (seção 11).
@@ -443,22 +447,23 @@ O relatório da conferência patrimonial do semestre (tarefa 2.10). Administrado
 | Filtro | Exemplo | O que faz |
 | --- | --- | --- |
 | `andar_id`, `sala_id`, `tipo_patrimonio_id` | `&andar_id=2` | só os bens daquele andar, sala ou tipo |
-| `status` | `&status=sem_uso,avariado` | uma ou mais situações, separadas por vírgula |
+| `status` | `&status=em_uso,sem_uso` | uma ou mais situações de uso, separadas por vírgula |
+| `estado_conservacao` | `&estado_conservacao=pessimo,sucata` | um ou mais estados de conservação, separados por vírgula |
 | `apenas_mudancas` | `&apenas_mudancas=1` | só os bens que mudaram no período |
 
 ### 13.2 O que o relatório mostra
 
 - Todos os bens que passam nos filtros, inclusive os baixados (RN05). O período **não** corta a lista: ele define o que aparece em destaque.
 - A ordem é a da conferência física: andar (campo `ordem`), sala, tipo e número de patrimônio.
-- Cada bem traz número de patrimônio, código interno, tipo, descrição, marca, quantidade, situação, data da última mudança, data da baixa e observação.
+- Cada bem traz número de patrimônio, código interno, tipo, descrição, marca, quantidade, situação de uso, estado de conservação, data da última mudança, data da baixa e observação.
 - `mudou_no_periodo` é `true` quando o bem mudou de sala ou de situação dentro do período. `mudou_de_sala_no_periodo` diz se foi de sala, e `veio_da_sala` traz a sala de onde ele saiu na primeira mudança do período.
-- `totais` traz o total de bens, quantos mudaram, quantos mudaram de sala e quantos há em cada situação.
+- `totais` traz o total de bens, quantos mudaram, quantos mudaram de sala e quantos há em cada situação de uso e em cada estado de conservação.
 
 Formato da resposta em JSON:
 
 ```
 periodo: { inicio, fim }
-totais: { bens, mudaram_no_periodo, mudaram_de_sala_no_periodo, por_status: { em_uso, sem_uso, avariado, baixado } }
+totais: { bens, mudaram_no_periodo, mudaram_de_sala_no_periodo, por_status: { em_uso, sem_uso, baixado }, por_estado_conservacao: { novo, bom, regular, pessimo, sucata, indeterminado } }
 andares: [ { id, nome, total, salas: [ { id, nome, total, bens: [ ... ] } ] } ]
 ```
 
@@ -470,7 +475,7 @@ A planilha segue a que o setor já usa (`Patrimônios CEAD`, novembro de 2024):
 
 - Arquivo `levantamento_<inicio>_a_<fim>.xlsx`.
 - Aba **Principal** com todos os bens e filtro nas colunas, e **uma aba por sala**, para a conferência sala a sala. Todas as abas têm o cabeçalho congelado. Se duas salas tiverem o mesmo nome em andares diferentes, a segunda aba leva o andar no nome.
-- Colunas: Patrimônio, Código interno, Tipo, Descrição, Marca, Local do patrimônio, Andar, Situação de uso, Quantidade, Última mudança, Mudou no período, Veio da sala, Data da baixa, Observação e Conferido por.
+- Colunas: Patrimônio, Código interno, Tipo, Descrição, Marca, Local do patrimônio, Andar, Situação de uso, Estado de conservação, Quantidade, Última mudança, Mudou no período, Veio da sala, Data da baixa, Observação e Conferido por.
 - **Conferido por** vem em branco, para a equipe preencher na conferência, como a coluna Nome da planilha atual.
 - Os bens que mudaram no período ficam com fundo amarelo.
 - O número de patrimônio sai como texto, sem virar `8.5015792E7`. Bem sem plaqueta aparece como `sem patrimônio`, com o código interno ao lado. As datas saem como data do Excel, então dá para ordenar e filtrar por elas.
