@@ -250,12 +250,33 @@ O login é feito por token. A API devolve um token quando o e-mail e a senha est
 
 ### 9.1 Usuários de teste
 
-Criados por `php artisan migrate:fresh --seed`, só no ambiente local. A senha dos dois é `password`.
+Criados por `php artisan migrate:fresh --seed`. A senha dos dois é `password`.
 
 | E-mail | Perfil | O que pode |
 | --- | --- | --- |
 | `admin@example.com` | administrador | tudo: consultar, cadastrar, editar, mover, mudar status, dar baixa, importar |
 | `consulta@example.com` | consulta | só consultar e gerar relatório |
+
+O seeder só cria esses usuários quando `APP_ENV` no `.env` é `local` ou `testing`. Em qualquer outro ambiente, como `production`, ele não cria ninguém e avisa no terminal. Assim, a senha conhecida nunca chega ao servidor.
+
+### 9.1.1 Primeiro administrador em produção
+
+No servidor, o primeiro administrador é criado com um comando, que pede o nome, o e-mail e a senha na hora:
+
+```
+php artisan usuario:criar-admin
+```
+
+Também dá para informar o nome e o e-mail direto, e só a senha é perguntada:
+
+```
+php artisan usuario:criar-admin --nome="Christine" --email=christine@unimontes.br
+```
+
+- A senha é digitada sem aparecer na tela e pedida duas vezes. Ela nunca vai como argumento do comando, que ficaria no histórico do terminal.
+- A senha precisa ter pelo menos 10 caracteres, com letras e números. A regra fica em `AppServiceProvider` (`Password::defaults()`) e vai valer também na gestão de usuários (tarefa 3.3).
+- O comando recusa e-mail repetido ou inválido e senhas diferentes, e não cria nada nesses casos.
+- O comando precisa de um terminal, porque pergunta a senha. Com `--no-interaction`, ele não roda.
 
 ### 9.2 Rotas de acesso
 
