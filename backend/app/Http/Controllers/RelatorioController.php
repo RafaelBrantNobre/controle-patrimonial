@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\RelatorioRequest;
 use App\Models\Bem;
+use App\Relatorios\PlanilhaDoLevantamento;
 use App\Relatorios\RelatorioDoLevantamento;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /*
 | Relatório do levantamento patrimonial (tarefa 2.10, RF22 a RF26).
@@ -14,13 +15,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 */
 class RelatorioController extends Controller
 {
-    /** Colunas da planilha, na ordem em que aparecem. */
-    private const COLUNAS = [
-        'Andar', 'Sala', 'Nº de patrimônio', 'Código interno', 'Tipo', 'Descrição', 'Marca',
-        'Quantidade', 'Situação', 'Última mudança', 'Mudou no período', 'Veio da sala',
-        'Data da baixa', 'Observação',
-    ];
-
     /**
      * GET /api/relatorio?inicio=2026-07-01&fim=2026-12-31
      * Filtros opcionais: andar_id, sala_id, tipo_patrimonio_id, status e
@@ -61,26 +55,20 @@ class RelatorioController extends Controller
 
     /**
      * GET /api/relatorio/planilha?inicio=2026-07-01&fim=2026-12-31
-     * Mesmos filtros do relatório. Devolve um arquivo CSV que o Excel abre
-     * direto: UTF-8 com BOM, para os acentos, e separador ponto e vírgula,
-     * o padrão do Excel em português (RF26).
+     * Mesmos filtros do relatório. Devolve uma planilha Excel (.xlsx) com a
+     * aba Principal e uma aba por sala (RF26). Ver PlanilhaDoLevantamento.
      */
-    public function planilha(RelatorioRequest $request): StreamedResponse
+    public function planilha(RelatorioRequest $request): BinaryFileResponse
     {
         $relatorio = new RelatorioDoLevantamento($request->validated());
-        $arquivo = "levantamento_{$relatorio->inicio->toDateString()}_a_{$relatorio->fim->toDateString()}.csv";
+        $arquivo = "levantamento_{$relatorio->inicio->toDateString()}_a_{$relatorio->fim->toDateString()}.xlsx";
 
-        return response()->streamDownload(function () use ($relatorio) {
-            $saida = fopen('php://output', 'w');
-            fwrite($saida, "\xEF\xBB\xBF");
-            fputcsv($saida, self::COLUNAS, ';', '"', '');
+        $caminho = tempnam(sys_get_temp_dir(), 'levantamento_');
+        (new PlanilhaDoLevantamento($relatorio))->salvarEm($caminho);
 
-            foreach ($relatorio->bens() as $bem) {
-                fputcsv($saida, array_map($this->celulaSegura(...), $this->bemNaPlanilha($bem)), ';', '"', '');
-            }
-
-            fclose($saida);
-        }, $arquivo, ['Content-Type' => 'text/csv; charset=UTF-8']);
+        return response()->download($caminho, $arquivo, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend();
     }
 
     /**
@@ -110,44 +98,5 @@ class RelatorioController extends Controller
             ] : null,
             'observacao' => $bem->observacao,
         ];
-    }
-
-    /**
-     * Uma linha da planilha, na ordem de COLUNAS.
-     *
-     * @return array<int, string|int|null>
-     */
-    private function bemNaPlanilha(Bem $bem): array
-    {
-        return [
-            $bem->sala->andar->nome,
-            $bem->sala->nome,
-            $bem->numero_patrimonio,
-            $bem->codigo_interno,
-            $bem->tipoPatrimonio->nome,
-            $bem->descricao,
-            $bem->marca,
-            $bem->quantidade,
-            $bem->status->rotulo(),
-            $bem->data_ultima_mudanca?->format('d/m/Y'),
-            $bem->mudou_no_periodo ? 'Sim' : 'Não',
-            $bem->veioDaSala ? "{$bem->veioDaSala->nome} ({$bem->veioDaSala->andar->nome})" : null,
-            $bem->baixa_data?->format('d/m/Y'),
-            $bem->observacao,
-        ];
-    }
-
-    /**
-     * Texto que começa com =, +, -, @ ou tabulação vira fórmula no Excel.
-     * Um apóstrofo na frente faz o Excel mostrar o texto como está, e
-     * impede que um dado digitado no sistema rode como fórmula na planilha.
-     */
-    private function celulaSegura(string|int|null $valor): string|int|null
-    {
-        if (is_string($valor) && $valor !== '' && in_array($valor[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
-            return "'".$valor;
-        }
-
-        return $valor;
     }
 }
