@@ -470,7 +470,7 @@ A planilha segue a que o setor já usa (`Patrimônios CEAD`, novembro de 2024):
 
 - Arquivo `levantamento_<inicio>_a_<fim>.xlsx`.
 - Aba **Principal** com todos os bens e filtro nas colunas, e **uma aba por sala**, para a conferência sala a sala. Todas as abas têm o cabeçalho congelado. Se duas salas tiverem o mesmo nome em andares diferentes, a segunda aba leva o andar no nome.
-- Colunas: Patrimônio, Código interno, Tipo, Descrição, Marca, Local do patrimônio, Andar, Estado do patrimônio, Quantidade, Última mudança, Mudou no período, Veio da sala, Data da baixa, Observação e Conferido por.
+- Colunas: Patrimônio, Código interno, Tipo, Descrição, Marca, Local do patrimônio, Andar, Situação de uso, Quantidade, Última mudança, Mudou no período, Veio da sala, Data da baixa, Observação e Conferido por.
 - **Conferido por** vem em branco, para a equipe preencher na conferência, como a coluna Nome da planilha atual.
 - Os bens que mudaram no período ficam com fundo amarelo.
 - O número de patrimônio sai como texto, sem virar `8.5015792E7`. Bem sem plaqueta aparece como `sem patrimônio`, com o código interno ao lado. As datas saem como data do Excel, então dá para ordenar e filtrar por elas.

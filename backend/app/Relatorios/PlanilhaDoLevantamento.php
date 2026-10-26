@@ -43,7 +43,7 @@ class PlanilhaDoLevantamento
         'Marca' => 16,
         'Local do patrimônio' => 28,
         'Andar' => 14,
-        'Estado do patrimônio' => 18,
+        'Situação de uso' => 16,
         'Quantidade' => 11,
         'Última mudança' => 15,
         'Mudou no período' => 16,
