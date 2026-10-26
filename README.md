@@ -26,6 +26,7 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 11. [Bens patrimoniais](#11-bens-patrimoniais)
 12. [Mudança de sala, situação e baixa](#12-mudança-de-sala-situação-e-baixa)
 13. [Relatório do levantamento](#13-relatório-do-levantamento)
+14. [Carga inicial da planilha](#14-carga-inicial-da-planilha)
 
 ## 1. O que instalar antes
 
@@ -504,3 +505,66 @@ A planilha segue a que o setor já usa (`Patrimônios CEAD`, novembro de 2024):
 - O front recebe o arquivo pela API com o token, como as outras chamadas. O nome do arquivo vem no cabeçalho `Content-Disposition`, que o CORS libera para leitura.
 - Gerada com a biblioteca OpenSpout (licença MIT), que precisa da extensão `zip` do PHP.
 - A exportação em PDF no modelo da Unimontes é a tarefa 3.4.
+
+## 14. Carga inicial da planilha
+
+Comando que coloca no sistema os bens da planilha `Patrimônios CEAD NOVEMBRO DE 2024.xlsx` (tarefa 2.12, RF28 e RF29). O objetivo é fidelidade à planilha: corrigir as defasagens dela é o recadastramento físico (tarefa 3.7).
+
+### 14.1 Como rodar
+
+Sempre comece pela simulação. Ela faz tudo e gera o relatório, mas não grava nada:
+
+```
+php artisan patrimonio:carregar-planilha "C:\caminho\Patrimônios CEAD NOVEMBRO DE 2024.xlsx" --fonte=principal --simular
+```
+
+Com o relatório conferido, rode sem `--simular` para gravar.
+
+| Opção | O que faz |
+| --- | --- |
+| `--fonte=principal` | lê só a aba Principal (629 linhas). O estado vira situação de uso e conservação pela tabela de conversão |
+| `--fonte=salas` | lê as abas de sala (828 linhas). O estado é a conservação, e a sala vem do nome da aba |
+| `--situacao-abas=em_uso` | situação de uso dos itens das abas de sala, que a planilha não informa. Padrão `em_uso`. Sucata sempre entra `sem_uso` |
+| `--simular` | gera o relatório sem gravar nada |
+| `--do-zero` | apaga bens, histórico, salas, andares e tipos antes de carregar. Não roda em produção |
+
+A fonte é obrigatória até a Christine dizer qual das duas é a certa.
+
+A carga é para um sistema vazio. Se já houver bens, o comando recusa, a não ser com `--simular` ou `--do-zero`. Rodar por cima duplicaria os bens sem plaqueta, que não têm número para a repetição ser notada.
+
+Tudo é gravado numa transação só: se algo falhar no meio, nada entra.
+
+### 14.2 O que a carga faz com cada linha
+
+- **Sala:** na aba Principal, vem da coluna Local. Nas abas de sala, vem do nome da aba. As salas e os tipos usados são criados automaticamente. Como a planilha não diz o andar (PD09), todas as salas ficam no andar "Andar a definir", até alguém informar o andar certo no mapeamento.
+- **Tipo:** é o começo da descrição. "Cadeira vermelha, convênio" vira tipo Cadeira, descrição "vermelha" e origem "Convênio". Marcas conhecidas, como Thermaltake, HP e Lenovo, vão para o campo marca.
+- **Número de patrimônio:** volta ao texto digitado (o Excel guarda 85015792 como `8.5015792E7`). Número no meio de outro texto, como "Série C 85018848" ou "900284315 (Convênio)", é separado, com aviso. "Sem patrimônio" deixa o bem sem número, com o código interno do sistema (PD07). Texto que não é plaqueta, como um ramal ou "Ilegível", deixa o bem sem número e vai para a observação.
+- **Observação:** todo bem guarda de onde veio (aba e linha) e os textos originais de patrimônio, descrição, local, estado e conferente. Serve de referência no recadastramento.
+
+### 14.3 Quando a linha é rejeitada
+
+| Motivo | Exemplo |
+| --- | --- |
+| Número repetido: entra só a primeira linha com o número (RN11) | o mesmo `1634456-1` em duas linhas |
+| Número que já está no sistema (RN01) | carga por cima de dados existentes, na simulação |
+| A linha conta vários itens: precisa ser separada antes (PD08) | "Monitor" com estado "Em uso 20 Unidades" |
+| Tipo não reconhecido na descrição | "Conect" |
+| Local não reconhecido (aba Principal) | um local que não está no mapeamento |
+| Estado em branco ou que não é estado (aba Principal) | "Sala de projetos" na coluna Estado |
+
+A linha **sem** número de patrimônio **não** é rejeitada, ao contrário do que diz a RN11. O bem entra com o código interno, como decidido na PD07.
+
+### 14.4 Relatório da carga (RF29)
+
+Cada execução gera um Excel em `backend/storage/app/carga/`, com o nome `relatorio_carga_<fonte>_<data>.xlsx`, e `_simulacao` no fim quando for simulação. Ele tem quatro abas:
+
+| Aba | Conteúdo |
+| --- | --- |
+| Resumo | linhas lidas, bens importados, linhas rejeitadas, o que foi criado e as rejeições agrupadas por motivo |
+| Importados | cada bem que entrou, com a aba e a linha de origem e o código interno que recebeu |
+| Rejeitados | cada linha que ficou de fora, com o motivo |
+| Avisos | bens que entraram, mas merecem conferência |
+
+### 14.5 Ajustar a interpretação
+
+As regras ficam em `backend/database/carga/planilha.php`, separadas do código: andares, salas, locais, abas, tipos, marcas, origens e conversão de estados. Para resolver uma rejeição de tipo ou de local, inclua a palavra no mapeamento e rode a simulação de novo.
