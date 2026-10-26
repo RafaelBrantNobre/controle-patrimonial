@@ -2,6 +2,7 @@
 
 namespace App\Relatorios;
 
+use App\Enums\EstadoConservacao;
 use App\Enums\StatusBem;
 use App\Models\Bem;
 use App\Models\Movimentacao;
@@ -71,6 +72,7 @@ class RelatorioDoLevantamento
             ->when($this->filtros['sala_id'] ?? null, fn ($query, $id) => $query->where('bem.sala_id', $id))
             ->when($this->filtros['tipo_patrimonio_id'] ?? null, fn ($query, $id) => $query->where('bem.tipo_patrimonio_id', $id))
             ->when($this->filtros['status'] ?? null, fn ($query, array $status) => $query->whereIn('bem.status', $status))
+            ->when($this->filtros['estado_conservacao'] ?? null, fn ($query, array $estados) => $query->whereIn('bem.estado_conservacao', $estados))
             ->when($this->filtros['apenas_mudancas'] ?? false, fn ($query) => $query->where(fn ($query) => $query
                 ->whereBetween('bem.data_ultima_mudanca', [$this->inicio->toDateString(), $this->fim->toDateString()])
                 ->orWhereExists(fn ($sub) => $sub->selectRaw('1')->from('movimentacao')
@@ -122,6 +124,9 @@ class RelatorioDoLevantamento
             'mudaram_de_sala_no_periodo' => $bens->where('mudou_de_sala_no_periodo', true)->count(),
             'por_status' => collect(StatusBem::cases())
                 ->mapWithKeys(fn (StatusBem $status) => [$status->value => $bens->where('status', $status)->count()])
+                ->all(),
+            'por_estado_conservacao' => collect(EstadoConservacao::cases())
+                ->mapWithKeys(fn (EstadoConservacao $estado) => [$estado->value => $bens->where('estado_conservacao', $estado)->count()])
                 ->all(),
         ];
     }

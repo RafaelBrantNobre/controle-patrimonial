@@ -17,8 +17,8 @@ class RelatorioController extends Controller
 {
     /**
      * GET /api/relatorio?inicio=2026-07-01&fim=2026-12-31
-     * Filtros opcionais: andar_id, sala_id, tipo_patrimonio_id, status e
-     * apenas_mudancas=1. Os bens vêm agrupados por andar e sala (RF23).
+     * Filtros opcionais: andar_id, sala_id, tipo_patrimonio_id, status,
+     * estado_conservacao e apenas_mudancas=1. Os bens vêm agrupados por andar e sala (RF23).
      */
     public function index(RelatorioRequest $request): JsonResponse
     {
@@ -86,6 +86,8 @@ class RelatorioController extends Controller
             'quantidade' => $bem->quantidade,
             'status' => $bem->status->value,
             'status_rotulo' => $bem->status->rotulo(),
+            'estado_conservacao' => $bem->estado_conservacao->value,
+            'estado_conservacao_rotulo' => $bem->estado_conservacao->rotulo(),
             'baixado' => $bem->estaBaixado(),
             'baixa_data' => $bem->baixa_data?->toDateString(),
             'data_ultima_mudanca' => $bem->data_ultima_mudanca?->toDateString(),

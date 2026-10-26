@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\EstadoConservacao;
 use App\Enums\StatusBem;
 use App\Models\Bem;
 use App\Models\Sala;
@@ -40,9 +41,14 @@ class BemFactory extends Factory
         return $this->state(fn () => ['numero_patrimonio' => null]);
     }
 
-    public function avariado(): static
+    public function semUso(): static
     {
-        return $this->state(fn () => ['status' => StatusBem::Avariado]);
+        return $this->state(fn () => ['status' => StatusBem::SemUso]);
+    }
+
+    public function conservacao(EstadoConservacao $estado): static
+    {
+        return $this->state(fn () => ['estado_conservacao' => $estado]);
     }
 
     public function baixado(): static

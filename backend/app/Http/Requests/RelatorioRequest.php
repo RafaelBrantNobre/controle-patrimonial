@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\EstadoConservacao;
 use App\Enums\StatusBem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,7 +14,8 @@ use Illuminate\Validation\Rule;
 | em destaque por terem mudado de sala ou de situação (RF25). O relatório
 | traz todos os bens que passam nos filtros, tenham mudado ou não.
 |
-| status aceita um valor ou vários separados por vírgula: ?status=sem_uso,avariado
+| status e estado_conservacao aceitam um valor ou vários separados por
+| vírgula: ?status=em_uso,sem_uso&estado_conservacao=pessimo,sucata
 */
 class RelatorioRequest extends FormRequest
 {
@@ -24,10 +26,12 @@ class RelatorioRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if (is_string($this->query('status'))) {
-            $this->merge([
-                'status' => array_values(array_filter(array_map('trim', explode(',', $this->query('status'))))),
-            ]);
+        foreach (['status', 'estado_conservacao'] as $campo) {
+            if (is_string($this->query($campo))) {
+                $this->merge([
+                    $campo => array_values(array_filter(array_map('trim', explode(',', $this->query($campo))))),
+                ]);
+            }
         }
     }
 
@@ -44,6 +48,8 @@ class RelatorioRequest extends FormRequest
             'tipo_patrimonio_id' => ['sometimes', 'nullable', 'integer'],
             'status' => ['sometimes', 'array'],
             'status.*' => [Rule::enum(StatusBem::class)],
+            'estado_conservacao' => ['sometimes', 'array'],
+            'estado_conservacao.*' => [Rule::enum(EstadoConservacao::class)],
             'apenas_mudancas' => ['sometimes', 'boolean'],
         ];
     }
@@ -63,7 +69,9 @@ class RelatorioRequest extends FormRequest
             'sala_id.integer' => 'A sala do filtro não é válida.',
             'tipo_patrimonio_id.integer' => 'O tipo do filtro não é válido.',
             'status.array' => 'A situação do filtro não é válida.',
-            'status.*.enum' => 'A situação do filtro deve ser em_uso, sem_uso, avariado ou baixado.',
+            'status.*.enum' => 'A situação de uso do filtro deve ser em_uso, sem_uso ou baixado.',
+            'estado_conservacao.array' => 'O estado de conservação do filtro não é válido.',
+            'estado_conservacao.*.enum' => 'O estado de conservação do filtro deve ser novo, bom, regular, pessimo, sucata ou indeterminado.',
             'apenas_mudancas.boolean' => 'Use 1 para ver só os bens que mudaram no período, ou 0 para ver todos.',
         ];
     }

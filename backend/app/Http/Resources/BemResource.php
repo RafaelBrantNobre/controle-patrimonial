@@ -8,8 +8,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /*
 | Dados do bem que o front-end recebe (tarefa 2.6). Serve para a lista e
-| para a ficha (RF15): traz tipo, sala e andar juntos, a situação com o
-| texto pronto para a tela e a data da última mudança.
+| para a ficha (RF15): traz tipo, sala e andar juntos, a situação de uso e
+| o estado de conservação com o texto pronto para a tela, e a data da
+| última mudança.
 |
 | baixado vem separado para a lista poder sinalizar o bem baixado que ainda
 | está no prédio (RN05).
@@ -39,6 +40,8 @@ class BemResource extends JsonResource
             'quantidade' => $this->quantidade,
             'status' => $this->status->value,
             'status_rotulo' => $this->status->rotulo(),
+            'estado_conservacao' => $this->estado_conservacao->value,
+            'estado_conservacao_rotulo' => $this->estado_conservacao->rotulo(),
             'baixado' => $this->estaBaixado(),
             'observacao' => $this->observacao,
             'data_ultima_mudanca' => $this->data_ultima_mudanca?->toDateString(),

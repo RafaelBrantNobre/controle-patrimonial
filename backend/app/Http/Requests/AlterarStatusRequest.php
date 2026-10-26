@@ -67,7 +67,7 @@ class AlterarStatusRequest extends FormRequest
     {
         return [
             'status.required' => 'Escolha a nova situação do bem.',
-            'status.enum' => 'A situação deve ser em uso, sem uso, avariado ou baixado.',
+            'status.enum' => 'A situação de uso deve ser em uso, sem uso ou baixado.',
             'baixa_data.required' => 'Informe a data da baixa.',
             'baixa_data.date_format' => 'Informe a data da baixa no formato ano-mês-dia, como 2026-10-23.',
             'baixa_data.before_or_equal' => 'A data da baixa não pode ser depois de hoje.',
