@@ -1,145 +1,97 @@
 # Controle Patrimonial
 
-Sistema de controle patrimonial do CEAD/Unimontes. Registra os bens do prédio, onde cada um está e em que situação se encontra, para apoiar a declaração de patrimônio feita a cada semestre.
+Sistema de controle patrimonial do CEAD/Unimontes, feito com Laravel, Blade, Tailwind CSS e MySQL.
 
-O repositório tem dois projetos:
-
-| Pasta | O que é | Tecnologia | Endereço local |
-| --- | --- | --- | --- |
-| `backend/` | API, regras de negócio e banco de dados | Laravel 13 (PHP) e MySQL 8.4 | http://localhost:8000 |
-| `frontend/` | Telas do sistema | React 19, Vite e TypeScript | http://localhost:5173 |
-
-O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
-
-## Sumário
-
-1. [O que instalar antes](#1-o-que-instalar-antes)
-2. [Subir o ambiente do zero](#2-subir-o-ambiente-do-zero)
-3. [Dia a dia](#3-dia-a-dia)
-4. [Variáveis de ambiente](#4-variáveis-de-ambiente)
-5. [Branches](#5-branches)
-6. [Padrão de commit](#6-padrão-de-commit)
-7. [Revisão por merge request](#7-revisão-por-merge-request)
-8. [Problemas comuns](#8-problemas-comuns)
+A aplicação fica em `backend/`. O Laravel gera as páginas Blade e acessa o banco. O projeto React separado foi removido. O Vite permanece como ferramenta de compilação do CSS e do JavaScript, integrado ao Laravel pelo plugin oficial.
 
 ## 1. O que instalar antes
 
-| Programa | Versão | Para que serve | Como conferir |
-| --- | --- | --- | --- |
-| Git | qualquer versão recente | baixar e versionar o código | `git --version` |
-| PHP | 8.4 ou mais nova | rodar o back-end | `php -v` |
-| Composer | 2 | instalar as bibliotecas do back-end | `composer -V` |
-| Node.js | 22 ou mais nova (o npm vem junto) | rodar o front-end | `node -v` |
-| Docker Desktop | qualquer versão recente | rodar o banco MySQL | `docker --version` |
+- PHP 8.4 ou superior (PHP 8.5 recomendado), com `pdo_mysql` e `pdo_sqlite` para os testes.
+- Composer 2.
+- Node.js 22.12 ou superior e npm.
+- Docker Desktop para o MySQL.
+- Git.
 
-Observações:
-
-- O PHP precisa da extensão `pdo_mysql` ligada. Para conferir, rode `php -m` e procure `pdo_mysql` na lista.
-- O Docker Desktop precisa estar aberto antes de subir o banco.
-- Os comandos deste README funcionam no PowerShell do Windows.
+Confira `php -v`, `composer -V` e `node -v`. No Windows, se houver várias instalações, use `Get-Command php -All` e `Get-Command node -All` para conferir qual vem primeiro no PATH.
 
 ## 2. Subir o ambiente do zero
 
-São três terminais no fim: um para o back-end, um para o front-end e um livre para o Git.
-
-### 2.1 Baixar o código
-
-```powershell
-git clone https://gitlab.com/cead-2026/controle-patrimonial.git
-cd controle-patrimonial
-git checkout develop
-```
-
-### 2.2 Back-end e banco
+Na pasta do repositório:
 
 ```powershell
 cd backend
 copy .env.example .env
 ```
 
-Abra o arquivo `backend/.env` e preencha a linha `DB_PASSWORD=` com uma senha qualquer, escolhida por você. Ela vale só para o banco da sua máquina. Exemplo: `DB_PASSWORD=minhasenha123`.
-
-Depois, ainda dentro de `backend`:
+Preencha `DB_PASSWORD` no `.env` com uma senha para seu banco local. Não sobrescreva o `.env` se já tiver configurado o ambiente.
 
 ```powershell
 docker compose up -d
 composer install
 php artisan key:generate
 php artisan migrate
+npm install
+npm run build
 php artisan serve
 ```
 
-O que cada comando faz:
+Espere o banco ficar saudável em `docker compose ps` antes de migrar. Abra **http://localhost:8000** para ver o login Blade. O build permite abrir a página sem manter o Vite rodando.
 
-- `docker compose up -d` cria e liga o banco MySQL, usando o nome, o usuário e a senha que estão no `.env`. Na primeira vez, espere uns 30 segundos antes do próximo passo, porque o banco demora a ficar pronto.
-- `composer install` baixa as bibliotecas do back-end.
-- `php artisan key:generate` gera a chave de segurança da aplicação e grava no `.env`.
-- `php artisan migrate` cria as tabelas no banco.
-- `php artisan serve` liga a API em http://localhost:8000. Deixe este terminal aberto.
-
-Para conferir, abra http://localhost:8000/api/status no navegador. A resposta deve trazer `"conectado": true`.
-
-Para ter um usuário de teste no banco local, rode também `php artisan db:seed`. Ele cria o administrador `admin@example.com`, com a senha `password`. Esse usuário existe só no banco da sua máquina.
-
-### 2.3 Front-end
-
-Em outro terminal, a partir da pasta do repositório:
-
-```powershell
-cd frontend
-copy .env.example .env
-npm install
-npm run dev
-```
-
-- `npm install` baixa as bibliotecas do front-end.
-- `npm run dev` liga o front-end em http://localhost:5173. Deixe este terminal aberto.
-
-### 2.4 Conferir se deu certo
-
-Abra http://localhost:5173 para visualizar o exemplo de login. Expanda **Conexão com o back-end** abaixo do formulário para verificar o Laravel e o banco. O envio do formulário é demonstrativo e ainda não autentica usuários. Veja a seção 9 para entender a implementação.
+Para criar o administrador de desenvolvimento, execute `php artisan db:seed`: e-mail `admin@example.com`, senha `password`. A tela atual ainda é demonstrativa e não autentica esse usuário.
 
 ## 3. Dia a dia
 
-Depois da primeira vez, para voltar a trabalhar basta:
+Execute todos os comandos na pasta `backend/`.
 
-| Onde | Comando | O que faz |
-| --- | --- | --- |
-| `backend/` | `docker compose up -d` | liga o banco |
-| `backend/` | `php artisan serve` | liga a API |
-| `frontend/` | `npm run dev` | liga o front-end |
+No primeiro terminal:
 
-Outros comandos úteis:
+```powershell
+docker compose up -d
+php artisan serve
+```
 
-| Onde | Comando | O que faz |
-| --- | --- | --- |
-| `backend/` | `docker compose stop` | desliga o banco, sem apagar os dados |
-| `backend/` | `docker compose down -v` | apaga o banco e todos os dados locais |
-| `backend/` | `php artisan migrate` | aplica tabelas novas, depois de um `git pull` |
-| `backend/` | `php artisan migrate:fresh --seed` | recria o banco do zero, com os dados de exemplo |
-| `backend/` | `php artisan test` | roda os testes do back-end |
-| `backend/` | `vendor/bin/pint` | formata o código PHP |
-| `frontend/` | `npm run build` | confere se o front-end compila sem erro |
-| `frontend/` | `npm run lint` | aponta problemas no código do front-end |
+No segundo terminal, durante a edição das telas:
 
-Depois de um `git pull`, rode `composer install` no back-end e `npm install` no front-end se alguém tiver adicionado bibliotecas.
+```powershell
+npm run dev
+```
+
+Abra **http://localhost:8000**, inclusive quando o Vite estiver rodando. A porta 5173 serve apenas os estilos e scripts de desenvolvimento. Blade continua sendo renderizado pelo Laravel.
+
+| Comando | Para que serve |
+| --- | --- |
+| `npm run dev` | atualiza os estilos e recarrega ao editar Blade |
+| `npm run build` | gera CSS e JavaScript em `public/build` |
+| `php artisan test --compact` | roda os testes |
+| `vendor/bin/pint` | formata o PHP |
+| `docker compose stop` | desliga o banco sem apagar dados |
+| `docker compose down -v` | apaga o banco local e seus dados |
+| `php artisan migrate` | aplica novas migrações |
+
+Depois de atualizar o código, rode `composer install` e `npm install` se as dependências mudaram.
+
+### Onde editar as telas
+
+- `resources/views/layouts/app.blade.php`: estrutura HTML e `@vite`.
+- `resources/views/login.blade.php`: tela de login com classes Tailwind.
+- `resources/css/app.css`: import do Tailwind e estilos globais.
+- `resources/js/app.js`: interação para mostrar/ocultar a senha, sem React.
+- `routes/web.php`: rotas das páginas e do formulário.
+- `app/Http/Controllers/LoginExemploController.php`: validação do formulário demonstrativo.
+- `vite.config.js`: compilação integrada ao Laravel.
+
+O formulário usa POST com `@csrf`, valida e-mail e senha no Laravel e retorna mensagens em português. Ele **ainda não autentica** nem cria sessão de usuário. A senha não é reapresentada no formulário. O link de diagnóstico mantém a rota `/api/status` para verificar o banco.
 
 ## 4. Variáveis de ambiente
 
-Cada projeto tem um arquivo `.env.example`, que é o modelo, e um arquivo `.env`, que é a cópia de cada pessoa.
+Existe apenas o ambiente da aplicação Laravel em `backend/.env`. O `.env.example` é o modelo versionado e não contém segredos. Não é mais necessário `VITE_API_URL` nem um endereço de front-end separado.
 
-- O `.env.example` vai para o Git e nunca contém senha, chave ou token.
-- O `.env` fica só na sua máquina. Ele está no `.gitignore` e não deve ser enviado.
-- Ao criar uma variável nova, adicione a linha também no `.env.example`, com o valor vazio ou um valor de exemplo, e avise no merge request.
-
-Principais variáveis:
-
-| Arquivo | Variável | Para que serve |
-| --- | --- | --- |
-| `backend/.env` | `APP_KEY` | chave de segurança, gerada por `php artisan key:generate` |
-| `backend/.env` | `FRONTEND_URL` | endereço do front-end autorizado a chamar a API |
-| `backend/.env` | `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `DB_PORT` | dados do banco, usados pelo Laravel e pelo Docker |
-| `frontend/.env` | `VITE_API_URL` | endereço da API que o front-end consome |
+| Variável | Para que serve |
+| --- | --- |
+| `APP_KEY` | chave gerada por `php artisan key:generate` |
+| `APP_URL` | endereço da aplicação, localmente `http://localhost:8000` |
+| `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `DB_PORT` | conexão com o banco e configuração do Docker |
+| `SESSION_DRIVER` | sessões; por padrão usa as tabelas do banco |
 
 ## 5. Branches
 
@@ -215,53 +167,22 @@ Regras:
 
 - Quem é responsável pela tarefa no quadro aprova e faz o merge dela.
 - A exceção é a mudança que afeta o trabalho do outro desenvolvedor, por exemplo algo que ele vai usar no código dele ou que muda a forma de subir o ambiente. Nesse caso, o outro revisa antes do merge.
-- Antes do merge, confira que `php artisan test` e `npm run build` passam.
+- Antes do merge, confira que `php artisan test` e `npm run build` (ambos em `backend/`) passam.
 - Merge request pequeno é mais fácil de revisar. Prefira um por tarefa do quadro.
 
 ## 8. Problemas comuns
 
 | Sintoma | O que fazer |
 | --- | --- |
-| `docker compose up -d` reclama que `DB_PASSWORD` não foi definida | preencha `DB_PASSWORD` em `backend/.env` |
-| `docker compose up -d` diz que a porta 3306 já está em uso | já existe um MySQL instalado na máquina, como o do XAMPP. Troque `DB_PORT` para `3307` em `backend/.env` e rode o comando de novo |
-| `docker` não é reconhecido ou dá erro com `dockerDesktopLinuxEngine` | o Docker Desktop está fechado. Abra e espere aparecer **Engine running** |
-| o Docker Desktop fica parado em **Starting the Docker Engine** | feche o Docker Desktop. No PowerShell como administrador, rode `wsl --shutdown` e `wsl --update` e abra o Docker de novo. Se continuar, confira no Gerenciador de Tarefas, em Desempenho e CPU, se a Virtualização está habilitada |
-| `php artisan migrate` dá `Connection refused` | o banco ainda está iniciando. Espere uns 30 segundos e tente de novo. Confira com `docker compose ps` |
-| `php artisan migrate` dá `Access denied` e `docker compose ps` mostra a lista vazia | o banco do Docker está desligado e quem respondeu foi outro MySQL instalado na máquina. Troque `DB_PORT` para `3307` em `backend/.env`, rode `docker compose up -d`, espere o `healthy` no `docker compose ps` e rode `php artisan config:clear` antes do `migrate` |
-| `php artisan migrate` dá `Access denied` e `docker compose ps` mostra o banco `healthy` | a senha do `.env` foi trocada depois de o banco ter sido criado, e o MySQL guarda a senha da primeira vez. Rode `docker compose down -v` e depois `docker compose up -d`. Isso apaga os dados do banco local |
-| `php artisan migrate` dá `could not find driver` | falta ligar a extensão `pdo_mysql` no `php.ini` |
-| a página do front-end mostra o back-end sem resposta | confira se `php artisan serve` está rodando e se `VITE_API_URL` em `frontend/.env` está certo. Depois de mudar o `.env`, pare e rode `npm run dev` de novo |
-| `npm run dev` diz que a porta 5173 está em uso | feche o outro terminal que já está rodando o front-end |
+| `Vite manifest not found` | rode `npm install` e `npm run build` em `backend/`, ou mantenha `npm run dev` rodando |
+| página sem estilos após parar o Vite | confira se o processo encerrou corretamente; se sobrou `backend/public/hot`, apague apenas esse arquivo e rode `npm run build` |
+| erro no import do Tailwind após mudar dependências | pare e inicie novamente `npm run dev` em `backend/` |
+| erro de versão do Node | use Node 22.12 ou superior; confira a instalação escolhida pelo PATH |
+| PowerShell bloqueia `npm.ps1` | use `npm.cmd install` e `npm.cmd run dev` |
+| porta 5173 em uso | encerre o antigo servidor React/Vite antes de iniciar o Vite do Laravel |
+| `Connection refused` ao acessar o banco | ligue o Docker, rode `docker compose up -d` e confira `docker compose ps` |
+| porta 3306 em uso | altere `DB_PORT` para `3307` no `.env` e recrie o contêiner |
+| `Access denied` no MySQL | confira a senha e a porta; trocar o `.env` não altera a senha de um banco já criado |
+| `could not find driver` | habilite a extensão PHP correspondente: `pdo_mysql` para a aplicação e `pdo_sqlite` para os testes |
 
-## 9. Exemplo de login com React, Vite e Tailwind
-
-A página inicial agora é um exemplo de login responsivo. Execute `npm run dev` na pasta `frontend` e abra http://localhost:5173.
-
-### Qual é o papel de cada ferramenta?
-
-- **React** define os elementos da tela e suas interações em `frontend/src/App.tsx`.
-- **Tailwind CSS** estiliza esses elementos com classes no atributo `className`. Por exemplo, `rounded-xl` arredonda as bordas, `px-4` adiciona espaço interno horizontal e `hover:bg-teal-900` muda a cor ao passar o mouse. O prefixo `lg:` aplica uma regra a partir de telas grandes.
-- **Vite** inicia o servidor de desenvolvimento e atualiza a página enquanto você edita. No build, transforma TypeScript, React e CSS em arquivos para publicação na pasta `frontend/dist`. Você continua escrevendo suas telas em React.
-- **Laravel** executa a API e acessa o banco. O navegador chama a API usando o serviço em `frontend/src/services/api.ts` e o endereço `VITE_API_URL`.
-
-O fluxo é: navegador → tela React estilizada com Tailwind → requisição HTTP → API Laravel → banco de dados.
-
-### Onde o Tailwind foi configurado?
-
-1. `frontend/package.json`: dependências `tailwindcss` e `@tailwindcss/vite`.
-2. `frontend/vite.config.ts`: plugin `tailwindcss()` junto do plugin React.
-3. `frontend/src/index.css`: `@import "tailwindcss";` carrega o Tailwind.
-4. `frontend/src/main.tsx`: importa esse CSS para a aplicação.
-5. `frontend/src/App.tsx`: usa as classes do Tailwind no formulário.
-
-Configuração baseada na documentação oficial: https://tailwindcss.com/docs/installation/using-vite
-
-### O que o exemplo faz?
-
-O formulário valida campos obrigatórios e o formato do e-mail pelo navegador, permite mostrar/ocultar a senha e exibe uma mensagem ao enviar. **Ele ainda não autentica e não envia as credenciais.** Não há uma rota de login implementada no Laravel. Qualquer e-mail com formato válido e senha preenchida permite testar a interação, sem criar uma sessão.
-
-A opção **Conexão com o back-end** consulta a rota real `GET /api/status`, preservando a verificação do Laravel e do banco. A tela pode ser visualizada mesmo com a API desligada.
-
-Para implementar o login real, será necessário criar a autenticação no Laravel (validação, sessão e proteção das rotas), conectar o envio do formulário e tratar as respostas de sucesso e erro. O Laravel será responsável por conferir a senha; essa verificação nunca deve ficar no React.
-
-Use Node.js 22.12 ou superior para os comandos do front-end. Se houver mais de uma instalação no Windows, confira `node -v` e `Get-Command node -All`: a primeira no PATH é a utilizada.
+Referência da integração de assets: [documentação oficial do Laravel](https://laravel.com/framework/docs/13.x/vite).

@@ -1,4 +1,8 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
+
+@source "../views/**/*.blade.php";
+@source "../js/**/*.js";
+@source "../../storage/framework/views/*.php";
 
 @layer base {
   body { margin: 0; min-width: 320px; font-family: 'Segoe UI', system-ui, sans-serif; }

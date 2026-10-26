@@ -1,5 +1,5 @@
 # Regras gerais do repositório.
-# Cada projeto tem o próprio .gitignore: backend/.gitignore e frontend/.gitignore.
+# A aplicação Laravel usa backend/.gitignore.
 
 # Variáveis de ambiente: só o modelo (.env.example) é versionado
 .env
@@ -19,3 +19,6 @@ Thumbs.db
 /node_modules
 README.md
 php
+
+# Resíduos locais do antigo front-end React (não utilizado).
+/frontend/

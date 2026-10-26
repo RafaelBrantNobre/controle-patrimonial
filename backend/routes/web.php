@@ -1,11 +1,8 @@
 <?php
 
+use App\Http\Controllers\LoginExemploController;
 use Illuminate\Support\Facades\Route;
 
-// O back-end é só API. As telas ficam no projeto frontend.
-Route::get('/', function () {
-    return response()->json([
-        'aplicacao' => config('app.name'),
-        'mensagem' => 'API no ar. As rotas ficam em /api.',
-    ]);
-});
+Route::view('/', 'login')->name('login');
+Route::redirect('/login', '/');
+Route::post('/login', [LoginExemploController::class, 'store'])->name('login.exemplo');
