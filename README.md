@@ -401,7 +401,6 @@ Não há rota para excluir bem. A saída do patrimônio é a baixa (RN07).
 | `quantidade` | opcional, padrão 1 | pode mudar | de 1 a 9999 (PD08) |
 | `status` | opcional, padrão `em_uso` | não muda | situação de uso. No cadastro: `em_uso` ou `sem_uso`. A baixa é registrada depois |
 | `estado_conservacao` | opcional, padrão `indeterminado` | pode mudar | condição física: `novo`, `bom`, `regular`, `pessimo`, `sucata` ou `indeterminado` |
-| `observacao` | opcional | pode mudar | texto livre |
 
 O `codigo_interno` é gerado pelo sistema no formato `CP-000123` e não pode ser informado nem editado. Ele existe para todo bem, tenha ou não plaqueta (PD07).
 
@@ -478,7 +477,7 @@ O relatório da conferência patrimonial do semestre (tarefa 2.10). Administrado
 
 - Todos os bens que passam nos filtros, inclusive os baixados (RN05). O período **não** corta a lista: ele define o que aparece em destaque.
 - A ordem é a da conferência física: andar (campo `ordem`), sala, tipo e número de patrimônio.
-- Cada bem traz número de patrimônio, código interno, tipo, descrição, marca, quantidade, situação de uso, estado de conservação, data da última mudança, data da baixa e observação.
+- Cada bem traz número de patrimônio, código interno, tipo, descrição, marca, quantidade, situação de uso, estado de conservação, data da última mudança e data da baixa.
 - `mudou_no_periodo` é `true` quando o bem mudou de sala ou de situação dentro do período. `mudou_de_sala_no_periodo` diz se foi de sala, e `veio_da_sala` traz a sala de onde ele saiu na primeira mudança do período.
 - `totais` traz o total de bens, quantos mudaram, quantos mudaram de sala e quantos há em cada situação de uso e em cada estado de conservação.
 
@@ -498,7 +497,7 @@ A planilha segue a que o setor já usa (`Patrimônios CEAD`, novembro de 2024):
 
 - Arquivo `levantamento_<inicio>_a_<fim>.xlsx`.
 - Aba **Principal** com todos os bens e filtro nas colunas, e **uma aba por sala**, para a conferência sala a sala. Todas as abas têm o cabeçalho congelado. Se duas salas tiverem o mesmo nome em andares diferentes, a segunda aba leva o andar no nome.
-- Colunas: Patrimônio, Código interno, Tipo, Descrição, Marca, Local do patrimônio, Andar, Situação de uso, Estado de conservação, Quantidade, Última mudança, Mudou no período, Veio da sala, Data da baixa, Observação e Conferido por.
+- Colunas: Patrimônio, Código interno, Tipo, Descrição, Marca, Local do patrimônio, Andar, Situação de uso, Estado de conservação, Quantidade, Última mudança, Mudou no período, Veio da sala, Data da baixa e Conferido por.
 - **Conferido por** vem em branco, para a equipe preencher na conferência, como a coluna Nome da planilha atual.
 - Os bens que mudaram no período ficam com fundo amarelo.
 - O número de patrimônio sai como texto, sem virar `8.5015792E7`. Bem sem plaqueta aparece como `sem patrimônio`, com o código interno ao lado. As datas saem como data do Excel, então dá para ordenar e filtrar por elas.
@@ -539,8 +538,8 @@ Tudo é gravado numa transação só: se algo falhar no meio, nada entra.
 
 - **Sala:** na aba Principal, vem da coluna Local. Nas abas de sala, vem do nome da aba. As salas e os tipos usados são criados automaticamente. Como a planilha não diz o andar (PD09), todas as salas ficam no andar "Andar a definir", até alguém informar o andar certo no mapeamento.
 - **Tipo:** é o começo da descrição. "Cadeira vermelha, convênio" vira tipo Cadeira, descrição "vermelha" e origem "Convênio". Marcas conhecidas, como Thermaltake, HP e Lenovo, vão para o campo marca.
-- **Número de patrimônio:** volta ao texto digitado (o Excel guarda 85015792 como `8.5015792E7`). Número no meio de outro texto, como "Série C 85018848" ou "900284315 (Convênio)", é separado, com aviso. "Sem patrimônio" deixa o bem sem número, com o código interno do sistema (PD07). Texto que não é plaqueta, como um ramal ou "Ilegível", deixa o bem sem número e vai para a observação.
-- **Observação:** todo bem guarda de onde veio (aba e linha) e os textos originais de patrimônio, descrição, local, estado e conferente. Serve de referência no recadastramento.
+- **Número de patrimônio:** volta ao texto digitado (o Excel guarda 85015792 como `8.5015792E7`). Número no meio de outro texto, como "Série C 85018848" ou "900284315 (Convênio)", é separado, com aviso. "Sem patrimônio" deixa o bem sem número, com o código interno do sistema (PD07). Texto que não é plaqueta, como um ramal ou "Ilegível", deixa o bem sem número, com aviso no relatório da carga.
+- **Marco zero:** o bem não guarda de onde veio na planilha. O que a planilha dizia sobre ele já está nos campos do bem (tipo, descrição, marca, origem, sala, situação e conservação), e a aba e a linha de cada bem ficam no relatório da carga (14.4). Depois da carga, o histórico vem das mudanças registradas no sistema (seção 12). O campo `observacao` do bem foi retirado em 28/10/2026 por esse motivo.
 
 ### 14.3 Quando a linha é rejeitada
 
