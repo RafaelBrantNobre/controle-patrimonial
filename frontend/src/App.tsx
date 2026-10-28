@@ -10,6 +10,7 @@ import { FichaDoBem } from './paginas/bens/FichaDoBem'
 import { FormularioDeBem } from './paginas/bens/FormularioDeBem'
 import { ListaDeBens } from './paginas/bens/ListaDeBens'
 import { Login } from './paginas/Login'
+import { Relatorios } from './paginas/Relatorios'
 import { StatusDoAmbiente } from './paginas/StatusDoAmbiente'
 
 // Só deixa passar quem está conectado. Quem não está vai para o login e volta
@@ -55,6 +56,7 @@ function App() {
             <Route path="/ambientes/novo" element={<SoAdministrador><FormularioDeSala /></SoAdministrador>} />
             <Route path="/ambientes/:id" element={<DetalhesDaSala />} />
             <Route path="/ambientes/:id/editar" element={<SoAdministrador><FormularioDeSala /></SoAdministrador>} />
+            <Route path="/relatorios" element={<Relatorios />} />
             <Route path="*" element={<Navigate to="/bens" replace />} />
           </Route>
         </Routes>
