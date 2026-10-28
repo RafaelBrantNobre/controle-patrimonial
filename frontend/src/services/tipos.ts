@@ -64,7 +64,6 @@ export type Bem = {
   estado_conservacao: EstadoConservacao
   estado_conservacao_rotulo: string
   baixado: boolean
-  observacao: string | null
   data_ultima_mudanca: string | null
   usuario_ultima_mudanca?: { id: number; nome: string } | null
   baixa_data: string | null
@@ -112,7 +111,6 @@ export type BemDoRelatorio = {
   mudou_no_periodo: boolean
   mudou_de_sala_no_periodo: boolean
   veio_da_sala: { id: number; nome: string; andar: string } | null
-  observacao: string | null
 }
 
 export type Relatorio = {

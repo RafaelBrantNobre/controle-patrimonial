@@ -25,7 +25,6 @@ type Dados = {
   sala_id: string
   status: 'em_uso' | 'sem_uso'
   estado_conservacao: EstadoConservacao
-  observacao: string
 }
 
 const VAZIO: Dados = {
@@ -39,7 +38,6 @@ const VAZIO: Dados = {
   sala_id: '',
   status: 'em_uso',
   estado_conservacao: 'indeterminado',
-  observacao: '',
 }
 
 function dadosDoBem(bem: Bem): Dados {
@@ -54,7 +52,6 @@ function dadosDoBem(bem: Bem): Dados {
     sala_id: String(bem.sala_id),
     status: bem.status === 'sem_uso' ? 'sem_uso' : 'em_uso',
     estado_conservacao: bem.estado_conservacao,
-    observacao: bem.observacao ?? '',
   }
 }
 
@@ -105,7 +102,6 @@ function Formulario({ bem }: { bem?: Bem }) {
       origem: dados.origem.trim() || null,
       quantidade: Number(dados.quantidade) || 1,
       estado_conservacao: dados.estado_conservacao,
-      observacao: dados.observacao.trim() || null,
       ...(editando ? {} : { sala_id: Number(dados.sala_id) || null, status: dados.status }),
     }
 
@@ -291,15 +287,6 @@ function Formulario({ bem }: { bem?: Bem }) {
                   </option>
                 ))}
               </select>
-            </Campo>
-
-            <Campo rotulo="Observações gerais" erro={erro?.doCampo('observacao')}>
-              <textarea
-                className="entrada min-h-24"
-                placeholder="Ex: acompanha cabo HDMI, fonte de alimentação e case rígido preto."
-                value={dados.observacao}
-                onChange={(e) => mudar('observacao', e.target.value)}
-              />
             </Campo>
           </section>
         </div>

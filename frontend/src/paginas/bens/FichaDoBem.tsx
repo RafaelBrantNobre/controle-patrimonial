@@ -113,12 +113,6 @@ export function FichaDoBem() {
               <SeloConservacao estado={bem.estado_conservacao} rotulo={bem.estado_conservacao_rotulo} />
             </Dado>
           </dl>
-          {bem.observacao && (
-            <div className="mt-5 rounded-lg bg-slate-50 p-4">
-              <p className="rotulo">Observação</p>
-              <p className="text-sm whitespace-pre-line text-slate-700">{bem.observacao}</p>
-            </div>
-          )}
         </section>
 
         <section className="cartao p-6">
