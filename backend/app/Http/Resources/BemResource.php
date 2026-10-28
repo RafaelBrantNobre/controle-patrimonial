@@ -43,7 +43,6 @@ class BemResource extends JsonResource
             'estado_conservacao' => $this->estado_conservacao->value,
             'estado_conservacao_rotulo' => $this->estado_conservacao->rotulo(),
             'baixado' => $this->estaBaixado(),
-            'observacao' => $this->observacao,
             'data_ultima_mudanca' => $this->data_ultima_mudanca?->toDateString(),
             'usuario_ultima_mudanca' => $this->whenLoaded('usuarioUltimaMudanca', fn () => $this->usuarioUltimaMudanca ? [
                 'id' => $this->usuarioUltimaMudanca->id,

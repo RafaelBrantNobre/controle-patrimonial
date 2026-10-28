@@ -133,7 +133,6 @@ class CargaInicial
                 'origem' => $linha->origem,
                 'status' => $linha->status,
                 'estado_conservacao' => $linha->estadoConservacao,
-                'observacao' => $linha->observacao,
             ]);
 
             $resultado->importadas[] = [$linha, $bem->codigo_interno];

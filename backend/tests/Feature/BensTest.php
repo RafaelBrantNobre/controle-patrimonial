@@ -75,7 +75,6 @@ test('o bem é cadastrado com todos os dados', function () {
         'origem' => 'convênio MCT x SECTES',
         'quantidade' => 2,
         'status' => 'sem_uso',
-        'observacao' => 'Estado na planilha: Sem uso',
     ])
         ->assertCreated()
         ->assertJsonPath('data.numero_patrimonio', '1634456-1')

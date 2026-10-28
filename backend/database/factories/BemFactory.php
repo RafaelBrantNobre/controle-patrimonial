@@ -31,7 +31,6 @@ class BemFactory extends Factory
             'origem' => null,
             'quantidade' => 1,
             'status' => StatusBem::EmUso,
-            'observacao' => null,
         ];
     }
 

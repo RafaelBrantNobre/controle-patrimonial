@@ -246,11 +246,11 @@ test('cada linha traz os dados do bem, com o número de patrimônio como texto',
 });
 
 test('texto que começa com = sai como texto, e não como fórmula', function () {
-    Bem::factory()->create(['observacao' => '=HYPERLINK("http://exemplo.com","clique")']);
+    Bem::factory()->create(['descricao' => '=HYPERLINK("http://exemplo.com","clique")']);
 
     $linha = baixarPlanilha()['Principal'][1];
 
-    expect($linha[14])->toBe('=HYPERLINK("http://exemplo.com","clique")');
+    expect($linha[3])->toBe('=HYPERLINK("http://exemplo.com","clique")');
 });
 
 test('salas com o mesmo nome em andares diferentes ganham abas diferentes', function () {

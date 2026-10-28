@@ -36,7 +36,6 @@ use Illuminate\Support\Str;
     'quantidade',
     'status',
     'estado_conservacao',
-    'observacao',
     'data_ultima_mudanca',
     'usuario_ultima_mudanca_id',
     'baixa_data',

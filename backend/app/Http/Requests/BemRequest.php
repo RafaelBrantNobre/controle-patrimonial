@@ -53,7 +53,6 @@ class BemRequest extends FormRequest
             'marca' => ['sometimes', 'nullable', 'string', 'max:80'],
             'origem' => ['sometimes', 'nullable', 'string', 'max:120'],
             'quantidade' => ['sometimes', 'integer', 'between:1,9999'],
-            'observacao' => ['sometimes', 'nullable', 'string', 'max:5000'],
         ];
     }
 
@@ -138,8 +137,6 @@ class BemRequest extends FormRequest
             'origem.max' => 'A origem pode ter no máximo 120 caracteres.',
             'quantidade.integer' => 'A quantidade deve ser um número inteiro.',
             'quantidade.between' => 'A quantidade deve ficar entre 1 e 9999.',
-            'observacao.string' => 'A observação deve ser um texto.',
-            'observacao.max' => 'A observação pode ter no máximo 5000 caracteres.',
         ];
     }
 

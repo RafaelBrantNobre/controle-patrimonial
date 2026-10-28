@@ -98,7 +98,6 @@ class RelatorioController extends Controller
                 'nome' => $bem->veioDaSala->nome,
                 'andar' => $bem->veioDaSala->andar->nome,
             ] : null,
-            'observacao' => $bem->observacao,
         ];
     }
 }

@@ -50,7 +50,6 @@ class PlanilhaDoLevantamento
         'Mudou no período' => 16,
         'Veio da sala' => 28,
         'Data da baixa' => 14,
-        'Observação' => 40,
         'Conferido por' => 20,
     ];
 
@@ -145,7 +144,6 @@ class PlanilhaDoLevantamento
             $texto($mudou ? 'Sim' : 'Não'),
             $texto($bem->veioDaSala ? "{$bem->veioDaSala->nome} ({$bem->veioDaSala->andar->nome})" : null),
             $data($bem->baixa_data),
-            $texto($bem->observacao),
             $texto(null),
         ];
 

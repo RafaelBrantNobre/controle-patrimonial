@@ -96,8 +96,7 @@ test('a carga da aba Principal cria salas, tipos e bens, e rejeita o que não d�
         ->and($cadeira->descricao)->toBe('azul')
         ->and($cadeira->origem)->toBe('Convênio')
         ->and($cadeira->status)->toBe(StatusBem::SemUso)
-        ->and($cadeira->estado_conservacao)->toBe(EstadoConservacao::Pessimo)
-        ->and($cadeira->observacao)->toContain('aba "Principal", linha 5');
+        ->and($cadeira->estado_conservacao)->toBe(EstadoConservacao::Pessimo);
 });
 
 test('o número repetido entra só na primeira linha (RN11)', function () {
@@ -149,7 +148,6 @@ test('a carga das abas de sala usa o nome da aba como sala e o estado como conse
         ->and($nobreak->marca)->toBe('APC')
         ->and($nobreak->estado_conservacao)->toBe(EstadoConservacao::Bom)
         ->and($nobreak->status)->toBe(StatusBem::EmUso)
-        ->and($nobreak->observacao)->toContain('Conferido por: Grupo 6')
         ->and($gabinete->status)->toBe(StatusBem::SemUso)
         ->and($gabinete->estado_conservacao)->toBe(EstadoConservacao::Sucata);
 });

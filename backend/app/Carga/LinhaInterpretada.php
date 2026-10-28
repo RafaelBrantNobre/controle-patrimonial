@@ -32,8 +32,6 @@ final class LinhaInterpretada
 
     public ?string $estadoConservacao = null;
 
-    public ?string $observacao = null;
-
     public function __construct(public readonly LinhaDaPlanilha $linha) {}
 
     public function rejeitar(string $motivo): self

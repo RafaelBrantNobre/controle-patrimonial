@@ -50,13 +50,12 @@ test('número no meio de outro texto é separado, com aviso', function () {
         ->and($convenio->origem)->toBe('Convênio');
 });
 
-test('texto que não é plaqueta deixa o bem sem número e vai para a observação', function (string $patrimonio) {
+test('texto que não é plaqueta deixa o bem sem número, com aviso', function (string $patrimonio) {
     $resultado = interpretar(['patrimonio' => $patrimonio]);
 
     expect($resultado->foiRejeitada())->toBeFalse()
         ->and($resultado->numeroPatrimonio)->toBeNull()
-        ->and($resultado->avisos[0])->toContain($patrimonio)
-        ->and($resultado->observacao)->toContain($patrimonio);
+        ->and($resultado->avisos[0])->toContain($patrimonio);
 })->with(['3229-8334', 'Ilegível', 'MON0001', 'pegar patrimonio']);
 
 // --- Tipo, descrição, marca e origem ----------------------------------------
@@ -144,15 +143,3 @@ test('linha que conta vários itens é rejeitada', function (string $descricao, 
     ['Monitor', '17 sem pé'],
     ['3 servidores (T300, T410, HP)', 'OK'],
 ]);
-
-// --- Observação -------------------------------------------------------------
-
-test('a observação guarda de onde a linha veio e o texto original', function () {
-    $resultado = interpretar(['aba' => 'Suporte TI sala 5', 'linha' => 42, 'descricao' => 'Cadeira azul', 'estado' => 'Regular', 'conferente' => 'Grupo 6'], 'salas');
-
-    expect($resultado->observacao)
-        ->toContain('aba "Suporte TI sala 5", linha 42')
-        ->toContain('Descrição na planilha: "Cadeira azul"')
-        ->toContain('Estado na planilha: "Regular"')
-        ->toContain('Conferido por: Grupo 6');
-});
