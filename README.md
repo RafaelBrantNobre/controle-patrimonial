@@ -27,6 +27,7 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 12. [Mudança de sala, situação e baixa](#12-mudança-de-sala-situação-e-baixa)
 13. [Relatório do levantamento](#13-relatório-do-levantamento)
 14. [Carga inicial da planilha](#14-carga-inicial-da-planilha)
+15. [Telas do sistema](#15-telas-do-sistema)
 
 ## 1. O que instalar antes
 
@@ -103,7 +104,7 @@ npm run dev
 
 ### 2.4 Conferir se deu certo
 
-Abra http://localhost:5173. A página mostra três linhas e as três devem estar em verde:
+Abra http://localhost:5173/status. A página mostra três linhas e as três devem estar em verde:
 
 - Front-end: no ar
 - Back-end: respondendo
@@ -568,3 +569,43 @@ Cada execução gera um Excel em `backend/storage/app/carga/`, com o nome `relat
 ### 14.5 Ajustar a interpretação
 
 As regras ficam em `backend/database/carga/planilha.php`, separadas do código: andares, salas, locais, abas, tipos, marcas, origens e conversão de estados. Para resolver uma rejeição de tipo ou de local, inclua a palavra no mapeamento e rode a simulação de novo.
+
+## 15. Telas do sistema
+
+As telas seguem os wireframes do Figma *CEAD - Gestão Patrimonial* (página Prototipagem; a Tela Login vem da página Definitivo). Ficam em `frontend/src/paginas`, com React Router, Tailwind e ícones do lucide.
+
+### 15.1 Rotas do front-end
+
+| Endereço | Tela | Quem vê | API usada |
+| --- | --- | --- | --- |
+| `/login` | Tela Login | todos | `POST /login` |
+| `/bens` | Listagem de Bens Patrimoniais | administrador e consulta | `GET /bens` |
+| `/bens/novo`, `/bens/{id}/editar` | Cadastro de Bem Patrimonial | administrador | `POST` e `PATCH /bens` |
+| `/bens/{id}` | Ficha do bem, com mudar de sala, mudar situação e dar baixa | administrador e consulta (as ações, só administrador) | `GET /bens/{id}`, `PATCH /bens/{id}/sala` e `/status` |
+| `/ambientes` | Gestão de Ambientes e Salas | administrador e consulta | `GET /salas`, `GET /andares` |
+| `/ambientes/novo`, `/ambientes/{id}/editar` | Cadastrar Ambiente / Sala | administrador | `POST` e `PATCH /salas` |
+| `/ambientes/{id}` | Detalhes da sala | administrador e consulta | `GET /salas/{id}`, `GET /salas/{id}/bens` |
+| `/relatorios` | Relatórios e Folhas de Conferência | administrador e consulta | `GET /relatorio`, `GET /relatorio/planilha` |
+| `/gerencia` | Painel de Gerência, com o cadastro de andares e tipos | administrador | `/andares`, `/tipos-patrimonio` |
+| `/usuarios`, `/usuarios/novo` | Usuários do Sistema e Cadastrar Novo Usuário | administrador | nenhuma ainda (tarefa 3.3) |
+| `/status` | Verificação do ambiente (seção 2.4) | todos | `GET /status` |
+
+O token do login fica no `sessionStorage` e some ao fechar o navegador. Com **Lembrar meu acesso** marcado, fica no `localStorage`. Quando a API responde 401, o front apaga o token e volta para o login.
+
+### 15.2 O que o wireframe pede e a API ainda não tem
+
+Essas partes aparecem nas telas com o aviso **Aguardando o back-end**, sem dado inventado:
+
+| Tela | Falta na API |
+| --- | --- |
+| Login | entrar com CPF, "Esqueci minha senha" |
+| Bens | foto, modelo, número de série, impressão da etiqueta, exportar a lista de bens em Excel (hoje só o relatório exporta) |
+| Ambientes | código ou sigla da sala, tipo de espaço, responsável, capacidade, registro da conferência por sala e histórico da sala |
+| Relatórios | PDF no modelo da Unimontes (tarefa 3.4; a tela usa a impressão do navegador) e histórico de relatórios gerados |
+| Gerência e Usuários | listar, cadastrar, editar e desativar usuários (tarefa 3.3) e parâmetros da plaqueta |
+
+Diferenças de nomes entre o wireframe e a API:
+
+- As situações *Em manutenção* e *Danificado* do wireframe não são situações de uso na API. O bem danificado fica `sem_uso` com conservação `pessimo` ou `sucata` (seção 11.2). O modelo **Itens com Pendência / Avarias** do relatório lista os bens em péssimo ou sucata.
+- O perfil *Operador* do wireframe é o perfil `consulta` da API.
+- A navegação do wireframe tem **Início**, mas não há wireframe dessa tela. O endereço `/` abre a lista de bens.
