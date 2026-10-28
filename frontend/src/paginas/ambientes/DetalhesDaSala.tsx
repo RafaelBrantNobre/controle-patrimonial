@@ -65,7 +65,7 @@ export function DetalhesDaSala() {
             </h2>
             <dl className="grid gap-4 sm:grid-cols-3">
               <div>
-                <dt className="rotulo">Pavimento</dt>
+                <dt className="rotulo">Andar</dt>
                 <dd className="flex items-center gap-1.5 text-sm">
                   <Layers className="size-4 text-cead-700" /> {dados.andar?.nome}
                 </dd>
@@ -107,7 +107,7 @@ export function DetalhesDaSala() {
               <table className="tabela">
                 <thead>
                   <tr>
-                    <th>Bem patrimonial</th>
+                    <th>Tipo do bem</th>
                     <th>Tombamento</th>
                     <th>Situação</th>
                     <th>Conservação</th>
@@ -120,7 +120,6 @@ export function DetalhesDaSala() {
                         <Link to={`/bens/${bem.id}`} className="font-medium text-slate-800 hover:text-cead-700">
                           {bem.tipo_patrimonio?.nome}
                         </Link>
-                        <span className="block text-xs text-slate-500">{[bem.descricao, bem.marca].filter(Boolean).join(' · ') || '—'}</span>
                       </td>
                       <td className="font-mono text-xs whitespace-nowrap">
                         {bem.numero_patrimonio ?? 'sem patrimônio'}

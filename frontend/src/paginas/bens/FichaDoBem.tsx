@@ -43,10 +43,7 @@ export function FichaDoBem() {
       </p>
       <div className="mt-1 mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-cead-900">
-            {bem.tipo_patrimonio?.nome}
-            {bem.descricao && <span className="font-normal text-slate-600"> · {bem.descricao}</span>}
-          </h1>
+          <h1 className="text-2xl font-bold text-cead-900">{bem.tipo_patrimonio?.nome}</h1>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
             <span className="font-mono font-semibold text-cead-800">{bem.numero_patrimonio ?? 'sem patrimônio'}</span>·
             <span className="font-mono">{bem.codigo_interno}</span>
@@ -102,6 +99,7 @@ export function FichaDoBem() {
             <Dado rotulo="Tombamento">{bem.numero_patrimonio ?? 'sem patrimônio'}</Dado>
             <Dado rotulo="Código interno">{bem.codigo_interno}</Dado>
             <Dado rotulo="Tipo">{bem.tipo_patrimonio?.nome}</Dado>
+            <Dado rotulo="Descrição">{bem.descricao}</Dado>
             <Dado rotulo="Marca">{bem.marca}</Dado>
             <Dado rotulo="Origem">{bem.origem}</Dado>
             <Dado rotulo="Quantidade">{bem.quantidade}</Dado>

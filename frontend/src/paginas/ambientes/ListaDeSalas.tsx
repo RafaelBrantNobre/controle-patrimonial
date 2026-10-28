@@ -1,4 +1,4 @@
-import { Building2, ClipboardCheck, DoorOpen, Eye, Layers, Package, Pencil, Plus, Search } from 'lucide-react'
+import { Building2, DoorOpen, Eye, Layers, Package, Pencil, Plus, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
@@ -14,8 +14,8 @@ const ABAS = [
 ]
 
 // Gestão de Ambientes e Salas (wireframe).
-// Fora do back-end por enquanto: a situação de conferência de cada sala
-// (conferida ou pendente) e o indicador de salas conferidas. As abas filtram
+// O wireframe mostra a situação de conferência de cada sala, que o back-end
+// ainda não registra; até lá a tela não mostra conferência. As abas filtram
 // por sala ativa e inativa, que o back-end já tem.
 export function ListaDeSalas() {
   const { usuario } = useAutenticacao()
@@ -56,7 +56,7 @@ export function ListaDeSalas() {
     <>
       <Cabecalho
         titulo="Locais e Ambientes"
-        subtitulo="Gestão das salas, pavimentos e conferência física dos bens."
+        subtitulo="Gestão das salas, andares e conferência física dos bens."
         acoes={
           usuario?.pode_alterar && (
             <Link to="/ambientes/novo" className="botao-primario">
@@ -66,11 +66,10 @@ export function ListaDeSalas() {
         }
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <Indicador titulo="Total de ambientes" valor={todasAtivas.dados?.meta.total ?? '…'} detalhe="salas ativas" icone={Building2} />
-        <Indicador titulo="Pavimentos" valor={andares.dados?.meta.total ?? '…'} detalhe="andares cadastrados" icone={Layers} />
+        <Indicador titulo="Andares" valor={andares.dados?.meta.total ?? '…'} detalhe="andares cadastrados" icone={Layers} />
         <Indicador titulo="Bens alocados" valor={bens.dados?.meta.total.toLocaleString('pt-BR') ?? '…'} detalhe="itens cadastrados" icone={Package} />
-        <Indicador titulo="Salas conferidas" valor="—" detalhe="aguardando o registro da conferência na API" icone={ClipboardCheck} />
       </div>
 
       <section className="cartao mb-6 flex flex-wrap items-center gap-3 p-4">
@@ -78,9 +77,9 @@ export function ListaDeSalas() {
           className="entrada w-auto min-w-48"
           value={filtro('andar_id')}
           onChange={(e) => mudarFiltro('andar_id', e.target.value)}
-          aria-label="Filtrar por pavimento"
+          aria-label="Filtrar por andar"
         >
-          <option value="">Todos os pavimentos</option>
+          <option value="">Todos os andares</option>
           {andares.dados?.data.map((andar) => (
             <option key={andar.id} value={andar.id}>
               {andar.nome}
@@ -116,7 +115,7 @@ export function ListaDeSalas() {
             <thead>
               <tr>
                 <th>Identificação da sala</th>
-                <th>Pavimento</th>
+                <th>Andar</th>
                 <th className="text-center">Total de bens alocados</th>
                 <th>Situação</th>
                 <th className="text-right">Ações</th>

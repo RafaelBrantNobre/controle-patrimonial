@@ -43,7 +43,7 @@ export function PainelDeGerencia() {
 
       <div className="mb-6 grid gap-6 lg:grid-cols-2">
         <CadastroSimples<Andar>
-          titulo="Pavimentos / Andares"
+          titulo="Andares"
           icone={Layers}
           caminho="/andares"
           detalhe={(andar) => `${andar.salas_count ?? 0} salas · ordem ${andar.ordem}`}

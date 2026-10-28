@@ -226,7 +226,7 @@ function Formulario({ bem }: { bem?: Bem }) {
             ) : (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Campo rotulo="Pavimento / Andar" obrigatorio>
+                  <Campo rotulo="Andar" obrigatorio>
                     <select className="entrada" value={dados.andar_id} onChange={(e) => mudar('andar_id', e.target.value)} required>
                       <option value="">Selecione o andar...</option>
                       {andares.dados?.data.map((andar) => (

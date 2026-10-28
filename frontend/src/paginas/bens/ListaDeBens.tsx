@@ -1,4 +1,4 @@
-import { ClipboardList, Eye, Pencil, Plus, ScanBarcode, Search } from 'lucide-react'
+import { ClipboardList, Eye, Pencil, Plus, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
@@ -82,9 +82,9 @@ export function ListaDeBens() {
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label>
-            <span className="rotulo">Pavimento</span>
+            <span className="rotulo">Andar</span>
             <select className="entrada" value={filtro('andar_id')} onChange={(e) => mudarFiltro('andar_id', e.target.value)}>
-              <option value="">Todos os pavimentos</option>
+              <option value="">Todos os andares</option>
               {andares.dados?.data.map((andar) => (
                 <option key={andar.id} value={andar.id}>
                   {andar.nome}
@@ -151,7 +151,7 @@ export function ListaDeBens() {
             <thead>
               <tr>
                 <th>Tombamento</th>
-                <th>Descrição do bem</th>
+                <th>Tipo do bem</th>
                 <th>Localização física</th>
                 <th>Situação</th>
                 <th>Conservação</th>
@@ -167,17 +167,7 @@ export function ListaDeBens() {
                     </span>
                     <span className="mt-1 block font-mono text-xs text-slate-400">{bem.codigo_interno}</span>
                   </td>
-                  <td>
-                    <p className="font-medium text-slate-800">
-                      {bem.tipo_patrimonio?.nome}
-                      {bem.descricao && <span className="font-normal text-slate-600"> · {bem.descricao}</span>}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {[bem.marca, bem.origem, bem.quantidade > 1 ? `${bem.quantidade} unidades` : null]
-                        .filter(Boolean)
-                        .join(' · ') || '—'}
-                    </p>
-                  </td>
+                  <td className="font-medium text-slate-800">{bem.tipo_patrimonio?.nome}</td>
                   <td>
                     <p className="text-slate-800">{bem.sala?.nome}</p>
                     <p className="text-xs text-slate-500">{bem.sala?.andar?.nome}</p>
@@ -221,13 +211,6 @@ export function ListaDeBens() {
         )}
       </section>
 
-      <section className="cartao mt-6 flex items-center gap-3 p-4 text-sm text-slate-600">
-        <ScanBarcode className="size-5 text-cead-700" />
-        <p>
-          <strong className="text-slate-800">Inventário em campo com leitor de código de barras.</strong> Clique na busca e
-          leia a plaqueta com um leitor USB: o número aparece no campo e a lista mostra o bem.
-        </p>
-      </section>
     </>
   )
 }

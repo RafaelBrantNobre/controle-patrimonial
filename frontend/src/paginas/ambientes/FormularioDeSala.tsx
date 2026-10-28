@@ -95,7 +95,7 @@ function Formulario({ sala }: { sala?: Sala }) {
             <Campo rotulo="Nome da sala / descrição" obrigatorio erro={erro?.doCampo('nome')} ajuda="Informe o nome como é reconhecido pela equipe.">
               <input className="entrada" maxLength={120} placeholder="ex: Estúdio 03 - Gravação de Podcasts" value={dados.nome} onChange={(e) => mudar('nome', e.target.value)} required />
             </Campo>
-            <Campo rotulo="Pavimento / Andar" obrigatorio erro={erro?.doCampo('andar_id')}>
+            <Campo rotulo="Andar" obrigatorio erro={erro?.doCampo('andar_id')}>
               <select className="entrada" value={dados.andar_id} onChange={(e) => mudar('andar_id', e.target.value)} required>
                 <option value="">Selecione o andar...</option>
                 {andares.dados?.data.map((andar) => (
@@ -180,7 +180,7 @@ function Formulario({ sala }: { sala?: Sala }) {
               <Building2 className="size-4 text-cead-700" />
               {dados.nome.trim() || 'Nome do espaço a preencher...'}
             </p>
-            <p className="mt-1 text-xs text-slate-500">{andarEscolhido?.nome ?? 'Pavimento não definido'}</p>
+            <p className="mt-1 text-xs text-slate-500">{andarEscolhido?.nome ?? 'Andar não definido'}</p>
           </section>
         </aside>
       </div>

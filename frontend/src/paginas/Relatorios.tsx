@@ -33,7 +33,7 @@ const MODELOS: { id: Modelo; categoria: string; titulo: string; texto: string; i
     id: 'inventario',
     categoria: 'Visão predial',
     titulo: 'Inventário Completo do Prédio',
-    texto: 'Listagem geral de todos os equipamentos cadastrados no CEAD, agrupados por pavimento e sala.',
+    texto: 'Listagem geral de todos os equipamentos cadastrados no CEAD, agrupados por andar e sala.',
     icone: Table2,
   },
   {
@@ -204,7 +204,7 @@ export function Relatorios() {
               <input type="date" className="entrada" value={periodo.fim} onChange={(e) => setPeriodo((p) => ({ ...p, fim: e.target.value }))} />
             </label>
             <label>
-              <span className="rotulo">Pavimento</span>
+              <span className="rotulo">Andar</span>
               <select
                 className="entrada"
                 value={andarId}
@@ -213,7 +213,7 @@ export function Relatorios() {
                   setSalaId('')
                 }}
               >
-                <option value="">Todos os pavimentos</option>
+                <option value="">Todos os andares</option>
                 {andares.dados?.data.map((andar) => (
                   <option key={andar.id} value={andar.id}>
                     {andar.nome}
@@ -341,7 +341,7 @@ function FolhaDeConferencia({
               <div>
                 <p className="font-semibold text-cead-900">CEAD - {titulo.toUpperCase()}</p>
                 <p className="text-xs text-slate-500">
-                  Ambiente: {sala.nome} · Pavimento: {sala.andar}
+                  Ambiente: {sala.nome} · Andar: {sala.andar}
                 </p>
               </div>
             </div>
