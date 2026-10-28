@@ -10,7 +10,10 @@ import { FichaDoBem } from './paginas/bens/FichaDoBem'
 import { FormularioDeBem } from './paginas/bens/FormularioDeBem'
 import { ListaDeBens } from './paginas/bens/ListaDeBens'
 import { Login } from './paginas/Login'
+import { PainelDeGerencia } from './paginas/PainelDeGerencia'
 import { Relatorios } from './paginas/Relatorios'
+import { FormularioDeUsuario } from './paginas/usuarios/FormularioDeUsuario'
+import { ListaDeUsuarios } from './paginas/usuarios/ListaDeUsuarios'
 import { StatusDoAmbiente } from './paginas/StatusDoAmbiente'
 
 // Só deixa passar quem está conectado. Quem não está vai para o login e volta
@@ -57,6 +60,9 @@ function App() {
             <Route path="/ambientes/:id" element={<DetalhesDaSala />} />
             <Route path="/ambientes/:id/editar" element={<SoAdministrador><FormularioDeSala /></SoAdministrador>} />
             <Route path="/relatorios" element={<Relatorios />} />
+            <Route path="/gerencia" element={<SoAdministrador><PainelDeGerencia /></SoAdministrador>} />
+            <Route path="/usuarios" element={<SoAdministrador><ListaDeUsuarios /></SoAdministrador>} />
+            <Route path="/usuarios/novo" element={<SoAdministrador><FormularioDeUsuario /></SoAdministrador>} />
             <Route path="*" element={<Navigate to="/bens" replace />} />
           </Route>
         </Routes>
