@@ -3,6 +3,9 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import { ProvedorDeAutenticacao, useAutenticacao } from './autenticacao/Autenticacao'
 import { Layout } from './componentes/Layout'
 import { Carregando } from './componentes/ui'
+import { DetalhesDaSala } from './paginas/ambientes/DetalhesDaSala'
+import { FormularioDeSala } from './paginas/ambientes/FormularioDeSala'
+import { ListaDeSalas } from './paginas/ambientes/ListaDeSalas'
 import { FichaDoBem } from './paginas/bens/FichaDoBem'
 import { FormularioDeBem } from './paginas/bens/FormularioDeBem'
 import { ListaDeBens } from './paginas/bens/ListaDeBens'
@@ -48,6 +51,10 @@ function App() {
             <Route path="/bens/novo" element={<SoAdministrador><FormularioDeBem /></SoAdministrador>} />
             <Route path="/bens/:id" element={<FichaDoBem />} />
             <Route path="/bens/:id/editar" element={<SoAdministrador><FormularioDeBem /></SoAdministrador>} />
+            <Route path="/ambientes" element={<ListaDeSalas />} />
+            <Route path="/ambientes/novo" element={<SoAdministrador><FormularioDeSala /></SoAdministrador>} />
+            <Route path="/ambientes/:id" element={<DetalhesDaSala />} />
+            <Route path="/ambientes/:id/editar" element={<SoAdministrador><FormularioDeSala /></SoAdministrador>} />
             <Route path="*" element={<Navigate to="/bens" replace />} />
           </Route>
         </Routes>
