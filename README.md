@@ -591,7 +591,17 @@ As telas seguem os wireframes do Figma *CEAD - Gestão Patrimonial* (página Pro
 
 O token do login fica no `sessionStorage` e some ao fechar o navegador. Com **Lembrar meu acesso** marcado, fica no `localStorage`. Quando a API responde 401, o front apaga o token e volta para o login.
 
-### 15.2 O que o wireframe pede e a API ainda não tem
+### 15.2 Exclusão
+
+Andar, sala e tipo de patrimônio têm botão **Excluir**: o andar e o tipo no Painel de Gerência, a sala nos Detalhes da sala. A regra é a da API (seção 10.3): só se exclui o que está vazio.
+
+- Se houver algo ligado (salas do andar, bens da sala ou do tipo), o popup lista o que está ligado e avisa que não é possível excluir. O caminho é mover os itens ou inativar.
+- Se estiver vazio, o popup avisa que a exclusão é permanente e só libera o botão depois que a pessoa digita o nome do item.
+- Sala vazia que aparece no histórico de mudanças também não é excluída. A mensagem da API aparece no popup.
+
+Bem não é excluído (RN07). O cadastro de bem avisa isso antes de salvar, e a saída do patrimônio é a baixa (seção 12).
+
+### 15.3 O que o wireframe pede e a API ainda não tem
 
 Essas partes aparecem nas telas com o aviso **Aguardando o back-end**, sem dado inventado:
 
