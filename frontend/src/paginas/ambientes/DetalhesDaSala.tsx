@@ -1,7 +1,9 @@
 import { ClipboardCheck, DoorOpen, History, Info, Layers, Package, Pencil } from 'lucide-react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
+import { BotaoExcluir } from '../../componentes/Exclusao'
 import { AguardandoApi, Aviso, Carregando, SeloAtivo, SeloConservacao, SeloStatus } from '../../componentes/ui'
+import { apiDelete, apiGet } from '../../services/api'
 import type { Bem, Sala } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
 
@@ -13,6 +15,7 @@ import { useApi } from '../../services/useApi'
 export function DetalhesDaSala() {
   const { id } = useParams()
   const { usuario } = useAutenticacao()
+  const navegar = useNavigate()
   const sala = useApi<{ data: Sala }>(`/salas/${id}`)
   const bens = useApi<{ data: Bem[]; total: number }>(`/salas/${id}/bens`)
 
@@ -45,6 +48,27 @@ export function DetalhesDaSala() {
               <Link to={`/ambientes/${dados.id}/editar`} className="botao-secundario">
                 <Pencil className="size-4" /> Editar sala
               </Link>
+            )}
+            {usuario?.pode_alterar && (
+              <BotaoExcluir
+                rotulo="a sala"
+                nome={dados.nome}
+                nomeDoVinculo={{ singular: 'bem', plural: 'bens' }}
+                buscarVinculos={async () => {
+                  const resposta = await apiGet<{ data: Bem[]; total: number }>(`/salas/${dados.id}/bens`)
+                  return {
+                    total: resposta.total,
+                    itens: resposta.data.map((bem) => ({
+                      id: bem.id,
+                      titulo: `${bem.numero_patrimonio ?? 'sem patrimônio'} · ${bem.tipo_patrimonio?.nome ?? ''}`,
+                      detalhe: bem.codigo_interno,
+                      para: `/bens/${bem.id}`,
+                    })),
+                  }
+                }}
+                excluir={() => apiDelete(`/salas/${dados.id}`)}
+                aoExcluir={() => navegar('/ambientes', { replace: true })}
+              />
             )}
             <Link to={`/relatorios?sala_id=${dados.id}`} className="botao-primario">
               <ClipboardCheck className="size-4" /> Iniciar conferência

@@ -315,6 +315,15 @@ function Formulario({ bem }: { bem?: Bem }) {
         </aside>
       </div>
 
+      {!editando && (
+        <div className="mt-6">
+          <Aviso tipo="info">
+            <strong>Atenção: um bem cadastrado não pode ser excluído.</strong> Confira o tombamento, o tipo e a sala antes de salvar. Se o bem sair do
+            patrimônio depois, registre a baixa na ficha dele.
+          </Aviso>
+        </div>
+      )}
+
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <button type="button" className="botao text-slate-500 hover:text-slate-700" onClick={() => setDados(bem ? dadosDoBem(bem) : VAZIO)}>
           <RotateCcw className="size-4" /> Limpar formulário

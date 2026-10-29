@@ -91,6 +91,10 @@ export async function apiPatch<T>(caminho: string, corpo: unknown): Promise<T> {
   return (await requisitar('PATCH', caminho, corpo)).json() as Promise<T>
 }
 
+export async function apiDelete<T>(caminho: string): Promise<T> {
+  return (await requisitar('DELETE', caminho)).json() as Promise<T>
+}
+
 // Baixa um arquivo (a planilha do relatório) com o token e entrega ao
 // navegador com o nome que vem em Content-Disposition.
 export async function apiBaixar(caminho: string, nomePadrao: string) {

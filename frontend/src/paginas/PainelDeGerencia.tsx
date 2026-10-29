@@ -3,8 +3,9 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { useAutenticacao } from '../autenticacao/Autenticacao'
 import { AguardandoApi, Aviso, Carregando, SeloAtivo } from '../componentes/ui'
-import { apiPatch, apiPost, ErroDaApi } from '../services/api'
-import type { Andar, Pagina, TipoPatrimonio } from '../services/tipos'
+import { BotaoExcluir, type Vinculos } from '../componentes/Exclusao'
+import { apiDelete, apiGet, apiPatch, apiPost, ErroDaApi } from '../services/api'
+import type { Andar, Bem, Pagina, Sala, TipoPatrimonio } from '../services/tipos'
 import { useApi } from '../services/useApi'
 
 // Painel de Gerência (wireframe), só para o administrador.
@@ -48,6 +49,15 @@ export function PainelDeGerencia() {
           caminho="/andares"
           detalhe={(andar) => `${andar.salas_count ?? 0} salas · ordem ${andar.ordem}`}
           novo={(nome, lista) => ({ nome, ordem: Math.max(0, ...lista.map((andar) => andar.ordem)) + 1 })}
+          rotulo="o andar"
+          nomeDoVinculo={{ singular: 'sala', plural: 'salas', feminino: true }}
+          buscarVinculos={async (andar) => {
+            const salas = await apiGet<Pagina<Sala>>(`/salas?andar_id=${andar.id}&por_pagina=100`)
+            return {
+              total: salas.meta.total,
+              itens: salas.data.map((sala) => ({ id: sala.id, titulo: sala.nome, detalhe: `${sala.bens_count ?? 0} bens`, para: `/ambientes/${sala.id}` })),
+            }
+          }}
         />
         <CadastroSimples<TipoPatrimonio>
           titulo="Tipos de patrimônio"
@@ -55,6 +65,20 @@ export function PainelDeGerencia() {
           caminho="/tipos-patrimonio"
           detalhe={(tipo) => `${tipo.bens_count ?? 0} bens`}
           novo={(nome) => ({ nome })}
+          rotulo="o tipo"
+          nomeDoVinculo={{ singular: 'bem', plural: 'bens' }}
+          buscarVinculos={async (tipo) => {
+            const bens = await apiGet<Pagina<Bem>>(`/bens?tipo_patrimonio_id=${tipo.id}&por_pagina=100`)
+            return {
+              total: bens.meta.total,
+              itens: bens.data.map((bem) => ({
+                id: bem.id,
+                titulo: `${bem.numero_patrimonio ?? 'sem patrimônio'} · ${bem.codigo_interno}`,
+                detalhe: bem.sala?.nome,
+                para: `/bens/${bem.id}`,
+              })),
+            }
+          }}
         />
       </div>
 
@@ -97,20 +121,27 @@ function Atalho({ icone: Icone, selo, titulo, texto, para, acao }: { icone: Luci
 
 type ItemSimples = { id: number; nome: string; ativo: boolean }
 
-// Lista com cadastro rápido e botão de ativar e inativar. Excluir fica de fora:
-// o caminho para tirar de uso é inativar (RN08).
+// Lista com cadastro rápido, botão de ativar e inativar e botão de excluir.
+// Excluir só funciona com o item vazio (RN08): o popup mostra o que está
+// ligado e, se não houver nada, pede o nome do item para confirmar.
 function CadastroSimples<T extends ItemSimples>({
   titulo,
   icone: Icone,
   caminho,
   detalhe,
   novo,
+  rotulo,
+  nomeDoVinculo,
+  buscarVinculos,
 }: {
   titulo: string
   icone: LucideIcon
   caminho: string
   detalhe: (item: T) => string
   novo: (nome: string, lista: T[]) => Record<string, unknown>
+  rotulo: string
+  nomeDoVinculo: { singular: string; plural: string; feminino?: boolean }
+  buscarVinculos: (item: T) => Promise<Vinculos>
 }) {
   const [versao, setVersao] = useState(0)
   const [nome, setNome] = useState('')
@@ -179,6 +210,17 @@ function CadastroSimples<T extends ItemSimples>({
               >
                 {item.ativo ? 'Inativar' : 'Reativar'}
               </button>
+              <BotaoExcluir
+                rotulo={rotulo}
+                nome={item.nome}
+                nomeDoVinculo={nomeDoVinculo}
+                buscarVinculos={() => buscarVinculos(item)}
+                excluir={() => apiDelete(`${caminho}/${item.id}`)}
+                aoExcluir={() => setVersao((v) => v + 1)}
+                className="text-xs font-semibold text-red-700 hover:underline"
+              >
+                Excluir
+              </BotaoExcluir>
             </span>
           </li>
         ))}
