@@ -14,3 +14,8 @@ export function hojeIso() {
   const dia = String(agora.getDate()).padStart(2, '0')
   return `${agora.getFullYear()}-${mes}-${dia}`
 }
+
+// "1 bem" e "2 bens": a quantidade com a palavra no número certo.
+export function plural(quantidade: number, singular: string, plural: string) {
+  return `${quantidade} ${quantidade === 1 ? singular : plural}`
+}

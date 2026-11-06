@@ -1,8 +1,9 @@
-import { ArrowRightLeft, CircleSlash, History, Pencil, RefreshCw } from 'lucide-react'
+import { ArrowRightLeft, CircleSlash, ClipboardCheck, FileText, History, MapPin, Pencil, RefreshCw } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
-import { Aviso, Campo, Carregando, SeloConservacao, SeloStatus } from '../../componentes/ui'
+import { Aviso, Campo, Carregando, SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/ui'
+import { ResolverPendencia } from '../conferencias/ResolverPendencia'
 import { apiPatch, consulta, ErroDaApi } from '../../services/api'
 import { formatarData, hojeIso } from '../../services/formatos'
 import type { Andar, Bem, Pagina, Sala } from '../../services/tipos'
@@ -124,14 +125,109 @@ export function FichaDoBem() {
             <Dado rotulo="Registrada por">{bem.usuario_ultima_mudanca?.nome}</Dado>
             <Dado rotulo="Última mudança de sala">
               {bem.ultima_movimentacao
-                ? `${bem.ultima_movimentacao.sala_origem?.nome} → ${bem.ultima_movimentacao.sala_destino?.nome}, em ${formatarData(bem.ultima_movimentacao.data)}`
+                ? `${bem.ultima_movimentacao.sala_origem?.nome ?? 'sem sala de origem'} → ${bem.ultima_movimentacao.sala_destino?.nome}, em ${formatarData(bem.ultima_movimentacao.data)}`
                 : 'nunca mudou de sala'}
             </Dado>
             <Dado rotulo="Cadastrado em">{formatarData(bem.cadastrado_em)}</Dado>
           </dl>
         </section>
       </div>
+
+      <ConferenciaDoBem bem={bem} podeResolver={Boolean(usuario?.pode_alterar)} aoResolver={() => concluir('Pendência resolvida.')} />
     </>
+  )
+}
+
+// Conferência do bem: a situação de agora, a pendência (se ele não foi
+// localizado) e o histórico das conferências concluídas.
+function ConferenciaDoBem({ bem, podeResolver, aoResolver }: { bem: Bem; podeResolver: boolean; aoResolver: () => void }) {
+  const [resolvendo, setResolvendo] = useState<'localizado' | 'processo_administrativo' | null>(null)
+  const historico = bem.historico_conferencias ?? []
+
+  return (
+    <section className="cartao mt-6 p-6">
+      <h2 className="mb-4 flex flex-wrap items-center gap-2 font-semibold text-cead-900">
+        <ClipboardCheck className="size-4" /> Conferência <SeloConferencia bem={bem} />
+      </h2>
+
+      {bem.em_conferencia && (
+        <p className="mb-4 text-sm text-slate-600">
+          Está na conferência aberta{' '}
+          <Link to={`/conferencias/${bem.em_conferencia.conferencia_id}`} className="font-semibold text-cead-700 hover:underline">
+            {bem.em_conferencia.nome}
+          </Link>
+          .
+        </p>
+      )}
+
+      {bem.pendencia && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <p>
+            <strong>Não localizado desde {formatarData(bem.pendencia.desde)}</strong>, na conferência {bem.pendencia.conferencia}. A pendência fecha quando
+            o bem aparecer ou com o número do processo administrativo.
+          </p>
+          {podeResolver && (
+            <div className="flex gap-2">
+              <button type="button" className="botao-secundario px-3 py-1 text-xs" onClick={() => setResolvendo('localizado')}>
+                <MapPin className="size-3.5" /> Localizado
+              </button>
+              <button type="button" className="botao-secundario px-3 py-1 text-xs" onClick={() => setResolvendo('processo_administrativo')}>
+                <FileText className="size-3.5" /> Processo
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {historico.length === 0 ? (
+        <p className="text-sm text-slate-500">Este bem ainda não entrou numa conferência concluída.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="tabela">
+            <thead>
+              <tr>
+                <th>Conferência</th>
+                <th>Realizada em</th>
+                <th>Resultado</th>
+                <th>Pendência</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historico.map((item) => (
+                <tr key={item.conferencia_id}>
+                  <td>
+                    <Link to={`/conferencias/${item.conferencia_id}`} className="text-cead-700 hover:underline">
+                      {item.conferencia}
+                    </Link>
+                  </td>
+                  <td>{formatarData(item.realizada_em)}</td>
+                  <td>{item.resultado_rotulo}</td>
+                  <td className="text-slate-600">
+                    {item.resolucao_rotulo
+                      ? `${item.resolucao_rotulo}${item.processo_numero ? ` nº ${item.processo_numero}` : ''}`
+                      : item.resultado === 'nao_localizado'
+                        ? 'aberta'
+                        : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {resolvendo && (
+        <ResolverPendencia
+          bem={bem}
+          jeito={resolvendo}
+          aoFechar={() => setResolvendo(null)}
+          aoResolver={() => {
+            setResolvendo(null)
+            aoResolver()
+          }}
+        />
+      )}
+    </section>
   )
 }
 

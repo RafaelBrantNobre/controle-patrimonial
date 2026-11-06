@@ -165,6 +165,7 @@ export function ListaDeSalas() {
             ultima={salas.dados.meta.last_page}
             total={salas.dados.meta.total}
             rotulo="ambientes"
+            singular="ambiente"
             aoMudar={(nova) => mudarFiltro('pagina', String(nova))}
           />
         )}

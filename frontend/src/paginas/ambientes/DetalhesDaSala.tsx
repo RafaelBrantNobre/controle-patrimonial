@@ -2,16 +2,19 @@ import { ClipboardCheck, DoorOpen, History, Info, Layers, Package, Pencil } from
 import { Link, useNavigate, useParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
 import { BotaoExcluir } from '../../componentes/Exclusao'
-import { AguardandoApi, Aviso, Carregando, SeloAtivo, SeloConservacao, SeloStatus } from '../../componentes/ui'
+import { AguardandoApi, Aviso, Carregando, SeloAtivo, SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/ui'
 import { apiDelete, apiGet } from '../../services/api'
+import { formatarData } from '../../services/formatos'
 import type { Bem, Sala } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
 
 // Detalhes da sala (wireframe): dados da sala e todos os bens dela, na ordem
 // da conferência (por tipo e número de patrimônio).
-// Fora do back-end por enquanto: capacidade, responsável, o registro da
-// conferência da sala e o histórico de mudanças da sala.
-// "Iniciar conferência" abre a folha de conferência da sala em Relatórios.
+// O cartão de conferência resume os bens da sala pela última conferência.
+// "Iniciar conferência" gera uma conferência com os bens da sala; para o
+// perfil consulta, abre a folha da sala em Relatórios.
+// Fora do back-end por enquanto: capacidade, responsável e o histórico de
+// mudanças da sala.
 export function DetalhesDaSala() {
   const { id } = useParams()
   const { usuario } = useAutenticacao()
@@ -23,7 +26,16 @@ export function DetalhesDaSala() {
   if (!sala.dados) return <Carregando />
 
   const dados = sala.dados.data
-  const emUso = bens.dados?.data.filter((bem) => bem.status === 'em_uso').length ?? 0
+  const lista = bens.dados?.data ?? []
+  const emUso = lista.filter((bem) => bem.status === 'em_uso').length
+  const conferidos = lista.filter((bem) => bem.resultado_ultima_conferencia === 'encontrado').length
+  const naoLocalizados = lista.filter((bem) => bem.resultado_ultima_conferencia === 'nao_localizado').length
+  const nuncaConferidos = lista.filter((bem) => !bem.data_ultima_conferencia).length
+  const emConferencia = lista.filter((bem) => bem.em_conferencia).length
+  const ultimaConferencia = lista.reduce<string | null>(
+    (maior, bem) => (bem.data_ultima_conferencia && (!maior || bem.data_ultima_conferencia > maior) ? bem.data_ultima_conferencia : maior),
+    null,
+  )
 
   return (
     <>
@@ -70,8 +82,11 @@ export function DetalhesDaSala() {
                 aoExcluir={() => navegar('/ambientes', { replace: true })}
               />
             )}
-            <Link to={`/relatorios?sala_id=${dados.id}`} className="botao-primario">
-              <ClipboardCheck className="size-4" /> Iniciar conferência
+            <Link
+              to={usuario?.pode_alterar ? `/conferencias/nova?sala_id=${dados.id}` : `/relatorios?sala_id=${dados.id}`}
+              className="botao-primario"
+            >
+              <ClipboardCheck className="size-4" /> {usuario?.pode_alterar ? 'Iniciar conferência' : 'Folha de conferência'}
             </Link>
           </div>
         </div>
@@ -135,6 +150,7 @@ export function DetalhesDaSala() {
                     <th>Tombamento</th>
                     <th>Situação</th>
                     <th>Conservação</th>
+                    <th>Conferência</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -155,6 +171,9 @@ export function DetalhesDaSala() {
                       <td>
                         <SeloConservacao estado={bem.estado_conservacao} rotulo={bem.estado_conservacao_rotulo} />
                       </td>
+                      <td>
+                        <SeloConferencia bem={bem} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -171,7 +190,36 @@ export function DetalhesDaSala() {
             <h2 className="flex items-center gap-2 font-semibold text-cead-900">
               <ClipboardCheck className="size-4" /> Conferência patrimonial
             </h2>
-            <AguardandoApi>O registro da conferência (data, quem conferiu e itens conferidos) ainda não existe na API.</AguardandoApi>
+            {bens.dados && (
+              <dl className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Última conferência</dt>
+                  <dd className="font-medium text-slate-800">{ultimaConferencia ? formatarData(ultimaConferencia) : 'nenhuma'}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Encontrados</dt>
+                  <dd className="font-medium text-emerald-700">
+                    {conferidos} de {lista.length}
+                  </dd>
+                </div>
+                {naoLocalizados > 0 && (
+                  <div className="flex justify-between">
+                    <dt className="text-slate-500">Não localizados</dt>
+                    <dd className="font-medium text-red-700">{naoLocalizados}</dd>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Nunca conferidos</dt>
+                  <dd className="font-medium text-slate-800">{nuncaConferidos}</dd>
+                </div>
+                {emConferencia > 0 && (
+                  <div className="flex justify-between">
+                    <dt className="text-slate-500">Em conferência aberta</dt>
+                    <dd className="font-medium text-cead-700">{emConferencia}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
           </section>
           <section className="cartao space-y-3 p-5">
             <h2 className="flex items-center gap-2 font-semibold text-cead-900">

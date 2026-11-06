@@ -1,7 +1,8 @@
 // Peças visuais repetidas nas telas: selos, indicadores, avisos e paginação.
 import { AlertTriangle, ChevronLeft, ChevronRight, Info, type LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
-import type { EstadoConservacao, StatusBem } from '../services/tipos'
+import { formatarData } from '../services/formatos'
+import type { Bem, EstadoConservacao, StatusBem } from '../services/tipos'
 
 const CORES_SELO = {
   verde: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
@@ -41,6 +42,19 @@ const COR_CONSERVACAO: Record<EstadoConservacao, CorSelo> = {
 
 export function SeloConservacao({ estado, rotulo }: { estado: EstadoConservacao; rotulo: string }) {
   return <Selo cor={COR_CONSERVACAO[estado]}>{rotulo}</Selo>
+}
+
+// Situação de conferência do bem: em conferência aberta, conferido (com a
+// data da última conferência), não localizado ou nunca conferido.
+export function SeloConferencia({ bem }: { bem: Bem }) {
+  if (bem.em_conferencia) return <Selo cor="azul">Em conferência</Selo>
+  if (bem.resultado_ultima_conferencia === 'encontrado') {
+    return <Selo cor="verde">Conferido em {formatarData(bem.data_ultima_conferencia)}</Selo>
+  }
+  if (bem.resultado_ultima_conferencia === 'nao_localizado') {
+    return <Selo cor="vermelho">Não localizado em {formatarData(bem.data_ultima_conferencia)}</Selo>
+  }
+  return <Selo cor="cinza">Nunca conferido</Selo>
 }
 
 export function SeloAtivo({ ativo }: { ativo: boolean }) {
@@ -113,18 +127,21 @@ export function Paginacao({
   ultima,
   total,
   rotulo,
+  singular,
   aoMudar,
 }: {
   pagina: number
   ultima: number
   total: number
   rotulo: string
+  // Para o total 1: "1 bem encontrado" em vez de "1 bens encontrados".
+  singular?: string
   aoMudar: (pagina: number) => void
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-xs text-slate-500">
       <span>
-        {total} {rotulo}
+        {total} {total === 1 && singular ? singular : rotulo}
       </span>
       <div className="flex items-center gap-2">
         <button

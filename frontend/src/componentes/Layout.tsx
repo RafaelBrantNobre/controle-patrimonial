@@ -7,6 +7,7 @@ import { useAutenticacao } from '../autenticacao/Autenticacao'
 const MENU = [
   { para: '/bens', rotulo: 'Bens' },
   { para: '/ambientes', rotulo: 'Ambientes' },
+  { para: '/conferencias', rotulo: 'Conferências' },
   { para: '/gerencia', rotulo: 'Painel de Gerência', soAdministrador: true },
   { para: '/relatorios', rotulo: 'Relatórios' },
   { para: '/usuarios', rotulo: 'Usuários', soAdministrador: true },

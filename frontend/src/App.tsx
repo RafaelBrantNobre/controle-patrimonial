@@ -7,6 +7,9 @@ import { DetalhesDaSala } from './paginas/ambientes/DetalhesDaSala'
 import { FormularioDeSala } from './paginas/ambientes/FormularioDeSala'
 import { ListaDeSalas } from './paginas/ambientes/ListaDeSalas'
 import { FichaDoBem } from './paginas/bens/FichaDoBem'
+import { Conferencias } from './paginas/conferencias/Conferencias'
+import { GerarConferencia } from './paginas/conferencias/GerarConferencia'
+import { LancarConferencia } from './paginas/conferencias/LancarConferencia'
 import { FormularioDeBem } from './paginas/bens/FormularioDeBem'
 import { ListaDeBens } from './paginas/bens/ListaDeBens'
 import { Login } from './paginas/Login'
@@ -59,6 +62,9 @@ function App() {
             <Route path="/ambientes/novo" element={<SoAdministrador><FormularioDeSala /></SoAdministrador>} />
             <Route path="/ambientes/:id" element={<DetalhesDaSala />} />
             <Route path="/ambientes/:id/editar" element={<SoAdministrador><FormularioDeSala /></SoAdministrador>} />
+            <Route path="/conferencias" element={<Conferencias />} />
+            <Route path="/conferencias/nova" element={<SoAdministrador><GerarConferencia /></SoAdministrador>} />
+            <Route path="/conferencias/:id" element={<LancarConferencia />} />
             <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/gerencia" element={<SoAdministrador><PainelDeGerencia /></SoAdministrador>} />
             <Route path="/usuarios" element={<SoAdministrador><ListaDeUsuarios /></SoAdministrador>} />
