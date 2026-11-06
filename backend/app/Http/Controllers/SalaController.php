@@ -82,7 +82,7 @@ class SalaController extends Controller
 
         if ($sala->apareceNoHistorico()) {
             return response()->json([
-                'message' => 'Esta sala aparece no histórico de mudanças de bens e não pode ser excluída. Se ela não é mais usada, inative-a.',
+                'message' => 'Esta sala aparece no histórico de mudanças ou de conferências de bens e não pode ser excluída. Se ela não é mais usada, inative-a.',
             ], 409);
         }
 

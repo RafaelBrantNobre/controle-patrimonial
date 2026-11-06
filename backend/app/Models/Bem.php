@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Enums\EstadoConservacao;
+use App\Enums\ResolucaoPendencia;
+use App\Enums\ResultadoConferencia;
+use App\Enums\SituacaoConferencia;
 use App\Enums\StatusBem;
 use Database\Factories\BemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -23,6 +26,8 @@ use Illuminate\Support\Str;
 | é a condição física (novo a sucata). Uma não depende da outra.
 | Mudar de sala e de status passa por mudarDeSala() e alterarStatus()
 | (tarefa 2.8), que gravam quem fez e quando (RN09).
+| data_ultima_conferencia e resultado_ultima_conferencia vêm da última
+| conferência concluída (ver Conferencia::concluir()).
 */
 #[Table('bem')]
 #[Fillable([
@@ -40,6 +45,8 @@ use Illuminate\Support\Str;
     'usuario_ultima_mudanca_id',
     'baixa_data',
     'baixa_observacao',
+    'data_ultima_conferencia',
+    'resultado_ultima_conferencia',
 ])]
 class Bem extends Model
 {
@@ -63,6 +70,9 @@ class Bem extends Model
         'ultimaMovimentacao.salaOrigem.andar',
         'ultimaMovimentacao.salaDestino.andar',
         'ultimaMovimentacao.usuario',
+        'itemEmConferenciaAberta.conferencia',
+        'pendenciaAberta.conferencia',
+        'historicoDeConferencias.conferencia',
     ];
 
     /** Prefixo do código interno: CP de Controle Patrimonial. */
@@ -142,6 +152,69 @@ class Bem extends Model
         return $this->belongsTo(User::class, 'usuario_ultima_mudanca_id');
     }
 
+    /**
+     * O bem em todas as conferências em que entrou.
+     *
+     * @return HasMany<ConferenciaItem, $this>
+     */
+    public function itensDeConferencia(): HasMany
+    {
+        return $this->hasMany(ConferenciaItem::class);
+    }
+
+    /**
+     * O bem na conferência aberta em que está, se estiver. Um bem não entra
+     * em duas conferências abertas ao mesmo tempo.
+     *
+     * @return HasOne<ConferenciaItem, $this>
+     */
+    public function itemEmConferenciaAberta(): HasOne
+    {
+        return $this->hasOne(ConferenciaItem::class)
+            ->whereHas('conferencia', fn ($query) => $query->where('situacao', SituacaoConferencia::Aberta))
+            ->orderBy('conferencia_item.id');
+    }
+
+    /**
+     * Conferências concluídas em que o bem não foi localizado e a pendência
+     * ainda não foi resolvida.
+     *
+     * @return HasMany<ConferenciaItem, $this>
+     */
+    public function pendenciasAbertas(): HasMany
+    {
+        return $this->hasMany(ConferenciaItem::class)
+            ->where('resultado', ResultadoConferencia::NaoLocalizado)
+            ->whereNull('resolvido_em')
+            ->whereHas('conferencia', fn ($query) => $query->where('situacao', SituacaoConferencia::Concluida));
+    }
+
+    /**
+     * A pendência aberta mais antiga: diz desde quando o bem não é localizado.
+     *
+     * @return HasOne<ConferenciaItem, $this>
+     */
+    public function pendenciaAberta(): HasOne
+    {
+        return $this->hasOne(ConferenciaItem::class)
+            ->where('resultado', ResultadoConferencia::NaoLocalizado)
+            ->whereNull('resolvido_em')
+            ->whereHas('conferencia', fn ($query) => $query->where('situacao', SituacaoConferencia::Concluida))
+            ->orderBy('conferencia_item.id');
+    }
+
+    /**
+     * O bem nas conferências concluídas, da mais recente para a mais antiga.
+     *
+     * @return HasMany<ConferenciaItem, $this>
+     */
+    public function historicoDeConferencias(): HasMany
+    {
+        return $this->hasMany(ConferenciaItem::class)
+            ->whereHas('conferencia', fn ($query) => $query->where('situacao', SituacaoConferencia::Concluida))
+            ->orderByDesc('conferencia_item.id');
+    }
+
     public function estaBaixado(): bool
     {
         return $this->status === StatusBem::Baixado;
@@ -186,6 +259,37 @@ class Bem extends Model
         $this->save();
     }
 
+    /**
+     * Grava a data e o resultado da última conferência. Uma conferência de
+     * data anterior, concluída depois, não passa por cima da mais recente.
+     */
+    public function registrarConferencia(ResultadoConferencia $resultado, string $data): void
+    {
+        if ($this->data_ultima_conferencia !== null && $this->data_ultima_conferencia->toDateString() > $data) {
+            return;
+        }
+
+        $this->data_ultima_conferencia = $data;
+        $this->resultado_ultima_conferencia = $resultado;
+    }
+
+    /**
+     * Fecha as pendências abertas do bem: porque ele apareceu (localizado) ou
+     * porque a gestora abriu o processo administrativo. Com $ate, só fecha as
+     * pendências de conferências feitas até aquela data.
+     */
+    public function resolverPendencias(ResolucaoPendencia $resolucao, User $usuario, ?string $processo = null, ?string $ate = null): void
+    {
+        $this->pendenciasAbertas()
+            ->when($ate, fn ($query) => $query->whereHas('conferencia', fn ($query) => $query->whereDate('realizada_em', '<=', $ate)))
+            ->update([
+                'resolucao' => $resolucao,
+                'processo_numero' => $processo,
+                'resolvido_em' => now(),
+                'resolvido_por_id' => $usuario->id,
+            ]);
+    }
+
     private function registrarMudanca(User $usuario): void
     {
         $this->data_ultima_mudanca = now()->toDateString();
@@ -200,6 +304,8 @@ class Bem extends Model
             'quantidade' => 'integer',
             'data_ultima_mudanca' => 'date',
             'baixa_data' => 'date',
+            'data_ultima_conferencia' => 'date',
+            'resultado_ultima_conferencia' => ResultadoConferencia::class,
         ];
     }
 }

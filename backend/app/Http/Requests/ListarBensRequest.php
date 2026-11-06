@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Consultas\FiltroDeBens;
 use App\Enums\EstadoConservacao;
 use App\Enums\StatusBem;
 use Illuminate\Foundation\Http\FormRequest;
@@ -50,6 +51,7 @@ class ListarBensRequest extends FormRequest
             'status.*' => [Rule::enum(StatusBem::class)],
             'estado_conservacao' => ['sometimes', 'array'],
             'estado_conservacao.*' => [Rule::enum(EstadoConservacao::class)],
+            'conferencia' => ['sometimes', 'nullable', Rule::in(FiltroDeBens::SITUACOES_DE_CONFERENCIA)],
             'ordenar' => ['sometimes', 'nullable', Rule::in(self::ORDENACOES)],
             'direcao' => ['sometimes', 'nullable', Rule::in(['asc', 'desc'])],
         ];
@@ -70,6 +72,7 @@ class ListarBensRequest extends FormRequest
             'status.*.enum' => 'A situação de uso do filtro deve ser em_uso, sem_uso ou baixado.',
             'estado_conservacao.array' => 'O estado de conservação do filtro não é válido.',
             'estado_conservacao.*.enum' => 'O estado de conservação do filtro deve ser novo, bom, regular, pessimo, sucata ou indeterminado.',
+            'conferencia.in' => 'A situação de conferência do filtro deve ser uma destas: '.implode(', ', FiltroDeBens::SITUACOES_DE_CONFERENCIA).'.',
             'ordenar.in' => 'A ordenação deve ser uma destas: '.implode(', ', self::ORDENACOES).'.',
             'direcao.in' => 'A direção da ordenação deve ser asc ou desc.',
         ];

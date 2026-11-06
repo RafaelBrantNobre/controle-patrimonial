@@ -50,6 +50,29 @@ class BemResource extends JsonResource
             ] : null),
             'baixa_data' => $this->baixa_data?->toDateString(),
             'baixa_observacao' => $this->baixa_observacao,
+            // Conferência: a última concluída, a aberta em que o bem está e a
+            // pendência, se ele não foi localizado.
+            'data_ultima_conferencia' => $this->data_ultima_conferencia?->toDateString(),
+            'resultado_ultima_conferencia' => $this->resultado_ultima_conferencia?->value,
+            'resultado_ultima_conferencia_rotulo' => $this->resultado_ultima_conferencia?->rotulo(),
+            'em_conferencia' => $this->whenLoaded('itemEmConferenciaAberta', fn () => $this->itemEmConferenciaAberta ? [
+                'conferencia_id' => $this->itemEmConferenciaAberta->conferencia_id,
+                'nome' => $this->itemEmConferenciaAberta->conferencia->nome,
+            ] : null),
+            'pendencia' => $this->whenLoaded('pendenciaAberta', fn () => $this->pendenciaAberta ? [
+                'desde' => $this->pendenciaAberta->conferencia->realizada_em?->toDateString(),
+                'conferencia_id' => $this->pendenciaAberta->conferencia_id,
+                'conferencia' => $this->pendenciaAberta->conferencia->nome,
+            ] : null),
+            'historico_conferencias' => $this->whenLoaded('historicoDeConferencias', fn () => $this->historicoDeConferencias->map(fn ($item) => [
+                'conferencia_id' => $item->conferencia_id,
+                'conferencia' => $item->conferencia->nome,
+                'realizada_em' => $item->conferencia->realizada_em?->toDateString(),
+                'resultado' => $item->resultado?->value,
+                'resultado_rotulo' => $item->resultado?->rotulo(),
+                'resolucao_rotulo' => $item->resolucao?->rotulo(),
+                'processo_numero' => $item->processo_numero,
+            ])),
             'cadastrado_em' => $this->created_at?->toIso8601String(),
             'atualizado_em' => $this->updated_at?->toIso8601String(),
         ];

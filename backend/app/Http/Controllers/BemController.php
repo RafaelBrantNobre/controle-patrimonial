@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Consultas\FiltroDeBens;
 use App\Http\Requests\BemRequest;
 use App\Http\Requests\ListarBensRequest;
 use App\Http\Resources\BemResource;
@@ -40,6 +41,7 @@ class BemController extends Controller
      *   ?busca=       parte do número, do código, da descrição ou da marca
      *   ?andar_id=, ?sala_id=, ?tipo_patrimonio_id=, ?status= (RF13)
      *   ?estado_conservacao=  um ou mais estados, separados por vírgula
+     *   ?conferencia= nunca, encontrado, nao_localizado ou em_aberto
      *   ?ordenar=     local (padrão), numero, codigo, tipo, status, conservacao, cadastro
      *   ?direcao=     asc (padrão) ou desc
      * Bens baixados aparecem, sinalizados em "baixado" (RN05).
@@ -49,30 +51,8 @@ class BemController extends Controller
         $filtros = $request->validated();
         $direcao = $filtros['direcao'] ?? 'asc';
 
-        $bens = Bem::query()
-            ->select('bem.*')
-            ->join('sala', 'sala.id', '=', 'bem.sala_id')
-            ->join('andar', 'andar.id', '=', 'sala.andar_id')
-            ->join('tipo_patrimonio', 'tipo_patrimonio.id', '=', 'bem.tipo_patrimonio_id')
-            ->with(['sala.andar', 'tipoPatrimonio'])
-            ->when($filtros['numero'] ?? null, function ($query, string $numero) {
-                $query->where(fn ($query) => $query
-                    ->where('bem.numero_patrimonio', $numero)
-                    ->orWhere('bem.codigo_interno', $numero));
-            })
-            ->when($filtros['busca'] ?? null, function ($query, string $busca) {
-                $padrao = $this->padraoDeBusca($busca);
-                $query->where(fn ($query) => $query
-                    ->where('bem.numero_patrimonio', 'like', $padrao)
-                    ->orWhere('bem.codigo_interno', 'like', $padrao)
-                    ->orWhere('bem.descricao', 'like', $padrao)
-                    ->orWhere('bem.marca', 'like', $padrao));
-            })
-            ->when($filtros['andar_id'] ?? null, fn ($query, int $andarId) => $query->where('andar.id', $andarId))
-            ->when($filtros['sala_id'] ?? null, fn ($query, int $salaId) => $query->where('bem.sala_id', $salaId))
-            ->when($filtros['tipo_patrimonio_id'] ?? null, fn ($query, int $tipoId) => $query->where('bem.tipo_patrimonio_id', $tipoId))
-            ->when($filtros['status'] ?? null, fn ($query, array $status) => $query->whereIn('bem.status', $status))
-            ->when($filtros['estado_conservacao'] ?? null, fn ($query, array $estados) => $query->whereIn('bem.estado_conservacao', $estados))
+        $bens = FiltroDeBens::consulta($filtros)
+            ->with(['sala.andar', 'tipoPatrimonio', 'itemEmConferenciaAberta.conferencia'])
             ->tap(function ($query) use ($filtros, $direcao) {
                 foreach (self::ORDENACOES[$filtros['ordenar'] ?? 'local'] as $coluna) {
                     $query->orderBy($coluna, $direcao);
@@ -95,7 +75,7 @@ class BemController extends Controller
         $bens = $sala->bens()
             ->select('bem.*')
             ->join('tipo_patrimonio', 'tipo_patrimonio.id', '=', 'bem.tipo_patrimonio_id')
-            ->with('tipoPatrimonio')
+            ->with(['tipoPatrimonio', 'itemEmConferenciaAberta.conferencia'])
             ->orderBy('tipo_patrimonio.nome')
             ->orderBy('bem.numero_patrimonio')
             ->orderBy('bem.id')

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Consultas\Busca;
 use Illuminate\Http\Request;
 
 abstract class Controller
@@ -21,12 +22,9 @@ abstract class Controller
         return max(1, min($porPagina, self::POR_PAGINA_MAXIMO));
     }
 
-    /**
-     * Padrão para buscar "contém o termo" com LIKE. Os caracteres % e _
-     * digitados pelo usuário valem como texto, e não como curinga.
-     */
+    /** Padrão para buscar "contém o termo" com LIKE (ver Busca::contem()). */
     protected function padraoDeBusca(string $termo): string
     {
-        return '%'.addcslashes($termo, '%_\\').'%';
+        return Busca::contem($termo);
     }
 }
