@@ -28,6 +28,7 @@ O front-end não acessa o banco. Ele conversa apenas com a API do back-end.
 13. [Relatório do levantamento](#13-relatório-do-levantamento)
 14. [Carga inicial da planilha](#14-carga-inicial-da-planilha)
 15. [Telas do sistema](#15-telas-do-sistema)
+16. [Conferência dos bens](#16-conferência-dos-bens)
 
 ## 1. O que instalar antes
 
@@ -584,6 +585,9 @@ As telas seguem os wireframes do Figma *CEAD - Gestão Patrimonial* (página Pro
 | `/ambientes` | Gestão de Ambientes e Salas | administrador e consulta | `GET /salas`, `GET /andares` |
 | `/ambientes/novo`, `/ambientes/{id}/editar` | Cadastrar Ambiente / Sala | administrador | `POST` e `PATCH /salas` |
 | `/ambientes/{id}` | Detalhes da sala | administrador e consulta | `GET /salas/{id}`, `GET /salas/{id}/bens` |
+| `/conferencias` | Conferências e bens não localizados (seção 16) | administrador e consulta (as ações, só administrador) | `GET /conferencias`, `GET /pendencias` |
+| `/conferencias/nova` | Gerar conferência | administrador | `GET /bens`, `POST /conferencias` |
+| `/conferencias/{id}` | Lançar a conferência e imprimir a folha | administrador e consulta (lançar, só administrador) | `/conferencias/{id}/itens` e as rotas da seção 16.1 |
 | `/relatorios` | Relatórios e Folhas de Conferência | administrador e consulta | `GET /relatorio`, `GET /relatorio/planilha` |
 | `/gerencia` | Painel de Gerência, com o cadastro de andares e tipos | administrador | `/andares`, `/tipos-patrimonio` |
 | `/usuarios`, `/usuarios/novo` | Usuários do Sistema e Cadastrar Novo Usuário | administrador | nenhuma ainda (tarefa 3.3) |
@@ -609,7 +613,7 @@ Essas partes aparecem nas telas com o aviso **Aguardando o back-end**, sem dado 
 | --- | --- |
 | Login | entrar com CPF, "Esqueci minha senha" |
 | Bens | foto, modelo, número de série, impressão da etiqueta, exportar a lista de bens em Excel (hoje só o relatório exporta) |
-| Ambientes | código ou sigla da sala, tipo de espaço, responsável, capacidade, registro da conferência por sala e histórico da sala |
+| Ambientes | código ou sigla da sala, tipo de espaço, responsável, capacidade e histórico da sala |
 | Relatórios | PDF no modelo da Unimontes (tarefa 3.4; a tela usa a impressão do navegador) e histórico de relatórios gerados |
 | Gerência e Usuários | listar, cadastrar, editar e desativar usuários (tarefa 3.3) e parâmetros da plaqueta |
 
@@ -618,3 +622,52 @@ Diferenças de nomes entre o wireframe e a API:
 - As situações *Em manutenção* e *Danificado* do wireframe não são situações de uso na API. O bem danificado fica `sem_uso` com conservação `pessimo` ou `sucata` (seção 11.2). O modelo **Itens com Pendência / Avarias** do relatório lista os bens em péssimo ou sucata.
 - O perfil *Operador* do wireframe é o perfil `consulta` da API.
 - A navegação do wireframe tem **Início**, mas não há wireframe dessa tela. O endereço `/` abre a lista de bens.
+
+## 16. Conferência dos bens
+
+A conferência é o levantamento físico: alguém percorre as salas com a folha impressa, confere bem por bem e depois passa o resultado para o sistema. O sistema registra cada conferência, mostra em cada bem a data e o resultado da última, e transforma o bem não localizado numa pendência da gestora.
+
+Fluxo:
+
+1. **Gerar** a conferência em `/conferencias/nova`: a lista de bens, com caixinhas e os mesmos filtros de `/bens`. Dá para marcar bem a bem, a página inteira ou todos os bens do filtro. Bens baixados e bens que já estão numa conferência aberta ficam de fora, e a tela avisa quantos.
+2. **Imprimir a folha** na tela da conferência e conferir no papel. A folha sai na ordem de andar, sala, tipo e número.
+3. **Lançar** a folha: os bens começam pendentes. Marque em lote os que estavam no lugar e lance só as exceções: não localizado (pede confirmação), encontrado em outra sala ou estado de conservação diferente.
+4. **Concluir**, informando o dia em que a conferência foi feita. Só aqui os bens mudam.
+
+### 16.1 Rotas
+
+| Método e rota | Quem acessa | O que faz |
+| --- | --- | --- |
+| `GET /api/conferencias` | administrador e consulta | lista as conferências, da mais recente para a mais antiga, com as contagens. Filtro `?situacao=aberta`, `concluida` ou `cancelada` |
+| `GET /api/conferencias/{id}` | administrador e consulta | uma conferência, com as contagens |
+| `GET /api/conferencias/{id}/itens` | administrador e consulta | os bens da conferência na ordem da folha, com as salas e os pendentes de cada uma. Filtros `?sala_id=` (sala registrada) e `?resultado=pendente`, `encontrado` ou `nao_localizado` |
+| `POST /api/conferencias` | administrador | gera. Corpo `{"nome", "modo": "selecionados", "bem_ids": [...]}` ou `{"nome", "modo": "filtro", "filtros": {...}}`, com os filtros de `GET /api/bens` (seção 11.3). Filtro vazio é o prédio inteiro |
+| `PATCH /api/conferencias/{id}/itens/{item}` | administrador | lança um bem: `{"resultado": "encontrado", "sala_encontrada_id": 7, "estado_conservacao": "regular"}`, `{"resultado": "nao_localizado"}` ou `{"resultado": null}` para voltar a pendente |
+| `POST /api/conferencias/{id}/encontrados` | administrador | marca em lote como encontrados na sala registrada: `{"itens": [10, 11]}` |
+| `POST /api/conferencias/{id}/concluir` | administrador | conclui: `{"realizada_em": "2026-11-06"}` |
+| `POST /api/conferencias/{id}/cancelar` | administrador | cancela a conferência aberta |
+| `GET /api/pendencias` | administrador e consulta | os bens com pendência aberta, cada um uma vez, com a data da primeira conferência em que não foi localizado |
+| `POST /api/bens/{id}/pendencia` | administrador | fecha a pendência: `{"resolucao": "localizado", "sala_id": 5, "localizado_em": "2026-11-06"}` ou `{"resolucao": "processo_administrativo", "processo_numero": "123/2026"}` |
+
+`GET /api/bens` ganhou o filtro `?conferencia=nunca`, `encontrado`, `nao_localizado` ou `em_aberto`. A resposta de um bem traz `data_ultima_conferencia`, `resultado_ultima_conferencia` e, na lista, `em_conferencia` (a conferência aberta em que o bem está). A ficha traz também `pendencia` e `historico_conferencias`.
+
+### 16.2 Regras
+
+- Um bem entra uma vez em cada conferência e não fica em duas conferências abertas ao mesmo tempo. Bem baixado não entra.
+- Enquanto a conferência está aberta, os resultados ficam só nela e nada muda nos bens. Conferência concluída ou cancelada não recebe mais resultados (409).
+- Só conclui quando todos os bens têm resultado. O dia da conferência não pode ser futuro, mas pode ser anterior ao dia em que a folha foi lançada.
+- Ao concluir, para cada bem:
+  - encontrado em outra sala vira mudança de sala, com histórico (seção 12). A sala precisa estar ativa, e bem baixado não muda de sala (RN04). Isso é conferido de novo na conclusão;
+  - o estado visto atualiza a conservação, sem contar como mudança de situação;
+  - a data e o resultado da última conferência são gravados no bem. Uma conferência de data anterior, concluída depois, não passa por cima da mais recente.
+- Cancelar não muda nada nos bens, e eles podem entrar numa conferência nova. A conferência cancelada continua registrada.
+- Sala em que algum bem foi encontrado numa conferência não pode ser excluída (seção 10.3). O caminho é inativar.
+
+### 16.3 Bem não localizado
+
+Bem não localizado é grave: a gestora responde por ele e precisa abrir processo administrativo. Por isso:
+
+- ao concluir a conferência, o bem não localizado vira uma **pendência**, que aparece em destaque em `/conferencias` e na ficha do bem;
+- a situação de uso do bem não muda sozinha;
+- a pendência só fecha de dois jeitos: **localizado** (a sala onde estava e o dia, que não pode ser anterior à conferência em que ele sumiu) ou **processo administrativo** (o número do processo, que fica no histórico de conferências do bem). Com o processo, o bem continua como não localizado até a baixa;
+- uma conferência nova que encontra o bem fecha as pendências antigas dele, como localizado. Se a conferência em que ele não foi localizado for de data anterior à última em que foi encontrado, não abre pendência.
