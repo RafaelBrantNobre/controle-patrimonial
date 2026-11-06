@@ -23,6 +23,7 @@ class ConferenciaItemFactory extends Factory
         return [
             'conferencia_id' => Conferencia::factory(),
             'bem_id' => Bem::factory(),
+            'sala_registrada_id' => fn (array $atributos) => Bem::find($atributos['bem_id'])->sala_id,
         ];
     }
 

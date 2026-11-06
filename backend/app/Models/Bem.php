@@ -10,6 +10,7 @@ use App\Enums\StatusBem;
 use Database\Factories\BemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -200,6 +201,7 @@ class Bem extends Model
             ->where('resultado', ResultadoConferencia::NaoLocalizado)
             ->whereNull('resolvido_em')
             ->whereHas('conferencia', fn ($query) => $query->where('situacao', SituacaoConferencia::Concluida))
+            ->orderBy(self::dataDaConferencia())
             ->orderBy('conferencia_item.id');
     }
 
@@ -212,7 +214,20 @@ class Bem extends Model
     {
         return $this->hasMany(ConferenciaItem::class)
             ->whereHas('conferencia', fn ($query) => $query->where('situacao', SituacaoConferencia::Concluida))
+            ->orderByDesc(self::dataDaConferencia())
             ->orderByDesc('conferencia_item.id');
+    }
+
+    /**
+     * Dia em que foi feita a conferência do item, para ordenar pendências e
+     * histórico pela data da conferência física, e não pela ordem em que as
+     * folhas foram passadas para o sistema.
+     *
+     * @return Builder<Conferencia>
+     */
+    private static function dataDaConferencia(): Builder
+    {
+        return Conferencia::select('realizada_em')->whereColumn('conferencia.id', 'conferencia_item.conferencia_id');
     }
 
     public function estaBaixado(): bool

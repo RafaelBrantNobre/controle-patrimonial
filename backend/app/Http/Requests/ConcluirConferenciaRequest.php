@@ -44,7 +44,11 @@ class ConcluirConferenciaRequest extends FormRequest
     {
         return [
             function (Validator $validator) {
-                foreach ($this->route('conferencia')->problemasParaConcluir() as $problema) {
+                if ($validator->errors()->has('realizada_em')) {
+                    return;
+                }
+
+                foreach ($this->route('conferencia')->problemasParaConcluir($this->input('realizada_em')) as $problema) {
                     $validator->errors()->add('conferencia', $problema);
                 }
             },

@@ -37,6 +37,9 @@ class ConferenciaController extends Controller
     /** Relações que a resposta de uma conferência traz. */
     private const RELACOES = ['criadaPor', 'concluidaPor'];
 
+    /** Relações que a resposta de um item traz. */
+    private const RELACOES_DO_ITEM = ['bem.sala.andar', 'bem.tipoPatrimonio', 'salaRegistrada.andar', 'salaEncontrada.andar', 'conferidoPor'];
+
     /**
      * GET /api/conferencias
      * As conferências, da mais recente para a mais antiga, com as contagens.
@@ -98,7 +101,10 @@ class ConferenciaController extends Controller
             ]);
         }
 
-        $conferencia = DB::transaction(function () use ($request, $incluir) {
+        // A sala de cada bem agora, que é a da folha impressa.
+        $salaDe = Bem::whereIn('id', $incluir)->pluck('sala_id', 'id');
+
+        $conferencia = DB::transaction(function () use ($request, $incluir, $salaDe) {
             $conferencia = Conferencia::create([
                 'nome' => $request->validated('nome'),
                 'criada_por_id' => $request->user()->id,
@@ -109,6 +115,7 @@ class ConferenciaController extends Controller
                 ConferenciaItem::insert($lote->map(fn (int $bemId) => [
                     'conferencia_id' => $conferencia->id,
                     'bem_id' => $bemId,
+                    'sala_registrada_id' => $salaDe[$bemId],
                     'created_at' => $agora,
                     'updated_at' => $agora,
                 ])->values()->all());
@@ -132,7 +139,9 @@ class ConferenciaController extends Controller
     /**
      * GET /api/conferencias/{conferencia}/itens
      * Os bens da conferência na ordem da folha: andar, sala, tipo e número.
-     * Filtros opcionais: ?sala_id= (sala registrada do bem) e
+     * A sala é a registrada quando a conferência foi gerada (a da folha),
+     * mesmo que a conclusão tenha mudado o bem de sala.
+     * Filtros opcionais: ?sala_id= (sala registrada) e
      * ?resultado=pendente, encontrado ou nao_localizado.
      * Traz junto as salas da conferência, com total e pendentes de cada uma,
      * para a tela lançar sala por sala.
@@ -152,11 +161,11 @@ class ConferenciaController extends Controller
 
         $itens = $this->itensNaOrdemDaFolha($conferencia)
             ->select('conferencia_item.*')
-            ->when($request->integer('sala_id'), fn ($query, int $salaId) => $query->where('bem.sala_id', $salaId))
+            ->when($request->integer('sala_id'), fn ($query, int $salaId) => $query->where('conferencia_item.sala_registrada_id', $salaId))
             ->when($request->query('resultado'), fn ($query, string $resultado) => $resultado === 'pendente'
                 ? $query->whereNull('conferencia_item.resultado')
                 : $query->where('conferencia_item.resultado', $resultado))
-            ->with(['bem.sala.andar', 'bem.tipoPatrimonio', 'salaEncontrada', 'conferidoPor'])
+            ->with(self::RELACOES_DO_ITEM)
             ->orderBy('tipo_patrimonio.nome')
             ->orderBy('bem.numero_patrimonio')
             ->orderBy('conferencia_item.id')
@@ -200,14 +209,15 @@ class ConferenciaController extends Controller
             $request->user(),
         );
 
-        return new ConferenciaItemResource($item->load(['bem.sala.andar', 'bem.tipoPatrimonio', 'salaEncontrada', 'conferidoPor']));
+        return new ConferenciaItemResource($item->load(self::RELACOES_DO_ITEM));
     }
 
     /**
      * POST /api/conferencias/{conferencia}/encontrados
      * Corpo: {"itens": [10, 11, 12]}
-     * Marca os itens como encontrados na sala registrada. Um item que já
-     * estava encontrado em outra sala, ou com estado lançado, fica como está.
+     * Marca como encontrados, na sala registrada, os itens ainda pendentes.
+     * Os que já têm resultado (encontrado em outra sala, não localizado)
+     * ficam como estão: para mudar, lança-se o item.
      */
     public function marcarEncontrados(MarcarEncontradosRequest $request, Conferencia $conferencia): ConferenciaResource
     {
@@ -216,18 +226,10 @@ class ConferenciaController extends Controller
         DB::transaction(function () use ($request, $conferencia, $usuario) {
             $conferencia->itens()
                 ->whereIn('id', $request->validated('itens'))
+                ->whereNull('resultado')
                 ->with('bem')
                 ->get()
-                ->each(function (ConferenciaItem $item) use ($usuario) {
-                    $jaEncontrado = $item->resultado === ResultadoConferencia::Encontrado;
-
-                    $item->lancar(
-                        ResultadoConferencia::Encontrado,
-                        $jaEncontrado ? $item->sala_encontrada_id : null,
-                        $jaEncontrado ? $item->estado_conservacao : null,
-                        $usuario,
-                    );
-                });
+                ->each(fn (ConferenciaItem $item) => $item->lancar(ResultadoConferencia::Encontrado, null, null, $usuario));
         });
 
         return $this->resposta($conferencia);
@@ -266,14 +268,14 @@ class ConferenciaController extends Controller
     }
 
     /**
-     * Itens da conferência com bem, sala, andar e tipo juntos, já na ordem
-     * de andar e sala da folha.
+     * Itens da conferência com bem, sala registrada, andar e tipo juntos, já
+     * na ordem de andar e sala da folha.
      */
     private function itensNaOrdemDaFolha(Conferencia $conferencia)
     {
         return $conferencia->itens()
             ->join('bem', 'bem.id', '=', 'conferencia_item.bem_id')
-            ->join('sala', 'sala.id', '=', 'bem.sala_id')
+            ->join('sala', 'sala.id', '=', 'conferencia_item.sala_registrada_id')
             ->join('andar', 'andar.id', '=', 'sala.andar_id')
             ->join('tipo_patrimonio', 'tipo_patrimonio.id', '=', 'bem.tipo_patrimonio_id')
             ->orderBy('andar.ordem')

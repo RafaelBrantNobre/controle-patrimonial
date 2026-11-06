@@ -53,7 +53,7 @@ class Sala extends Model
         return Movimentacao::where('sala_origem_id', $this->id)
             ->orWhere('sala_destino_id', $this->id)
             ->exists()
-            || ConferenciaItem::where('sala_encontrada_id', $this->id)->exists();
+            || ConferenciaItem::where('sala_encontrada_id', $this->id)->orWhere('sala_registrada_id', $this->id)->exists();
     }
 
     #[Scope]

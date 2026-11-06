@@ -347,6 +347,96 @@ test('uma conferência de data anterior, concluída depois, não passa por cima 
     $this->getJson('/api/pendencias')->assertJsonCount(0, 'data');
 });
 
+test('mudança feita no bem depois do lançamento vale mais que a folha', function () {
+    gestoraConectada();
+    $registrada = Sala::factory()->create();
+    $nova = Sala::factory()->create();
+    $bem = Bem::factory()->for($registrada)->create();
+    $id = gerarConferencia([$bem]);
+    $this->patchJson("/api/conferencias/{$id}/itens/".itemDe($id, $bem)->id, ['resultado' => 'encontrado', 'estado_conservacao' => 'bom'])->assertOk();
+
+    $this->travel(1)->minutes();
+    $this->patchJson("/api/bens/{$bem->id}/sala", ['sala_id' => $nova->id])->assertOk();
+    $this->patchJson("/api/bens/{$bem->id}", ['estado_conservacao' => 'sucata'])->assertOk();
+
+    $this->travel(1)->minutes();
+    $this->postJson("/api/conferencias/{$id}/concluir", ['realizada_em' => '2026-11-06'])->assertOk();
+
+    $bem->refresh();
+    expect($bem->sala_id)->toBe($nova->id)
+        ->and($bem->estado_conservacao)->toBe(EstadoConservacao::Sucata)
+        ->and($bem->resultado_ultima_conferencia)->toBe(ResultadoConferencia::Encontrado)
+        ->and(Movimentacao::count())->toBe(1);
+});
+
+test('conferência de data anterior, concluída depois, não muda a sala nem o estado do bem', function () {
+    gestoraConectada();
+    $antiga = Sala::factory()->create();
+    $atual = Sala::factory()->create();
+    $bem = Bem::factory()->for($antiga)->create();
+    $recente = gerarConferencia([$bem], 'Recente');
+    $this->patchJson("/api/conferencias/{$recente}/itens/".itemDe($recente, $bem)->id, ['resultado' => 'encontrado', 'sala_encontrada_id' => $atual->id, 'estado_conservacao' => 'bom'])->assertOk();
+    $this->postJson("/api/conferencias/{$recente}/concluir", ['realizada_em' => '2026-11-05'])->assertOk();
+
+    $this->travel(1)->minutes();
+    $outubro = gerarConferencia([$bem], 'Outubro');
+    $this->patchJson("/api/conferencias/{$outubro}/itens/".itemDe($outubro, $bem)->id, ['resultado' => 'encontrado', 'sala_encontrada_id' => $antiga->id, 'estado_conservacao' => 'pessimo'])->assertOk();
+    $this->postJson("/api/conferencias/{$outubro}/concluir", ['realizada_em' => '2026-10-01'])->assertOk();
+
+    $bem->refresh();
+    expect($bem->sala_id)->toBe($atual->id)
+        ->and($bem->estado_conservacao)->toBe(EstadoConservacao::Bom)
+        ->and(Movimentacao::count())->toBe(1);
+});
+
+test('a pendência diz desde a conferência de data mais antiga, e o histórico vem pela data', function () {
+    gestoraConectada();
+    $bem = Bem::factory()->create();
+    $novembro = gerarConferencia([$bem], 'Novembro');
+    $this->patchJson("/api/conferencias/{$novembro}/itens/".itemDe($novembro, $bem)->id, ['resultado' => 'nao_localizado'])->assertOk();
+    $this->postJson("/api/conferencias/{$novembro}/concluir", ['realizada_em' => '2026-11-05'])->assertOk();
+
+    $outubro = gerarConferencia([$bem], 'Outubro');
+    $this->patchJson("/api/conferencias/{$outubro}/itens/".itemDe($outubro, $bem)->id, ['resultado' => 'nao_localizado'])->assertOk();
+    $this->postJson("/api/conferencias/{$outubro}/concluir", ['realizada_em' => '2026-10-20'])->assertOk();
+
+    $this->getJson('/api/pendencias')
+        ->assertJsonPath('data.0.pendencia.desde', '2026-10-20')
+        ->assertJsonPath('data.0.pendencia.conferencia', 'Outubro');
+
+    expect($this->getJson("/api/bens/{$bem->id}")->json('data.historico_conferencias.*.conferencia'))->toBe(['Novembro', 'Outubro']);
+});
+
+test('marcar em lote não desfaz um não localizado já lançado', function () {
+    gestoraConectada();
+    [$a, $b] = Bem::factory()->count(2)->create();
+    $id = gerarConferencia([$a, $b]);
+    $this->patchJson("/api/conferencias/{$id}/itens/".itemDe($id, $b)->id, ['resultado' => 'nao_localizado'])->assertOk();
+
+    $this->postJson("/api/conferencias/{$id}/encontrados", ['itens' => [itemDe($id, $a)->id, itemDe($id, $b)->id]])
+        ->assertOk()
+        ->assertJsonPath('data.totais.encontrados', 1)
+        ->assertJsonPath('data.totais.nao_localizados', 1);
+});
+
+test('a conferência guarda a sala da folha: depois de concluir, o bem achado em outra sala continua listado na sala registrada', function () {
+    gestoraConectada();
+    $registrada = Sala::factory()->create(['nome' => 'Sala 03']);
+    $outra = Sala::factory()->create(['nome' => 'Sala 05']);
+    $bem = Bem::factory()->for($registrada)->create();
+    $id = gerarConferencia([$bem]);
+    $this->patchJson("/api/conferencias/{$id}/itens/".itemDe($id, $bem)->id, ['resultado' => 'encontrado', 'sala_encontrada_id' => $outra->id])->assertOk();
+    $this->postJson("/api/conferencias/{$id}/concluir", ['realizada_em' => '2026-11-06'])->assertOk();
+
+    expect($bem->fresh()->sala_id)->toBe($outra->id);
+
+    $this->getJson("/api/conferencias/{$id}/itens?sala_id={$registrada->id}")
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.sala_registrada.nome', 'Sala 03')
+        ->assertJsonPath('data.0.sala_encontrada.nome', 'Sala 05')
+        ->assertJsonPath('salas.0.nome', 'Sala 03');
+});
+
 // --- Cancelar ---------------------------------------------------------------
 
 test('cancelar não muda nada nos bens e libera os bens para uma conferência nova', function () {

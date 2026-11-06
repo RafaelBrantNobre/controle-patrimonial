@@ -95,11 +95,12 @@ class Conferencia extends Model
      * O que impede concluir: bens ainda sem resultado, bem encontrado numa
      * sala inativa e bem baixado encontrado em outra sala (RN04). As salas e
      * a baixa podem ter mudado depois do lançamento, por isso a conferência
-     * olha de novo na hora de concluir.
+     * olha de novo na hora de concluir. O bem cuja sala não vai ser aplicada
+     * (ConferenciaItem::folhaEhMaisNova()) não entra nessa conferência.
      *
      * @return list<string>
      */
-    public function problemasParaConcluir(): array
+    public function problemasParaConcluir(string $realizadaEm): array
     {
         $problemas = [];
 
@@ -115,7 +116,8 @@ class Conferencia extends Model
             ->whereNotNull('sala_encontrada_id')
             ->with(['bem', 'salaEncontrada'])
             ->get()
-            ->filter(fn (ConferenciaItem $item) => (int) $item->sala_encontrada_id !== (int) $item->bem->sala_id);
+            ->filter(fn (ConferenciaItem $item) => (int) $item->sala_encontrada_id !== (int) $item->bem->sala_id
+                && $item->folhaEhMaisNova($realizadaEm));
 
         foreach ($mudancas as $item) {
             $bem = $item->bem->numero_patrimonio ?? $item->bem->codigo_interno;

@@ -23,6 +23,8 @@ class ConferenciaItemResource extends JsonResource
             'id' => $this->id,
             'conferencia_id' => $this->conferencia_id,
             'bem' => new BemResource($this->whenLoaded('bem')),
+            'sala_registrada_id' => $this->sala_registrada_id,
+            'sala_registrada' => new SalaResource($this->whenLoaded('salaRegistrada')),
             'resultado' => $this->resultado?->value,
             'resultado_rotulo' => $this->resultado?->rotulo(),
             'sala_encontrada_id' => $this->sala_encontrada_id,

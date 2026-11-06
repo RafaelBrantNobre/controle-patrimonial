@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable([
     'conferencia_id',
     'bem_id',
+    'sala_registrada_id',
     'resultado',
     'sala_encontrada_id',
     'estado_conservacao',
@@ -53,6 +54,16 @@ class ConferenciaItem extends Model
     public function bem(): BelongsTo
     {
         return $this->belongsTo(Bem::class);
+    }
+
+    /**
+     * A sala do bem quando a conferência foi gerada: a da folha impressa.
+     *
+     * @return BelongsTo<Sala, $this>
+     */
+    public function salaRegistrada(): BelongsTo
+    {
+        return $this->belongsTo(Sala::class, 'sala_registrada_id');
     }
 
     /**
@@ -88,7 +99,7 @@ class ConferenciaItem extends Model
         $encontrado = $resultado === ResultadoConferencia::Encontrado;
 
         $this->resultado = $resultado;
-        $this->sala_encontrada_id = $encontrado ? ($salaId ?? $this->bem->sala_id) : null;
+        $this->sala_encontrada_id = $encontrado ? ($salaId ?? $this->sala_registrada_id ?? $this->bem->sala_id) : null;
         $this->estado_conservacao = $encontrado ? $estado : null;
         $this->conferido_em = $resultado ? now() : null;
         $this->conferido_por_id = $resultado ? $usuario->id : null;
@@ -100,18 +111,22 @@ class ConferenciaItem extends Model
      * Encontrado em outra sala vira mudança de sala, com histórico (RN09).
      * O estado visto atualiza a conservação, sem contar como mudança de
      * situação. Encontrar o bem fecha as pendências antigas dele.
+     * A sala e o estado só valem se a folha é a informação mais nova do bem
+     * (ver folhaEhMaisNova()).
      */
     public function aplicarAoBem(string $realizadaEm, User $usuario): void
     {
         $bem = $this->bem;
 
         if ($this->resultado === ResultadoConferencia::Encontrado) {
-            if ($this->sala_encontrada_id !== null && (int) $this->sala_encontrada_id !== (int) $bem->sala_id) {
-                $bem->mudarDeSala($this->salaEncontrada, $usuario);
-            }
+            if ($this->folhaEhMaisNova($realizadaEm)) {
+                if ($this->sala_encontrada_id !== null && (int) $this->sala_encontrada_id !== (int) $bem->sala_id) {
+                    $bem->mudarDeSala($this->salaEncontrada, $usuario);
+                }
 
-            if ($this->estado_conservacao !== null) {
-                $bem->estado_conservacao = $this->estado_conservacao;
+                if ($this->estado_conservacao !== null) {
+                    $bem->estado_conservacao = $this->estado_conservacao;
+                }
             }
 
             $bem->resolverPendencias(ResolucaoPendencia::Localizado, $usuario, ate: $realizadaEm);
@@ -131,6 +146,24 @@ class ConferenciaItem extends Model
                 'resolvido_por_id' => $usuario->id,
             ]);
         }
+    }
+
+    /**
+     * A folha só muda a sala e o estado do bem quando é a informação mais
+     * nova dele. Não é quando:
+     *   - o bem mudou depois do lançamento (mudou de sala, foi editado, teve
+     *     a pendência resolvida): o que veio depois vale mais;
+     *   - o bem já tem uma conferência de data mais recente que esta.
+     */
+    public function folhaEhMaisNova(string $realizadaEm): bool
+    {
+        $bem = $this->bem;
+
+        if ($bem->data_ultima_conferencia !== null && $bem->data_ultima_conferencia->toDateString() > $realizadaEm) {
+            return false;
+        }
+
+        return $this->conferido_em === null || $bem->updated_at === null || ! $bem->updated_at->greaterThan($this->conferido_em);
     }
 
     protected function casts(): array
