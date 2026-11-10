@@ -1,16 +1,17 @@
 import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { consulta } from '../services/api'
 import {
   ROTULOS_STATUS,
   SITUACOES_DE_CONFERENCIA,
-  type Andar,
   type Pagina,
   type Sala,
   type StatusBem,
   type TipoPatrimonio,
 } from '../services/tipos'
 import { useApi } from '../services/useApi'
+
+// Valor da opção "Sem localização" no seletor de sala (vira ?sem_sala=1).
+const SEM_SALA = 'sem'
 
 // Campos de filtro da lista de bens. O estado fica na URL (useFiltrosDeBens).
 export function FiltrosDeBens({
@@ -31,8 +32,7 @@ export function FiltrosDeBens({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busca])
 
-  const andares = useApi<Pagina<Andar>>('/andares?por_pagina=100')
-  const salas = useApi<Pagina<Sala>>(`/salas${consulta({ andar_id: filtro('andar_id'), por_pagina: 100 })}`)
+  const salas = useApi<Pagina<Sala>>('/salas?por_pagina=100')
   const tipos = useApi<Pagina<TipoPatrimonio>>('/tipos-patrimonio?por_pagina=100')
 
   return (
@@ -48,22 +48,16 @@ export function FiltrosDeBens({
         />
       </label>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <label>
-          <span className="rotulo">Andar</span>
-          <select className="entrada" value={filtro('andar_id')} onChange={(e) => mudarFiltro('andar_id', e.target.value)}>
-            <option value="">Todos os andares</option>
-            {andares.dados?.data.map((andar) => (
-              <option key={andar.id} value={andar.id}>
-                {andar.nome}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label>
           <span className="rotulo">Sala / Ambiente</span>
-          <select className="entrada" value={filtro('sala_id')} onChange={(e) => mudarFiltro('sala_id', e.target.value)}>
+          <select
+            className="entrada"
+            value={filtro('sem_sala') ? SEM_SALA : filtro('sala_id')}
+            onChange={(e) => (e.target.value === SEM_SALA ? mudarFiltro('sem_sala', '1') : mudarFiltro('sala_id', e.target.value))}
+          >
             <option value="">Todas as salas</option>
+            <option value={SEM_SALA}>Sem localização</option>
             {salas.dados?.data.map((sala) => (
               <option key={sala.id} value={sala.id}>
                 {sala.nome}

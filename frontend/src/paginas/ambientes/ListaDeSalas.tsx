@@ -1,10 +1,10 @@
-import { Building2, DoorOpen, Eye, Layers, Package, Pencil, Plus, Search } from 'lucide-react'
+import { Building2, DoorOpen, Eye, Package, Pencil, Plus, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
 import { Aviso, Cabecalho, Carregando, Indicador, Paginacao, SeloAtivo } from '../../componentes/ui'
 import { consulta } from '../../services/api'
-import type { Andar, Bem, Pagina, Sala } from '../../services/tipos'
+import type { Bem, Pagina, Sala } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
 
 const ABAS = [
@@ -42,13 +42,11 @@ export function ListaDeSalas() {
   const salas = useApi<Pagina<Sala>>(
     `/salas${consulta({
       busca: filtro('busca'),
-      andar_id: filtro('andar_id'),
       ativo: filtro('ativo'),
       pagina: filtro('pagina') || 1,
       por_pagina: 20,
     })}`,
   )
-  const andares = useApi<Pagina<Andar>>('/andares?por_pagina=100')
   const todasAtivas = useApi<Pagina<Sala>>('/salas?ativo=1&por_pagina=1')
   const bens = useApi<Pagina<Bem>>('/bens?por_pagina=1')
 
@@ -56,7 +54,7 @@ export function ListaDeSalas() {
     <>
       <Cabecalho
         titulo="Locais e Ambientes"
-        subtitulo="Gestão das salas, andares e conferência física dos bens."
+        subtitulo="Gestão das salas e ambientes onde ficam os bens."
         acoes={
           usuario?.pode_alterar && (
             <Link to="/ambientes/novo" className="botao-primario">
@@ -66,26 +64,12 @@ export function ListaDeSalas() {
         }
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2">
         <Indicador titulo="Total de ambientes" valor={todasAtivas.dados?.meta.total ?? '…'} detalhe="salas ativas" icone={Building2} />
-        <Indicador titulo="Andares" valor={andares.dados?.meta.total ?? '…'} detalhe="andares cadastrados" icone={Layers} />
         <Indicador titulo="Bens alocados" valor={bens.dados?.meta.total.toLocaleString('pt-BR') ?? '…'} detalhe="itens cadastrados" icone={Package} />
       </div>
 
       <section className="cartao mb-6 flex flex-wrap items-center gap-3 p-4">
-        <select
-          className="entrada w-auto min-w-48"
-          value={filtro('andar_id')}
-          onChange={(e) => mudarFiltro('andar_id', e.target.value)}
-          aria-label="Filtrar por andar"
-        >
-          <option value="">Todos os andares</option>
-          {andares.dados?.data.map((andar) => (
-            <option key={andar.id} value={andar.id}>
-              {andar.nome}
-            </option>
-          ))}
-        </select>
         <div className="flex rounded-lg bg-slate-100 p-1 text-xs">
           {ABAS.map((aba) => (
             <button
@@ -115,7 +99,6 @@ export function ListaDeSalas() {
             <thead>
               <tr>
                 <th>Identificação da sala</th>
-                <th>Andar</th>
                 <th className="text-center">Total de bens alocados</th>
                 <th>Situação</th>
                 <th className="text-right">Ações</th>
@@ -135,7 +118,6 @@ export function ListaDeSalas() {
                       </span>
                     </Link>
                   </td>
-                  <td className="text-slate-600">{sala.andar?.nome}</td>
                   <td className="text-center">
                     <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">{sala.bens_count ?? 0} bens</span>
                   </td>

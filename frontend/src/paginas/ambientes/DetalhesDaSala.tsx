@@ -1,8 +1,8 @@
-import { ClipboardCheck, DoorOpen, History, Info, Layers, Package, Pencil } from 'lucide-react'
+import { ClipboardCheck, DoorOpen, History, Info, Package, Pencil } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
 import { BotaoExcluir } from '../../componentes/Exclusao'
-import { AguardandoApi, Aviso, Carregando, SeloAtivo, SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/ui'
+import { Aviso, Carregando, Desativado, SeloAtivo, SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/ui'
 import { apiDelete, apiGet } from '../../services/api'
 import { formatarData } from '../../services/formatos'
 import type { Bem, Sala } from '../../services/tipos'
@@ -52,7 +52,7 @@ export function DetalhesDaSala() {
               <DoorOpen className="size-4" /> Detalhes do ambiente <SeloAtivo ativo={dados.ativo} />
             </p>
             <h1 className="mt-2 text-2xl font-bold text-cead-900">{dados.nome}</h1>
-            <p className="mt-1 text-sm text-slate-500">Prédio Sede CEAD · {dados.andar?.nome}</p>
+            <p className="mt-1 text-sm text-slate-500">Prédio Sede CEAD</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {usuario?.pode_alterar && (
@@ -100,12 +100,6 @@ export function DetalhesDaSala() {
               <Info className="size-4" /> Informações da sala
             </h2>
             <dl className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <dt className="rotulo">Andar</dt>
-                <dd className="flex items-center gap-1.5 text-sm">
-                  <Layers className="size-4 text-cead-700" /> {dados.andar?.nome}
-                </dd>
-              </div>
               <div>
                 <dt className="rotulo">Bens alocados</dt>
                 <dd className="flex items-center gap-1.5 text-sm">
@@ -222,7 +216,8 @@ export function DetalhesDaSala() {
             <h2 className="flex items-center gap-2 font-semibold text-cead-900">
               <History className="size-4" /> Histórico recente
             </h2>
-            <AguardandoApi>O histórico da sala ainda não tem rota. As mudanças de sala de cada bem aparecem na ficha do bem.</AguardandoApi>
+            {/* Desativado: O histórico da sala ainda não tem rota. As mudanças de sala de cada bem aparecem na ficha do bem. */}
+            <Desativado />
           </section>
         </aside>
       </div>

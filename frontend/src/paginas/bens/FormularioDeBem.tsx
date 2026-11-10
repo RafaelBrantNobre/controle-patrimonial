@@ -1,11 +1,10 @@
 import { Camera, CheckCircle2, MapPin, RotateCcw, Save, Tag } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { AguardandoApi, Aviso, Campo, Carregando } from '../../componentes/ui'
+import { Aviso, Campo, Carregando, Desativado } from '../../componentes/ui'
 import { apiPatch, apiPost, consulta, ErroDaApi } from '../../services/api'
 import {
   ROTULOS_CONSERVACAO,
-  type Andar,
   type Bem,
   type EstadoConservacao,
   type Pagina,
@@ -21,7 +20,6 @@ type Dados = {
   marca: string
   origem: string
   quantidade: string
-  andar_id: string
   sala_id: string
   status: 'em_uso' | 'sem_uso'
   estado_conservacao: EstadoConservacao
@@ -34,7 +32,6 @@ const VAZIO: Dados = {
   marca: '',
   origem: '',
   quantidade: '1',
-  andar_id: '',
   sala_id: '',
   status: 'em_uso',
   estado_conservacao: 'indeterminado',
@@ -48,8 +45,7 @@ function dadosDoBem(bem: Bem): Dados {
     marca: bem.marca ?? '',
     origem: bem.origem ?? '',
     quantidade: String(bem.quantidade),
-    andar_id: String(bem.sala?.andar_id ?? ''),
-    sala_id: String(bem.sala_id),
+    sala_id: String(bem.sala_id ?? ''),
     status: bem.status === 'sem_uso' ? 'sem_uso' : 'em_uso',
     estado_conservacao: bem.estado_conservacao,
   }
@@ -82,11 +78,10 @@ function Formulario({ bem }: { bem?: Bem }) {
 
   // Sala e tipo inativos não recebem bens novos (README, 10.2).
   const tipos = useApi<Pagina<TipoPatrimonio>>(`/tipos-patrimonio${consulta({ ativo: editando ? undefined : true, por_pagina: 100 })}`)
-  const andares = useApi<Pagina<Andar>>('/andares?ativo=1&por_pagina=100')
-  const salas = useApi<Pagina<Sala>>(dados.andar_id ? `/salas${consulta({ andar_id: dados.andar_id, ativo: true, por_pagina: 100 })}` : null)
+  const salas = useApi<Pagina<Sala>>(editando ? null : '/salas?ativo=1&por_pagina=100')
 
   function mudar<C extends keyof Dados>(campo: C, valor: Dados[C]) {
-    setDados((atual) => ({ ...atual, [campo]: valor, ...(campo === 'andar_id' ? { sala_id: '' } : {}) }))
+    setDados((atual) => ({ ...atual, [campo]: valor }))
   }
 
   async function salvar(evento: FormEvent) {
@@ -102,6 +97,7 @@ function Formulario({ bem }: { bem?: Bem }) {
       origem: dados.origem.trim() || null,
       quantidade: Number(dados.quantidade) || 1,
       estado_conservacao: dados.estado_conservacao,
+      // Sem sala escolhida, o bem fica sem localização.
       ...(editando ? {} : { sala_id: Number(dados.sala_id) || null, status: dados.status }),
     }
 
@@ -212,7 +208,8 @@ function Formulario({ bem }: { bem?: Bem }) {
 
             {editando ? (
               <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                Está em <strong>{bem?.sala?.nome}</strong> ({bem?.sala?.andar?.nome}), situação{' '}
+                {bem?.sala ? 'Está em ' : 'Está '}
+                <strong>{bem?.sala?.nome ?? 'sem localização'}</strong>, situação{' '}
                 <strong>{bem?.status_rotulo}</strong>. Para mudar de sala, de situação ou dar baixa, use a{' '}
                 <Link to={`/bens/${id}`} className="font-semibold text-cead-700 hover:underline">
                   ficha do bem
@@ -221,34 +218,16 @@ function Formulario({ bem }: { bem?: Bem }) {
               </p>
             ) : (
               <>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Campo rotulo="Andar" obrigatorio>
-                    <select className="entrada" value={dados.andar_id} onChange={(e) => mudar('andar_id', e.target.value)} required>
-                      <option value="">Selecione o andar...</option>
-                      {andares.dados?.data.map((andar) => (
-                        <option key={andar.id} value={andar.id}>
-                          {andar.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </Campo>
-                  <Campo rotulo="Sala / Ambiente" obrigatorio erro={erro?.doCampo('sala_id')}>
-                    <select
-                      className="entrada"
-                      value={dados.sala_id}
-                      onChange={(e) => mudar('sala_id', e.target.value)}
-                      disabled={!dados.andar_id}
-                      required
-                    >
-                      <option value="">{dados.andar_id ? 'Selecione a sala...' : 'Escolha o andar primeiro'}</option>
-                      {salas.dados?.data.map((sala) => (
-                        <option key={sala.id} value={sala.id}>
-                          {sala.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </Campo>
-                </div>
+                <Campo rotulo="Sala / Ambiente" erro={erro?.doCampo('sala_id')} ajuda="Deixe sem localização quando ainda não se sabe onde o bem está.">
+                  <select className="entrada" value={dados.sala_id} onChange={(e) => mudar('sala_id', e.target.value)}>
+                    <option value="">Sem localização</option>
+                    {salas.dados?.data.map((sala) => (
+                      <option key={sala.id} value={sala.id}>
+                        {sala.nome}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
 
                 <div>
                   <span className="rotulo">Situação de uso</span>
@@ -301,7 +280,7 @@ function Formulario({ bem }: { bem?: Bem }) {
                 {dados.numero_patrimonio.trim() || bem?.codigo_interno || 'CP-gerado ao salvar'}
               </p>
               <p className="mt-2 text-xs text-slate-500">
-                {tipoEscolhido?.nome ?? 'Tipo'} · {salaEscolhida?.nome ?? 'Sala'}
+                {tipoEscolhido?.nome ?? 'Tipo'} · {salaEscolhida?.nome ?? 'Sem localização'}
               </p>
             </div>
           </section>
@@ -310,7 +289,8 @@ function Formulario({ bem }: { bem?: Bem }) {
             <h2 className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
               <Camera className="size-4" /> Foto do equipamento
             </h2>
-            <AguardandoApi>O cadastro de foto, modelo, número de série e a impressão da etiqueta ainda não existem na API.</AguardandoApi>
+            {/* Desativado: O cadastro de foto, modelo, número de série e a impressão da etiqueta ainda não existem na API. */}
+            <Desativado />
           </section>
         </aside>
       </div>

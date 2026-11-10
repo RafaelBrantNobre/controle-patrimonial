@@ -9,18 +9,8 @@ export type Usuario = {
   pode_alterar: boolean
 }
 
-export type Andar = {
-  id: number
-  nome: string
-  ordem: number
-  ativo: boolean
-  salas_count?: number
-}
-
 export type Sala = {
   id: number
-  andar_id: number
-  andar?: Andar
   nome: string
   descricao: string | null
   ativo: boolean
@@ -52,8 +42,9 @@ export type Bem = {
   codigo_interno: string
   tipo_patrimonio_id: number
   tipo_patrimonio?: TipoPatrimonio
-  sala_id: number
-  sala?: Sala
+  // Nulo quando o bem está sem localização.
+  sala_id: number | null
+  sala?: Sala | null
   ultima_movimentacao?: Movimentacao | null
   descricao: string | null
   marca: string | null
@@ -172,41 +163,4 @@ export const ROTULOS_CONSERVACAO: Record<EstadoConservacao, string> = {
   pessimo: 'Péssimo',
   sucata: 'Sucata',
   indeterminado: 'Indeterminado',
-}
-
-export type BemDoRelatorio = {
-  id: number
-  numero_patrimonio: string | null
-  codigo_interno: string
-  tipo: string
-  descricao: string | null
-  marca: string | null
-  quantidade: number
-  status: StatusBem
-  status_rotulo: string
-  estado_conservacao: EstadoConservacao
-  estado_conservacao_rotulo: string
-  baixado: boolean
-  baixa_data: string | null
-  data_ultima_mudanca: string | null
-  mudou_no_periodo: boolean
-  mudou_de_sala_no_periodo: boolean
-  veio_da_sala: { id: number; nome: string; andar: string } | null
-}
-
-export type Relatorio = {
-  periodo: { inicio: string; fim: string }
-  totais: {
-    bens: number
-    mudaram_no_periodo: number
-    mudaram_de_sala_no_periodo: number
-    por_status: Record<StatusBem, number>
-    por_estado_conservacao: Record<EstadoConservacao, number>
-  }
-  andares: {
-    id: number
-    nome: string
-    total: number
-    salas: { id: number; nome: string; total: number; bens: BemDoRelatorio[] }[]
-  }[]
 }

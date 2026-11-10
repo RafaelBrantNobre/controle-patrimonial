@@ -1,7 +1,7 @@
 import { Plus, ScanLine, ShieldCheck, Users } from 'lucide-react'
 import { Link } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
-import { AguardandoApi, Cabecalho, Indicador, Selo } from '../../componentes/ui'
+import { Cabecalho, Desativado, Indicador, Selo } from '../../componentes/ui'
 
 // Usuários do Sistema (wireframe).
 // A API ainda não lista nem gerencia usuários (tarefa 3.3): ela só diz quem
@@ -30,10 +30,8 @@ export function ListaDeUsuarios() {
       </div>
 
       <div className="mb-6">
-        <AguardandoApi>
-          A lista de usuários, o cadastro e a edição dependem da gestão de usuários na API (tarefa 3.3). Até lá, os usuários são
-          criados no servidor com <code>php artisan usuario:criar-admin</code>.
-        </AguardandoApi>
+        {/* Desativado: A lista de usuários, o cadastro e a edição dependem da gestão de usuários na API (tarefa 3.3). Até lá, os usuários são criados no servidor com <code>php artisan usuario:criar-admin</code>. */}
+        <Desativado />
       </div>
 
       <section className="cartao overflow-hidden">

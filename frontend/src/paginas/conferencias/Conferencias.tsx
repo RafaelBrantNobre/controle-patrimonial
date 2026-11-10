@@ -167,10 +167,7 @@ function Pendencias({ bens, erro, podeResolver, aoResolver }: { bens?: Bem[]; er
                   <span className="block text-slate-400">{bem.codigo_interno}</span>
                 </td>
                 <td className="font-medium">{bem.tipo_patrimonio?.nome}</td>
-                <td>
-                  {bem.sala?.nome}
-                  <span className="block text-xs text-slate-500">{bem.sala?.andar?.nome}</span>
-                </td>
+                <td>{bem.sala?.nome ?? 'Sem localização'}</td>
                 <td>
                   {formatarData(bem.pendencia?.desde)}
                   <span className="block text-xs text-slate-500">{bem.pendencia?.conferencia}</span>

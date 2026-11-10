@@ -1,7 +1,7 @@
 import { Briefcase, Copy, KeyRound, Mail, ShieldCheck, User, UserPlus, Wrench } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { AguardandoApi, Campo } from '../../componentes/ui'
+import { Campo, Desativado } from '../../componentes/ui'
 
 const LETRAS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
 
@@ -42,7 +42,8 @@ export function FormularioDeUsuario() {
           <span className="rounded-full bg-cead-50 px-3 py-1 text-xs font-semibold text-cead-700">CEAD / UNIMONTES</span>
         </div>
 
-        <AguardandoApi>O cadastro de usuários ainda não existe na API (tarefa 3.3). O formulário fica pronto para quando a rota chegar.</AguardandoApi>
+        {/* Desativado: O cadastro de usuários ainda não existe na API (tarefa 3.3). O formulário fica pronto para quando a rota chegar. */}
+        <Desativado />
 
         <div className="space-y-4">
           <h2 className="font-semibold text-cead-900">

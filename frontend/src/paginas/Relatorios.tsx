@@ -1,7 +1,7 @@
 import { FileSpreadsheet } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { AguardandoApi, Aviso, Cabecalho, Carregando, Paginacao } from '../componentes/ui'
+import { Aviso, Cabecalho, Carregando, Desativado, Paginacao } from '../componentes/ui'
 import { consulta } from '../services/api'
 import { formatarData, plural } from '../services/formatos'
 import type { Conferencia, Pagina } from '../services/tipos'
@@ -19,12 +19,13 @@ export function Relatorios() {
     <>
       <Cabecalho titulo="Relatórios" subtitulo="O resultado de cada conferência concluída." />
 
-      <div className="mb-6">
-        <AguardandoApi>
-          A exportação de cada conferência em planilha (XLSX), no formato da planilha de 2024, ainda não existe na API. Por enquanto o resultado é
-          consultado na própria conferência.
-        </AguardandoApi>
-      </div>
+      <section className="cartao mb-6 space-y-3 p-5">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <FileSpreadsheet className="size-4" /> Exportar conferência em planilha (XLSX)
+        </h2>
+        {/* Desativado: A exportação de cada conferência em planilha (XLSX), no formato da planilha de 2024, ainda não existe na API. Por enquanto o resultado é consultado na própria conferência. */}
+        <Desativado />
+      </section>
 
       <section className="cartao overflow-hidden">
         <div className="border-b border-slate-200 px-4 py-3">

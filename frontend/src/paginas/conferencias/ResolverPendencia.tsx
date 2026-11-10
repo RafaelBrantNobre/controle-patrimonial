@@ -19,7 +19,7 @@ export function ResolverPendencia({
   aoFechar: () => void
   aoResolver: () => void
 }) {
-  const [salaId, setSalaId] = useState(String(bem.sala_id))
+  const [salaId, setSalaId] = useState(String(bem.sala_id ?? ''))
   const [data, setData] = useState(hojeIso())
   const [processo, setProcesso] = useState('')
   const [erro, setErro] = useState<ErroDaApi | null>(null)
@@ -55,7 +55,7 @@ export function ResolverPendencia({
           <button type="button" className="botao-secundario" onClick={aoFechar} disabled={enviando}>
             Voltar
           </button>
-          <button type="button" className="botao-primario" onClick={() => void resolver()} disabled={enviando || (jeito === 'processo_administrativo' && !processo.trim())}>
+          <button type="button" className="botao-primario" onClick={() => void resolver()} disabled={enviando || (jeito === 'processo_administrativo' ? !processo.trim() : !salaId)}>
             {enviando ? 'Salvando...' : 'Fechar pendência'}
           </button>
         </>
@@ -66,16 +66,11 @@ export function ResolverPendencia({
           <p>Informe onde e quando o bem apareceu. Se for outra sala, a mudança entra no histórico.</p>
           <Campo rotulo="Sala onde estava" erro={erro?.doCampo('sala_id')}>
             <select className="entrada" value={salaId} onChange={(e) => setSalaId(e.target.value)}>
-              {!salas.dados?.data.some((sala) => sala.id === bem.sala_id) && (
-                <option value={bem.sala_id}>
-                  {bem.sala?.nome}
-                  {bem.sala?.andar && ` · ${bem.sala.andar.nome}`}
-                </option>
-              )}
+              {bem.sala_id === null && <option value="">Selecione a sala...</option>}
+              {bem.sala && !salas.dados?.data.some((sala) => sala.id === bem.sala_id) && <option value={bem.sala.id}>{bem.sala.nome}</option>}
               {salas.dados?.data.map((sala) => (
                 <option key={sala.id} value={sala.id}>
                   {sala.nome}
-                  {sala.andar && ` · ${sala.andar.nome}`}
                 </option>
               ))}
             </select>

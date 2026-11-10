@@ -1,17 +1,17 @@
-import { Building2, DatabaseBackup, KeyRound, Layers, Plus, Settings2, ShieldCheck, Tags, UserPlus, Users, type LucideIcon } from 'lucide-react'
+import { Building2, DatabaseBackup, KeyRound, Plus, Settings2, ShieldCheck, Tags, UserPlus, Users, type LucideIcon } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { useAutenticacao } from '../autenticacao/Autenticacao'
-import { AguardandoApi, Aviso, Carregando, SeloAtivo } from '../componentes/ui'
+import { Aviso, Carregando, Desativado, SeloAtivo } from '../componentes/ui'
 import { BotaoExcluir, type Vinculos } from '../componentes/Exclusao'
 import { apiDelete, apiGet, apiPatch, apiPost, ErroDaApi } from '../services/api'
-import type { Andar, Bem, Pagina, Sala, TipoPatrimonio } from '../services/tipos'
+import type { Bem, Pagina, TipoPatrimonio } from '../services/tipos'
 import { useApi } from '../services/useApi'
 
 // Painel de Gerência (wireframe), só para o administrador.
 // Funcionam: atalho para cadastrar sala, exportação (pela tela Relatórios) e
-// o cadastro de andares e tipos de patrimônio, que o wireframe não desenha
-// mas a API já tem (README, 10) e sem os quais não dá para organizar as salas.
+// o cadastro de tipos de patrimônio, que o wireframe não desenha mas a API
+// já tem (README, 10).
 // Fora do back-end por enquanto: gestão de usuários e de acessos (tarefa 3.3)
 // e os parâmetros da plaqueta (o código interno CP-000123 é fixo na API).
 export function PainelDeGerencia() {
@@ -42,29 +42,12 @@ export function PainelDeGerencia() {
         <Atalho icone={DatabaseBackup} selo="Exportar" titulo="Relatórios" texto="Consulte o resultado de cada conferência realizada." para="/relatorios" acao="Ver relatórios" />
       </div>
 
-      <div className="mb-6 grid gap-6 lg:grid-cols-2">
-        <CadastroSimples<Andar>
-          titulo="Andares"
-          icone={Layers}
-          caminho="/andares"
-          detalhe={(andar) => `${andar.salas_count ?? 0} salas · ordem ${andar.ordem}`}
-          novo={(nome, lista) => ({ nome, ordem: Math.max(0, ...lista.map((andar) => andar.ordem)) + 1 })}
-          rotulo="o andar"
-          nomeDoVinculo={{ singular: 'sala', plural: 'salas', feminino: true }}
-          buscarVinculos={async (andar) => {
-            const salas = await apiGet<Pagina<Sala>>(`/salas?andar_id=${andar.id}&por_pagina=100`)
-            return {
-              total: salas.meta.total,
-              itens: salas.data.map((sala) => ({ id: sala.id, titulo: sala.nome, detalhe: `${sala.bens_count ?? 0} bens`, para: `/ambientes/${sala.id}` })),
-            }
-          }}
-        />
+      <div className="mb-6">
         <CadastroSimples<TipoPatrimonio>
           titulo="Tipos de patrimônio"
           icone={Tags}
           caminho="/tipos-patrimonio"
           detalhe={(tipo) => `${tipo.bens_count ?? 0} bens`}
-          novo={(nome) => ({ nome })}
           rotulo="o tipo"
           nomeDoVinculo={{ singular: 'bem', plural: 'bens' }}
           buscarVinculos={async (tipo) => {
@@ -74,7 +57,7 @@ export function PainelDeGerencia() {
               itens: bens.data.map((bem) => ({
                 id: bem.id,
                 titulo: `${bem.numero_patrimonio ?? 'sem patrimônio'} · ${bem.codigo_interno}`,
-                detalhe: bem.sala?.nome,
+                detalhe: bem.sala?.nome ?? 'Sem localização',
                 para: `/bens/${bem.id}`,
               })),
             }
@@ -87,7 +70,8 @@ export function PainelDeGerencia() {
           <h2 className="flex items-center gap-2 font-semibold text-cead-900">
             <Users className="size-4" /> Membros da Equipe com Acesso
           </h2>
-          <AguardandoApi>A lista de membros, o último acesso e a ativação de cada pessoa dependem da gestão de usuários na API (tarefa 3.3).</AguardandoApi>
+          {/* Desativado: A lista de membros, o último acesso e a ativação de cada pessoa dependem da gestão de usuários na API (tarefa 3.3). */}
+          <Desativado />
         </section>
         <section className="cartao space-y-3 p-6">
           <h2 className="flex items-center gap-2 font-semibold text-cead-900">
@@ -96,7 +80,8 @@ export function PainelDeGerencia() {
           <p className="text-sm text-slate-500">
             Hoje o sistema gera o código interno no formato <span className="font-mono font-semibold">CP-000123</span> para todo bem.
           </p>
-          <AguardandoApi>Prefixo da plaqueta e próximo número de tombamento configuráveis ainda não existem na API.</AguardandoApi>
+          {/* Desativado: Prefixo da plaqueta e próximo número de tombamento configuráveis ainda não existem na API. */}
+          <Desativado />
         </section>
       </div>
     </>
@@ -129,7 +114,6 @@ function CadastroSimples<T extends ItemSimples>({
   icone: Icone,
   caminho,
   detalhe,
-  novo,
   rotulo,
   nomeDoVinculo,
   buscarVinculos,
@@ -138,9 +122,8 @@ function CadastroSimples<T extends ItemSimples>({
   icone: LucideIcon
   caminho: string
   detalhe: (item: T) => string
-  novo: (nome: string, lista: T[]) => Record<string, unknown>
   rotulo: string
-  nomeDoVinculo: { singular: string; plural: string; feminino?: boolean }
+  nomeDoVinculo: { singular: string; plural: string }
   buscarVinculos: (item: T) => Promise<Vinculos>
 }) {
   const [versao, setVersao] = useState(0)
@@ -166,7 +149,7 @@ function CadastroSimples<T extends ItemSimples>({
 
   async function adicionar(evento: FormEvent) {
     evento.preventDefault()
-    if (await executar(() => apiPost(caminho, novo(nome.trim(), lista.dados?.data ?? [])))) setNome('')
+    if (await executar(() => apiPost(caminho, { nome: nome.trim() }))) setNome('')
   }
 
   return (

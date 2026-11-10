@@ -4,9 +4,9 @@ import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
 import { Aviso, Campo, Carregando, SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/ui'
 import { ResolverPendencia } from '../conferencias/ResolverPendencia'
-import { apiPatch, consulta, ErroDaApi } from '../../services/api'
+import { apiPatch, ErroDaApi } from '../../services/api'
 import { formatarData, hojeIso } from '../../services/formatos'
-import { ROTULOS_CONSERVACAO, type Andar, type Bem, type EstadoConservacao, type Pagina, type Sala } from '../../services/tipos'
+import { ROTULOS_CONSERVACAO, type Bem, type EstadoConservacao, type Pagina, type Sala } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
 
 // Ficha do bem (RF15). Não há wireframe próprio: segue o padrão das outras
@@ -133,11 +133,14 @@ export function FichaDoBem() {
             <Dado rotulo="Origem">{bem.origem}</Dado>
             <Dado rotulo="Quantidade">{bem.quantidade}</Dado>
             <Dado rotulo="Sala">
-              <Link to={`/ambientes/${bem.sala_id}`} className="text-cead-700 hover:underline">
-                {bem.sala?.nome}
-              </Link>
+              {bem.sala ? (
+                <Link to={`/ambientes/${bem.sala.id}`} className="text-cead-700 hover:underline">
+                  {bem.sala.nome}
+                </Link>
+              ) : (
+                'Sem localização'
+              )}
             </Dado>
-            <Dado rotulo="Andar">{bem.sala?.andar?.nome}</Dado>
             <Dado rotulo="Conservação">
               <SeloConservacao estado={bem.estado_conservacao} rotulo={bem.estado_conservacao_rotulo} />
             </Dado>
@@ -364,10 +367,8 @@ function PainelDeAcao({
 }
 
 function MudarSala({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
-  const [andarId, setAndarId] = useState(String(bem.sala?.andar_id ?? ''))
   const [salaId, setSalaId] = useState('')
-  const andares = useApi<Pagina<Andar>>('/andares?ativo=1&por_pagina=100')
-  const salas = useApi<Pagina<Sala>>(andarId ? `/salas${consulta({ andar_id: andarId, ativo: true, por_pagina: 100 })}` : null)
+  const salas = useApi<Pagina<Sala>>('/salas?ativo=1&por_pagina=100')
 
   return (
     <PainelDeAcao
@@ -381,23 +382,6 @@ function MudarSala({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
     >
       {(erro) => (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Campo rotulo="Andar de destino">
-            <select
-              className="entrada"
-              value={andarId}
-              onChange={(e) => {
-                setAndarId(e.target.value)
-                setSalaId('')
-              }}
-            >
-              <option value="">Selecione o andar...</option>
-              {andares.dados?.data.map((andar) => (
-                <option key={andar.id} value={andar.id}>
-                  {andar.nome}
-                </option>
-              ))}
-            </select>
-          </Campo>
           <Campo rotulo="Sala de destino" obrigatorio erro={erro?.doCampo('sala_id')}>
             <select className="entrada" value={salaId} onChange={(e) => setSalaId(e.target.value)} required>
               <option value="">Selecione a sala...</option>

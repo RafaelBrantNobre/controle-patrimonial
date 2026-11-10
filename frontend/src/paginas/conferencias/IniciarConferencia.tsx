@@ -63,7 +63,7 @@ export function IniciarConferencia({ aoFechar }: { aoFechar: () => void }) {
               <span className="flex items-center gap-1.5 font-semibold text-slate-800">
                 <FileUp className="size-4" /> Importar um arquivo (planilha ou SIAD)
               </span>
-              <span className="block text-xs text-slate-500">Ainda não disponível: a leitura será ligada quando o formato do arquivo estiver definido.</span>
+              <span className="block text-xs text-slate-500">Desativado</span>
             </span>
           </label>
           <label className="flex cursor-pointer gap-3 rounded-lg border border-cead-600 bg-cead-50 p-3">

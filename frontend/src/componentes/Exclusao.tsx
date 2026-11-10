@@ -4,12 +4,12 @@ import { Link } from 'react-router'
 import { ErroDaApi } from '../services/api'
 import { Aviso, Carregando } from './ui'
 
-// Um item que impede a exclusão: um bem da sala ou do tipo, ou uma sala do andar.
+// Um item que impede a exclusão: um bem da sala ou do tipo.
 export type Vinculo = { id: number; titulo: string; detalhe?: string; para?: string }
 
 export type Vinculos = { total: number; itens: Vinculo[] }
 
-// Botão Excluir de andar, sala e tipo (RN08).
+// Botão Excluir de sala e tipo (RN08).
 // Ao clicar, confere o que está ligado ao item:
 //   - se houver algo, o popup lista o que está ligado e avisa que não dá
 //     para excluir (o caminho é inativar);

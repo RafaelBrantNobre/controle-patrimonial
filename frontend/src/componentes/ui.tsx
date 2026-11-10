@@ -109,12 +109,13 @@ export function Aviso({ tipo = 'erro', children }: { tipo?: 'erro' | 'info'; chi
   )
 }
 
-// Marca na tela o que o wireframe pede e o back-end ainda não oferece.
-export function AguardandoApi({ children }: { children: ReactNode }) {
+// Caixa no lugar de um recurso que ainda não funciona. O motivo fica em
+// comentário no código de quem usa, não na tela.
+export function Desativado() {
   return (
-    <Aviso tipo="info">
-      <strong>Aguardando o back-end.</strong> {children}
-    </Aviso>
+    <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-center text-sm font-medium text-slate-500">
+      Desativado
+    </div>
   )
 }
 

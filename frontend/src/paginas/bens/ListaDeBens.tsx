@@ -39,7 +39,7 @@ export function ListaDeBens() {
           <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
             <ClipboardList className="size-4" /> Inventário de equipamentos
           </h2>
-          <span className="text-xs text-slate-500">Ordenado por andar, sala e tipo</span>
+          <span className="text-xs text-slate-500">Ordenado por sala e tipo</span>
         </div>
 
         {bens.erro && (
@@ -71,10 +71,7 @@ export function ListaDeBens() {
                     <span className="mt-1 block font-mono text-xs text-slate-400">{bem.codigo_interno}</span>
                   </td>
                   <td className="font-medium text-slate-800">{bem.tipo_patrimonio?.nome}</td>
-                  <td>
-                    <p className="text-slate-800">{bem.sala?.nome}</p>
-                    <p className="text-xs text-slate-500">{bem.sala?.andar?.nome}</p>
-                  </td>
+                  <td className={bem.sala ? 'text-slate-800' : 'text-slate-500 italic'}>{bem.sala?.nome ?? 'Sem localização'}</td>
                   <td>
                     <SeloStatus status={bem.status} rotulo={bem.status_rotulo} />
                   </td>

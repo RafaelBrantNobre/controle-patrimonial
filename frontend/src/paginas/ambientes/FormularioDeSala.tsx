@@ -1,12 +1,12 @@
 import { Building2, ClipboardList, Save, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { AguardandoApi, Aviso, Campo, Carregando, SeloAtivo } from '../../componentes/ui'
+import { Aviso, Campo, Carregando, Desativado, SeloAtivo } from '../../componentes/ui'
 import { apiPatch, apiPost, ErroDaApi } from '../../services/api'
-import type { Andar, Pagina, Sala } from '../../services/tipos'
+import type { Pagina, Sala } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
 
-type Dados = { nome: string; descricao: string; andar_id: string; ativo: boolean }
+type Dados = { nome: string; descricao: string; ativo: boolean }
 
 // Cadastrar Ambiente / Sala (wireframe), também usado para editar.
 // Fora do back-end por enquanto: código ou sigla, tipo de espaço e
@@ -27,13 +27,11 @@ function Formulario({ sala }: { sala?: Sala }) {
   const [dados, setDados] = useState<Dados>({
     nome: sala?.nome ?? '',
     descricao: sala?.descricao ?? '',
-    andar_id: sala ? String(sala.andar_id) : '',
     ativo: sala?.ativo ?? true,
   })
   const [erro, setErro] = useState<ErroDaApi | null>(null)
   const [salvando, setSalvando] = useState(false)
 
-  const andares = useApi<Pagina<Andar>>('/andares?por_pagina=100')
   const recentes = useApi<Pagina<Sala>>('/salas?por_pagina=5')
 
   function mudar<C extends keyof Dados>(campo: C, valor: Dados[C]) {
@@ -47,7 +45,6 @@ function Formulario({ sala }: { sala?: Sala }) {
     const corpo = {
       nome: dados.nome.trim(),
       descricao: dados.descricao.trim() || null,
-      andar_id: Number(dados.andar_id) || null,
       ativo: dados.ativo,
     }
     try {
@@ -62,8 +59,6 @@ function Formulario({ sala }: { sala?: Sala }) {
       setSalvando(false)
     }
   }
-
-  const andarEscolhido = andares.dados?.data.find((andar) => String(andar.id) === dados.andar_id)
 
   return (
     <form onSubmit={salvar}>
@@ -94,17 +89,6 @@ function Formulario({ sala }: { sala?: Sala }) {
             </h2>
             <Campo rotulo="Nome da sala / descrição" obrigatorio erro={erro?.doCampo('nome')} ajuda="Informe o nome como é reconhecido pela equipe.">
               <input className="entrada" maxLength={120} placeholder="ex: Estúdio 03 - Gravação de Podcasts" value={dados.nome} onChange={(e) => mudar('nome', e.target.value)} required />
-            </Campo>
-            <Campo rotulo="Andar" obrigatorio erro={erro?.doCampo('andar_id')}>
-              <select className="entrada" value={dados.andar_id} onChange={(e) => mudar('andar_id', e.target.value)} required>
-                <option value="">Selecione o andar...</option>
-                {andares.dados?.data.map((andar) => (
-                  <option key={andar.id} value={andar.id} disabled={!andar.ativo}>
-                    {andar.nome}
-                    {!andar.ativo && ' (inativo)'}
-                  </option>
-                ))}
-              </select>
             </Campo>
           </section>
 
@@ -147,7 +131,8 @@ function Formulario({ sala }: { sala?: Sala }) {
               {erro?.doCampo('ativo') && <span className="mt-1 block text-xs text-red-600">{erro.doCampo('ativo')}</span>}
             </div>
 
-            <AguardandoApi>Código ou sigla, tipo de espaço e responsável pela sala ainda não existem na API.</AguardandoApi>
+            {/* Desativado: Código ou sigla, tipo de espaço e responsável pela sala ainda não existem na API. */}
+            <Desativado />
           </section>
         </div>
 
@@ -159,10 +144,7 @@ function Formulario({ sala }: { sala?: Sala }) {
             <ul className="space-y-2">
               {recentes.dados?.data.map((item) => (
                 <li key={item.id} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                  <span>
-                    <span className="block font-medium text-slate-800">{item.nome}</span>
-                    <span className="block text-xs text-slate-500">{item.andar?.nome}</span>
-                  </span>
+                  <span className="font-medium text-slate-800">{item.nome}</span>
                   <SeloAtivo ativo={item.ativo} />
                 </li>
               ))}
@@ -180,7 +162,6 @@ function Formulario({ sala }: { sala?: Sala }) {
               <Building2 className="size-4 text-cead-700" />
               {dados.nome.trim() || 'Nome do espaço a preencher...'}
             </p>
-            <p className="mt-1 text-xs text-slate-500">{andarEscolhido?.nome ?? 'Andar não definido'}</p>
           </section>
         </aside>
       </div>
