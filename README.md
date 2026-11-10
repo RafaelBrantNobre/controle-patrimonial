@@ -581,14 +581,13 @@ As telas seguem os wireframes do Figma *CEAD - Gestão Patrimonial* (página Pro
 | `/login` | Tela Login | todos | `POST /login` |
 | `/bens` | Listagem de Bens Patrimoniais | administrador e consulta | `GET /bens` |
 | `/bens/novo`, `/bens/{id}/editar` | Cadastro de Bem Patrimonial | administrador | `POST` e `PATCH /bens` |
-| `/bens/{id}` | Ficha do bem, com mudar de sala, mudar situação e dar baixa | administrador e consulta (as ações, só administrador) | `GET /bens/{id}`, `PATCH /bens/{id}/sala` e `/status` |
+| `/bens/{id}` | Ficha do bem, com o registro de ocorrências (seção 16.4) | administrador e consulta (as ações, só administrador) | `GET /bens/{id}`, `PATCH /bens/{id}/sala` e `/status` |
 | `/ambientes` | Gestão de Ambientes e Salas | administrador e consulta | `GET /salas`, `GET /andares` |
 | `/ambientes/novo`, `/ambientes/{id}/editar` | Cadastrar Ambiente / Sala | administrador | `POST` e `PATCH /salas` |
 | `/ambientes/{id}` | Detalhes da sala | administrador e consulta | `GET /salas/{id}`, `GET /salas/{id}/bens` |
 | `/conferencias` | Conferências e bens não localizados (seção 16) | administrador e consulta (as ações, só administrador) | `GET /conferencias`, `GET /pendencias` |
-| `/conferencias/nova` | Gerar conferência | administrador | `GET /bens`, `POST /conferencias` |
-| `/conferencias/{id}` | Lançar a conferência e imprimir a folha | administrador e consulta (lançar, só administrador) | `/conferencias/{id}/itens` e as rotas da seção 16.1 |
-| `/relatorios` | Relatórios e Folhas de Conferência | administrador e consulta | `GET /relatorio`, `GET /relatorio/planilha` |
+| `/conferencias/{id}` | Conferência sala a sala | administrador e consulta (registrar, só administrador) | `/conferencias/{id}/itens` e as rotas da seção 16.1 |
+| `/relatorios` | Relatórios: as conferências concluídas | administrador e consulta | `GET /conferencias?situacao=concluida` |
 | `/gerencia` | Painel de Gerência, com o cadastro de andares e tipos | administrador | `/andares`, `/tipos-patrimonio` |
 | `/usuarios`, `/usuarios/novo` | Usuários do Sistema e Cadastrar Novo Usuário | administrador | nenhuma ainda (tarefa 3.3) |
 | `/status` | Verificação do ambiente (seção 2.4) | todos | `GET /status` |
@@ -614,7 +613,8 @@ Essas partes aparecem nas telas com o aviso **Aguardando o back-end**, sem dado 
 | Login | entrar com CPF, "Esqueci minha senha" |
 | Bens | foto, modelo, número de série, impressão da etiqueta, exportar a lista de bens em Excel (hoje só o relatório exporta) |
 | Ambientes | código ou sigla da sala, tipo de espaço, responsável, capacidade e histórico da sala |
-| Relatórios | PDF no modelo da Unimontes (tarefa 3.4; a tela usa a impressão do navegador) e histórico de relatórios gerados |
+| Relatórios | baixar cada conferência em planilha (XLSX), no formato da planilha de 2024 |
+| Conferências | iniciar a conferência a partir de um arquivo (planilha ou SIAD): depende do formato do arquivo |
 | Gerência e Usuários | listar, cadastrar, editar e desativar usuários (tarefa 3.3) e parâmetros da plaqueta |
 
 Diferenças de nomes entre o wireframe e a API:
@@ -629,10 +629,11 @@ A conferência é o levantamento físico: alguém percorre as salas com a folha 
 
 Fluxo:
 
-1. **Gerar** a conferência em `/conferencias/nova`: a lista de bens, com caixinhas e os mesmos filtros de `/bens`. Dá para marcar bem a bem, a página inteira ou todos os bens do filtro. Bens baixados e bens que já estão numa conferência aberta ficam de fora, e a tela avisa quantos.
-2. **Imprimir a folha** na tela da conferência e conferir no papel. A folha sai na ordem de andar, sala, tipo e número.
-3. **Lançar** a folha: os bens começam pendentes. Marque em lote os que estavam no lugar e lance só as exceções: não localizado (pede confirmação), encontrado em outra sala ou estado de conservação diferente.
-4. **Concluir**, informando o dia em que a conferência foi feita. Só aqui os bens mudam.
+1. **Iniciar** em `/conferencias`, no botão *Iniciar conferência*. A tela pergunta se há um arquivo para importar; por enquanto só funciona *Pular e usar os bens cadastrados*, que inclui todos os bens não baixados. Só existe **uma conferência aberta por vez**.
+2. A tela vai direto para a **primeira sala**. Cada sala é uma etapa; os bens sem sala ficam numa etapa final, *Sem localização*; a última etapa é a conclusão.
+3. Em cada sala, para cada bem: **encontrado ou não localizado**, a **sala** onde está, o **estado de conservação** e a **condição de uso** (em uso ou sem uso). Os campos já vêm com a situação registrada, como sugestão. *Marcar os pendentes como encontrados* preenche a sala de uma vez, e restam só as exceções.
+4. **Salvar sala e ir para a próxima** grava a sala inteira. O progresso fica guardado: dá para sair e voltar, e a tela reabre na primeira sala que ainda tem bens pendentes.
+5. **Concluir**, informando o dia em que a conferência foi feita. Só aqui os bens mudam. A conferência também pode ser **cancelada**, sem efeito nos bens.
 
 ### 16.1 Rotas
 
@@ -640,8 +641,9 @@ Fluxo:
 | --- | --- | --- |
 | `GET /api/conferencias` | administrador e consulta | lista as conferências, da mais recente para a mais antiga, com as contagens. Filtro `?situacao=aberta`, `concluida` ou `cancelada` |
 | `GET /api/conferencias/{id}` | administrador e consulta | uma conferência, com as contagens |
-| `GET /api/conferencias/{id}/itens` | administrador e consulta | os bens da conferência na ordem da folha, com as salas e os pendentes de cada uma. Filtros `?sala_id=` (sala registrada) e `?resultado=pendente`, `encontrado` ou `nao_localizado` |
-| `POST /api/conferencias` | administrador | gera. Corpo `{"nome", "modo": "selecionados", "bem_ids": [...]}` ou `{"nome", "modo": "filtro", "filtros": {...}}`, com os filtros de `GET /api/bens` (seção 11.3). Filtro vazio é o prédio inteiro |
+| `GET /api/conferencias/{id}/itens` | administrador e consulta | os bens da conferência por sala, com as salas e os pendentes de cada uma. Filtros `?sala_id=` (sala registrada), `?sem_sala=1` e `?resultado=pendente`, `encontrado` ou `nao_localizado`. Com `?resumo=1` vêm só a conferência e as salas |
+| `POST /api/conferencias` | administrador | inicia. Corpo `{"nome", "modo": "filtro"}` para todos os bens (é o que a tela usa), `{"nome", "modo": "filtro", "filtros": {...}}` com os filtros de `GET /api/bens` (seção 11.3) ou `{"nome", "modo": "selecionados", "bem_ids": [...]}`. Responde 409 se já houver uma conferência aberta |
+| `PUT /api/conferencias/{id}/itens` | administrador | salva os bens de uma sala de uma vez: `{"itens": [{"id", "resultado", "sala_encontrada_id", "estado_conservacao", "condicao_uso"}]}`. Resultado nulo deixa o bem pendente |
 | `PATCH /api/conferencias/{id}/itens/{item}` | administrador | lança um bem: `{"resultado": "encontrado", "sala_encontrada_id": 7, "estado_conservacao": "regular"}`, `{"resultado": "nao_localizado"}` ou `{"resultado": null}` para voltar a pendente |
 | `POST /api/conferencias/{id}/encontrados` | administrador | marca em lote como encontrados na sala registrada: `{"itens": [10, 11]}` |
 | `POST /api/conferencias/{id}/concluir` | administrador | conclui: `{"realizada_em": "2026-11-06"}` |
@@ -653,12 +655,14 @@ Fluxo:
 
 ### 16.2 Regras
 
-- Um bem entra uma vez em cada conferência e não fica em duas conferências abertas ao mesmo tempo. Bem baixado não entra.
+- Só existe uma conferência aberta por vez. Para iniciar outra, conclua ou cancele a que está aberta. Bem baixado não entra.
 - Enquanto a conferência está aberta, os resultados ficam só nela e nada muda nos bens. Conferência concluída ou cancelada não recebe mais resultados (409).
 - Só conclui quando todos os bens têm resultado. O dia da conferência não pode ser futuro, mas pode ser anterior ao dia em que a folha foi lançada.
 - Ao concluir, para cada bem:
   - encontrado em outra sala vira mudança de sala, com histórico (seção 12). A sala precisa estar ativa, e bem baixado não muda de sala (RN04). Isso é conferido de novo na conclusão;
-  - o estado visto atualiza a conservação, sem contar como mudança de situação;
+  - o estado de conservação e a condição de uso informados passam a valer;
+  - cada uma dessas mudanças vira uma ocorrência no histórico do bem, ligada à conferência (seção 16.4). Confirmar o bem como está não gera ocorrência;
+  - a sala, o estado e o uso só são aplicados se a conferência é a informação mais nova do bem: se ele mudou depois de registrado na conferência, ou se já tem uma conferência de data mais recente, vale o que é mais novo;
   - a data e o resultado da última conferência são gravados no bem. Uma conferência de data anterior, concluída depois, não passa por cima da mais recente.
 - Cancelar não muda nada nos bens, e eles podem entrar numa conferência nova. A conferência cancelada continua registrada.
 - Sala em que algum bem foi encontrado numa conferência não pode ser excluída (seção 10.3). O caminho é inativar.
@@ -671,3 +675,11 @@ Bem não localizado é grave: a gestora responde por ele e precisa abrir process
 - a situação de uso do bem não muda sozinha;
 - a pendência só fecha de dois jeitos: **localizado** (a sala onde estava e o dia, que não pode ser anterior à conferência em que ele sumiu) ou **processo administrativo** (o número do processo, que fica no histórico de conferências do bem). Com o processo, o bem continua como não localizado até a baixa;
 - uma conferência nova que encontra o bem fecha as pendências antigas dele, como localizado. Se a conferência em que ele não foi localizado for de data anterior à última em que foi encontrado, não abre pendência.
+
+### 16.4 Ocorrências
+
+Tudo o que acontece com um bem fica no histórico de ocorrências dele (tabela `ocorrencia`): mudança de sala, de estado de conservação, de condição de uso e baixa. Cada linha guarda o valor de antes e o de depois, a data, quem registrou e, quando veio de uma conferência, qual.
+
+- Na tela: localize o bem em `/bens` (pelos filtros, como o de sala) e use **Registrar ocorrência**, na lista ou na ficha. A ficha mostra o histórico.
+- Na API, as ocorrências são gravadas pelas rotas que já mudam o bem: `PATCH /api/bens/{id}/sala`, `PATCH /api/bens/{id}/status` (seção 12) e `PATCH /api/bens/{id}` com `estado_conservacao`. A ficha (`GET /api/bens/{id}`) traz `ocorrencias`.
+- A baixa não apaga o bem nem o histórico. Desfazer a baixa também vira ocorrência.
