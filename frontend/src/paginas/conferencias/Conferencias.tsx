@@ -83,7 +83,7 @@ export function Conferencias() {
                 <th>Situação</th>
                 <th>Andamento</th>
                 <th>Realizada em</th>
-                <th>Gerada por</th>
+                <th>Iniciada por</th>
               </tr>
             </thead>
             <tbody className={conferencias.carregando ? 'opacity-50' : ''}>
@@ -93,7 +93,7 @@ export function Conferencias() {
                     <Link to={`/conferencias/${conferencia.id}`} className="font-medium text-cead-700 hover:underline">
                       {conferencia.nome}
                     </Link>
-                    <span className="block text-xs text-slate-500">gerada em {formatarData(conferencia.criada_em)}</span>
+                    <span className="block text-xs text-slate-500">iniciada em {formatarData(conferencia.criada_em)}</span>
                   </td>
                   <td>
                     <Selo cor={COR_SITUACAO[conferencia.situacao]}>{conferencia.situacao_rotulo}</Selo>
