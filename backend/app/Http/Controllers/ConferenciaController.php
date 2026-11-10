@@ -11,11 +11,13 @@ use App\Http\Requests\ConcluirConferenciaRequest;
 use App\Http\Requests\GerarConferenciaRequest;
 use App\Http\Requests\LancarResultadoRequest;
 use App\Http\Requests\MarcarEncontradosRequest;
+use App\Http\Requests\SalvarItensRequest;
 use App\Http\Resources\ConferenciaItemResource;
 use App\Http\Resources\ConferenciaResource;
 use App\Models\Bem;
 use App\Models\Conferencia;
 use App\Models\ConferenciaItem;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -75,11 +77,22 @@ class ConferenciaController extends Controller
      * POST /api/conferencias
      * Corpo: {"nome": "...", "modo": "selecionados", "bem_ids": [1, 2]}
      *     ou {"nome": "...", "modo": "filtro", "filtros": {"sala_id": 5}}
-     * Ficam de fora os bens baixados e os que já estão numa conferência
-     * aberta. A resposta diz quantos entraram e quantos ficaram de fora.
+     * Modo "filtro" sem filtros é o prédio inteiro: é como a tela inicia uma
+     * conferência com os bens cadastrados.
+     * Só existe uma conferência aberta por vez (409 se já houver).
+     * Ficam de fora os bens baixados. A resposta diz quantos entraram.
      */
     public function store(GerarConferenciaRequest $request): JsonResponse
     {
+        $aberta = Conferencia::abertas()->first();
+
+        if ($aberta) {
+            return response()->json([
+                'message' => "Já existe uma conferência aberta: {$aberta->nome}. Conclua ou cancele essa conferência antes de iniciar outra.",
+                'conferencia_id' => $aberta->id,
+            ], 409);
+        }
+
         $consulta = $request->input('modo') === 'filtro'
             ? FiltroDeBens::consulta($request->validated('filtros') ?? [])
             : Bem::query()->whereIn('bem.id', $request->validated('bem_ids'));
@@ -138,10 +151,11 @@ class ConferenciaController extends Controller
 
     /**
      * GET /api/conferencias/{conferencia}/itens
-     * Os bens da conferência na ordem da folha: andar, sala, tipo e número.
+     * Os bens da conferência na ordem da folha: sala, tipo e número.
      * A sala é a registrada quando a conferência foi gerada (a da folha),
-     * mesmo que a conclusão tenha mudado o bem de sala.
-     * Filtros opcionais: ?sala_id= (sala registrada) e
+     * mesmo que a conclusão tenha mudado o bem de sala. Os bens sem sala
+     * registrada vêm por último, no grupo "Sem localização" (id nulo).
+     * Filtros opcionais: ?sala_id= (sala registrada), ?sem_sala=1 e
      * ?resultado=pendente, encontrado ou nao_localizado.
      * Traz junto as salas da conferência, com total e pendentes de cada uma,
      * para a tela lançar sala por sala.
@@ -162,6 +176,7 @@ class ConferenciaController extends Controller
         $itens = $this->itensNaOrdemDaFolha($conferencia)
             ->select('conferencia_item.*')
             ->when($request->integer('sala_id'), fn ($query, int $salaId) => $query->where('conferencia_item.sala_registrada_id', $salaId))
+            ->when($request->boolean('sem_sala'), fn ($query) => $query->whereNull('conferencia_item.sala_registrada_id'))
             ->when($request->query('resultado'), fn ($query, string $resultado) => $resultado === 'pendente'
                 ? $query->whereNull('conferencia_item.resultado')
                 : $query->where('conferencia_item.resultado', $resultado))
@@ -179,8 +194,8 @@ class ConferenciaController extends Controller
             ->groupBy('sala.id', 'sala.nome', 'andar.nome', 'andar.ordem')
             ->get()
             ->map(fn ($sala) => [
-                'id' => (int) $sala->id,
-                'nome' => $sala->nome,
+                'id' => $sala->id === null ? null : (int) $sala->id,
+                'nome' => $sala->nome ?? 'Sem localização',
                 'andar' => $sala->andar,
                 'total' => (int) $sala->total,
                 'pendentes' => (int) $sala->pendentes,
@@ -199,17 +214,43 @@ class ConferenciaController extends Controller
      */
     public function lancar(LancarResultadoRequest $request, Conferencia $conferencia, ConferenciaItem $item): ConferenciaItemResource
     {
-        $resultado = $request->validated('resultado');
-        $estado = $request->validated('estado_conservacao');
-
-        $item->lancar(
-            $resultado ? ResultadoConferencia::from($resultado) : null,
-            $request->validated('sala_encontrada_id'),
-            $estado ? EstadoConservacao::from($estado) : null,
-            $request->user(),
-        );
+        $this->lancarItem($item, $request->validated(), $request->user());
 
         return new ConferenciaItemResource($item->load(self::RELACOES_DO_ITEM));
+    }
+
+    /**
+     * PUT /api/conferencias/{conferencia}/itens
+     * Corpo: {"itens": [{"id": 10, "resultado": "encontrado", "sala_encontrada_id": 7,
+     *                    "estado_conservacao": "bom", "condicao_uso": "em_uso"}, ...]}
+     * Salva os bens de uma sala de uma vez: é o "salvar sala" da conferência.
+     * Resultado nulo deixa o bem pendente. Nada muda nos bens até concluir.
+     */
+    public function salvarItens(SalvarItensRequest $request, Conferencia $conferencia): ConferenciaResource
+    {
+        $itens = $request->itensDaConferencia();
+
+        DB::transaction(function () use ($request, $itens) {
+            foreach ($request->validated('itens') as $dados) {
+                $this->lancarItem($itens[(int) $dados['id']], $dados, $request->user());
+            }
+        });
+
+        return $this->resposta($conferencia);
+    }
+
+    /**
+     * @param  array<string, mixed>  $dados  resultado, sala_encontrada_id, estado_conservacao e condicao_uso
+     */
+    private function lancarItem(ConferenciaItem $item, array $dados, User $usuario): void
+    {
+        $item->lancar(
+            ($dados['resultado'] ?? null) ? ResultadoConferencia::from($dados['resultado']) : null,
+            $dados['sala_encontrada_id'] ?? null,
+            ($dados['estado_conservacao'] ?? null) ? EstadoConservacao::from($dados['estado_conservacao']) : null,
+            $usuario,
+            ($dados['condicao_uso'] ?? null) ? StatusBem::from($dados['condicao_uso']) : null,
+        );
     }
 
     /**
@@ -238,9 +279,10 @@ class ConferenciaController extends Controller
     /**
      * POST /api/conferencias/{conferencia}/concluir
      * Corpo: {"realizada_em": "2026-11-06"}
-     * Aplica os resultados aos bens: sala onde estavam (com histórico),
-     * estado visto e data e resultado da última conferência. Os não
-     * localizados viram pendências da gestora.
+     * Aplica os resultados aos bens: sala onde estavam, estado de conservação
+     * e condição de uso (cada mudança vira uma ocorrência no histórico do
+     * bem), e data e resultado da última conferência. Os não localizados
+     * viram pendências da gestora.
      */
     public function concluir(ConcluirConferenciaRequest $request, Conferencia $conferencia): ConferenciaResource
     {
@@ -275,9 +317,10 @@ class ConferenciaController extends Controller
     {
         return $conferencia->itens()
             ->join('bem', 'bem.id', '=', 'conferencia_item.bem_id')
-            ->join('sala', 'sala.id', '=', 'conferencia_item.sala_registrada_id')
-            ->join('andar', 'andar.id', '=', 'sala.andar_id')
+            ->leftJoin('sala', 'sala.id', '=', 'conferencia_item.sala_registrada_id')
+            ->leftJoin('andar', 'andar.id', '=', 'sala.andar_id')
             ->join('tipo_patrimonio', 'tipo_patrimonio.id', '=', 'bem.tipo_patrimonio_id')
+            ->orderByRaw('case when sala.id is null then 1 else 0 end')
             ->orderBy('andar.ordem')
             ->orderBy('sala.nome');
     }

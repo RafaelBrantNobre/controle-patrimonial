@@ -104,6 +104,7 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
         // Conferência dos bens: gerar, lançar a folha, concluir e cancelar.
         Route::post('/conferencias', [ConferenciaController::class, 'store']);
         Route::patch('/conferencias/{conferencia}/itens/{item}', [ConferenciaController::class, 'lancar']);
+        Route::put('/conferencias/{conferencia}/itens', [ConferenciaController::class, 'salvarItens']);
         Route::post('/conferencias/{conferencia}/encontrados', [ConferenciaController::class, 'marcarEncontrados']);
         Route::post('/conferencias/{conferencia}/concluir', [ConferenciaController::class, 'concluir']);
         Route::post('/conferencias/{conferencia}/cancelar', [ConferenciaController::class, 'cancelar']);

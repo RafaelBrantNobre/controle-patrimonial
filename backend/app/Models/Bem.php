@@ -7,6 +7,7 @@ use App\Enums\ResolucaoPendencia;
 use App\Enums\ResultadoConferencia;
 use App\Enums\SituacaoConferencia;
 use App\Enums\StatusBem;
+use App\Enums\TipoOcorrencia;
 use Database\Factories\BemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
@@ -74,6 +75,8 @@ class Bem extends Model
         'itemEmConferenciaAberta.conferencia',
         'pendenciaAberta.conferencia',
         'historicoDeConferencias.conferencia',
+        'ocorrencias.usuario',
+        'ocorrencias.conferencia',
     ];
 
     /** Prefixo do código interno: CP de Controle Patrimonial. */
@@ -230,6 +233,16 @@ class Bem extends Model
         return Conferencia::select('realizada_em')->whereColumn('conferencia.id', 'conferencia_item.conferencia_id');
     }
 
+    /**
+     * O histórico do bem, da ocorrência mais recente para a mais antiga.
+     *
+     * @return HasMany<Ocorrencia, $this>
+     */
+    public function ocorrencias(): HasMany
+    {
+        return $this->hasMany(Ocorrencia::class)->latest('data')->latest('id');
+    }
+
     public function estaBaixado(): bool
     {
         return $this->status === StatusBem::Baixado;
@@ -245,9 +258,13 @@ class Bem extends Model
      * Muda o bem de sala (RF17) e grava a mudança na tabela movimentacao,
      * com origem, destino, usuário e momento. Quem chama deve usar uma
      * transação, para o bem e o histórico mudarem juntos.
+     * $conferenciaId diz de qual conferência veio a mudança, quando não foi
+     * um registro manual. Vale o mesmo em alterarStatus e alterarConservacao.
      */
-    public function mudarDeSala(Sala $destino, User $usuario): void
+    public function mudarDeSala(Sala $destino, User $usuario, ?int $conferenciaId = null): void
     {
+        $this->registrarOcorrencia(TipoOcorrencia::Sala, $this->sala?->nome, $destino->nome, $usuario, $conferenciaId);
+
         $this->movimentacoes()->create([
             'sala_origem_id' => $this->sala_id,
             'sala_destino_id' => $destino->id,
@@ -256,6 +273,7 @@ class Bem extends Model
         ]);
 
         $this->sala_id = $destino->id;
+        $this->unsetRelation('sala');
         $this->registrarMudanca($usuario);
         $this->save();
     }
@@ -265,13 +283,55 @@ class Bem extends Model
      * Ao sair de baixado, os dados da baixa são apagados, porque deixam de
      * valer: é o caminho para desfazer uma baixa registrada por engano.
      */
-    public function alterarStatus(StatusBem $novo, User $usuario, ?string $baixaData = null, ?string $baixaObservacao = null): void
+    public function alterarStatus(StatusBem $novo, User $usuario, ?string $baixaData = null, ?string $baixaObservacao = null, ?int $conferenciaId = null): void
     {
+        $this->registrarOcorrencia(
+            $novo === StatusBem::Baixado ? TipoOcorrencia::Baixa : TipoOcorrencia::Uso,
+            $this->status->rotulo(),
+            $novo->rotulo(),
+            $usuario,
+            $conferenciaId,
+            $novo === StatusBem::Baixado ? $baixaData : null,
+            $novo === StatusBem::Baixado ? $baixaObservacao : null,
+        );
+
         $this->status = $novo;
         $this->baixa_data = $novo === StatusBem::Baixado ? $baixaData : null;
         $this->baixa_observacao = $novo === StatusBem::Baixado ? $baixaObservacao : null;
         $this->registrarMudanca($usuario);
         $this->save();
+    }
+
+    /**
+     * Altera o estado de conservação e grava a ocorrência. Não conta como
+     * mudança de situação: data_ultima_mudanca fica como está.
+     */
+    public function alterarConservacao(EstadoConservacao $novo, User $usuario, ?int $conferenciaId = null): void
+    {
+        if ($this->estado_conservacao === $novo) {
+            return;
+        }
+
+        $this->registrarOcorrencia(TipoOcorrencia::Conservacao, $this->estado_conservacao->rotulo(), $novo->rotulo(), $usuario, $conferenciaId);
+
+        $this->estado_conservacao = $novo;
+        $this->save();
+    }
+
+    /**
+     * Grava uma linha no histórico do bem, com o valor de antes e o de depois.
+     */
+    private function registrarOcorrencia(TipoOcorrencia $tipo, ?string $anterior, ?string $novo, User $usuario, ?int $conferenciaId = null, ?string $data = null, ?string $observacao = null): void
+    {
+        $this->ocorrencias()->create([
+            'tipo' => $tipo,
+            'valor_anterior' => $anterior,
+            'valor_novo' => $novo,
+            'observacao' => $observacao,
+            'data' => $data ?? now()->toDateString(),
+            'usuario_id' => $usuario->id,
+            'conferencia_id' => $conferenciaId,
+        ]);
     }
 
     /**

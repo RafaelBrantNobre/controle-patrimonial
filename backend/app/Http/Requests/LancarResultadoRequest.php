@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\EstadoConservacao;
 use App\Enums\ResultadoConferencia;
+use App\Enums\StatusBem;
 use App\Http\Requests\Concerns\ExigeConferenciaAberta;
 use App\Models\ConferenciaItem;
 use App\Models\Sala;
@@ -44,6 +45,7 @@ class LancarResultadoRequest extends FormRequest
             'resultado' => ['present', 'nullable', Rule::enum(ResultadoConferencia::class)],
             'sala_encontrada_id' => ['sometimes', 'nullable', 'integer', Rule::exists('sala', 'id')],
             'estado_conservacao' => ['sometimes', 'nullable', Rule::enum(EstadoConservacao::class)],
+            'condicao_uso' => ['sometimes', 'nullable', Rule::in([StatusBem::EmUso->value, StatusBem::SemUso->value])],
         ];
     }
 
@@ -84,6 +86,7 @@ class LancarResultadoRequest extends FormRequest
             'resultado.enum' => 'O resultado deve ser encontrado ou não localizado.',
             'sala_encontrada_id.integer' => 'Escolha a sala onde o bem estava.',
             'sala_encontrada_id.exists' => 'A sala escolhida não existe. Atualize a página e escolha de novo.',
+            'condicao_uso.in' => 'A condição de uso deve ser em uso ou sem uso.',
             'estado_conservacao.enum' => 'Escolha o estado de conservação: novo, bom, regular, péssimo, sucata ou indeterminado.',
         ];
     }

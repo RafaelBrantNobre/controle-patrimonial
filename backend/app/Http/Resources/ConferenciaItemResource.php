@@ -31,6 +31,8 @@ class ConferenciaItemResource extends JsonResource
             'sala_encontrada' => new SalaResource($this->whenLoaded('salaEncontrada')),
             'estado_conservacao' => $this->estado_conservacao?->value,
             'estado_conservacao_rotulo' => $this->estado_conservacao?->rotulo(),
+            'condicao_uso' => $this->condicao_uso?->value,
+            'condicao_uso_rotulo' => $this->condicao_uso?->rotulo(),
             'conferido_em' => $this->conferido_em?->toIso8601String(),
             'conferido_por' => $this->whenLoaded('conferidoPor', fn () => $this->conferidoPor ? [
                 'id' => $this->conferidoPor->id,

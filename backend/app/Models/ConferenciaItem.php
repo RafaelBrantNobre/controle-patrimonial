@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\EstadoConservacao;
 use App\Enums\ResolucaoPendencia;
 use App\Enums\ResultadoConferencia;
+use App\Enums\StatusBem;
 use Database\Factories\ConferenciaItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
@@ -28,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'resultado',
     'sala_encontrada_id',
     'estado_conservacao',
+    'condicao_uso',
     'conferido_em',
     'conferido_por_id',
     'resolucao',
@@ -94,13 +96,14 @@ class ConferenciaItem extends Model
      * Grava o resultado lançado a partir da folha. Resultado nulo volta o
      * item a pendente. Bem não localizado não tem sala nem estado vistos.
      */
-    public function lancar(?ResultadoConferencia $resultado, ?int $salaId, ?EstadoConservacao $estado, User $usuario): void
+    public function lancar(?ResultadoConferencia $resultado, ?int $salaId, ?EstadoConservacao $estado, User $usuario, ?StatusBem $uso = null): void
     {
         $encontrado = $resultado === ResultadoConferencia::Encontrado;
 
         $this->resultado = $resultado;
         $this->sala_encontrada_id = $encontrado ? ($salaId ?? $this->sala_registrada_id ?? $this->bem->sala_id) : null;
         $this->estado_conservacao = $encontrado ? $estado : null;
+        $this->condicao_uso = $encontrado ? $uso : null;
         $this->conferido_em = $resultado ? now() : null;
         $this->conferido_por_id = $resultado ? $usuario->id : null;
         $this->save();
@@ -121,11 +124,15 @@ class ConferenciaItem extends Model
         if ($this->resultado === ResultadoConferencia::Encontrado) {
             if ($this->folhaEhMaisNova($realizadaEm)) {
                 if ($this->sala_encontrada_id !== null && (int) $this->sala_encontrada_id !== (int) $bem->sala_id) {
-                    $bem->mudarDeSala($this->salaEncontrada, $usuario);
+                    $bem->mudarDeSala($this->salaEncontrada, $usuario, $this->conferencia_id);
                 }
 
                 if ($this->estado_conservacao !== null) {
-                    $bem->estado_conservacao = $this->estado_conservacao;
+                    $bem->alterarConservacao($this->estado_conservacao, $usuario, $this->conferencia_id);
+                }
+
+                if ($this->condicao_uso !== null && $this->condicao_uso !== $bem->status && ! $bem->estaBaixado()) {
+                    $bem->alterarStatus($this->condicao_uso, $usuario, conferenciaId: $this->conferencia_id);
                 }
             }
 
@@ -171,6 +178,7 @@ class ConferenciaItem extends Model
         return [
             'resultado' => ResultadoConferencia::class,
             'estado_conservacao' => EstadoConservacao::class,
+            'condicao_uso' => StatusBem::class,
             'resolucao' => ResolucaoPendencia::class,
             'conferido_em' => 'datetime',
             'resolvido_em' => 'datetime',

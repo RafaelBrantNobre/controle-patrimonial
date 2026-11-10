@@ -73,6 +73,18 @@ class BemResource extends JsonResource
                 'resolucao_rotulo' => $item->resolucao?->rotulo(),
                 'processo_numero' => $item->processo_numero,
             ])),
+            // Só na ficha: o histórico de ocorrências do bem.
+            'ocorrencias' => $this->whenLoaded('ocorrencias', fn () => $this->ocorrencias->map(fn ($ocorrencia) => [
+                'id' => $ocorrencia->id,
+                'tipo' => $ocorrencia->tipo->value,
+                'tipo_rotulo' => $ocorrencia->tipo->rotulo(),
+                'valor_anterior' => $ocorrencia->valor_anterior,
+                'valor_novo' => $ocorrencia->valor_novo,
+                'observacao' => $ocorrencia->observacao,
+                'data' => $ocorrencia->data->toDateString(),
+                'usuario' => $ocorrencia->usuario->nome,
+                'conferencia' => $ocorrencia->conferencia ? ['id' => $ocorrencia->conferencia->id, 'nome' => $ocorrencia->conferencia->nome] : null,
+            ])),
             'cadastrado_em' => $this->created_at?->toIso8601String(),
             'atualizado_em' => $this->updated_at?->toIso8601String(),
         ];

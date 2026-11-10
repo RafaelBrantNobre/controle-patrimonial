@@ -4,10 +4,12 @@ use App\Enums\EstadoConservacao;
 use App\Enums\ResolucaoPendencia;
 use App\Enums\ResultadoConferencia;
 use App\Enums\SituacaoConferencia;
+use App\Enums\StatusBem;
 use App\Models\Bem;
 use App\Models\Conferencia;
 use App\Models\ConferenciaItem;
 use App\Models\Movimentacao;
+use App\Models\Ocorrencia;
 use App\Models\Sala;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -90,22 +92,32 @@ test('gerar pelo filtro vazio pega o prédio inteiro', function () {
         ->assertJsonPath('incluidos', 4);
 });
 
-test('bens baixados e bens em outra conferência aberta ficam de fora, e a resposta diz quantos', function () {
+test('bens baixados ficam de fora, e a resposta diz quantos', function () {
     gestoraConectada();
     $livre = Bem::factory()->create();
     $baixado = Bem::factory()->baixado()->create();
-    $emOutra = Bem::factory()->create();
-    gerarConferencia([$emOutra], 'Outra');
 
     $this->postJson('/api/conferencias', [
         'nome' => 'Nova',
         'modo' => 'selecionados',
-        'bem_ids' => [$livre->id, $baixado->id, $emOutra->id],
+        'bem_ids' => [$livre->id, $baixado->id],
     ])
         ->assertCreated()
         ->assertJsonPath('incluidos', 1)
-        ->assertJsonPath('ignorados.baixados', 1)
-        ->assertJsonPath('ignorados.em_outra_conferencia', 1);
+        ->assertJsonPath('ignorados.baixados', 1);
+});
+
+test('só existe uma conferência aberta por vez', function () {
+    gestoraConectada();
+    $bem = Bem::factory()->create();
+    $aberta = gerarConferencia([$bem], 'Em andamento');
+
+    $this->postJson('/api/conferencias', ['nome' => 'Outra', 'modo' => 'filtro'])
+        ->assertConflict()
+        ->assertJsonPath('conferencia_id', $aberta);
+
+    $this->postJson("/api/conferencias/{$aberta}/cancelar")->assertOk();
+    $this->postJson('/api/conferencias', ['nome' => 'Outra', 'modo' => 'filtro'])->assertCreated();
 });
 
 test('sem nenhum bem que possa entrar, a conferência não é criada', function () {
@@ -195,10 +207,14 @@ test('item de outra conferência dá 404', function () {
     gestoraConectada();
     [$a, $b] = Bem::factory()->count(2)->create();
     $id = gerarConferencia([$a], 'A');
-    $outra = gerarConferencia([$b], 'B');
+    $deOutra = ConferenciaItem::factory()->for(Conferencia::factory()->cancelada())->for($b)->create();
 
-    $this->patchJson("/api/conferencias/{$id}/itens/".itemDe($outra, $b)->id, ['resultado' => 'encontrado'])
+    $this->patchJson("/api/conferencias/{$id}/itens/{$deOutra->id}", ['resultado' => 'encontrado'])
         ->assertNotFound();
+
+    $this->putJson("/api/conferencias/{$id}/itens", ['itens' => [['id' => $deOutra->id, 'resultado' => 'encontrado']]])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('itens');
 });
 
 test('marcar selecionados como encontrados mantém o que já tinha sido lançado em outra sala', function () {
@@ -241,6 +257,113 @@ test('a lista de itens vem na ordem da folha, com as salas e os pendentes de cad
 
     $this->getJson("/api/conferencias/{$id}/itens?resultado=pendente")->assertJsonCount(1, 'data');
     $this->getJson("/api/conferencias/{$id}/itens?sala_id={$salaA->id}")->assertJsonCount(1, 'data');
+});
+
+// --- Salvar a sala (conferência sala a sala) ---------------------------------
+
+test('salvar a sala grava todos os bens de uma vez e guarda o progresso', function () {
+    gestoraConectada();
+    $sala = Sala::factory()->create();
+    $outraSala = Sala::factory()->create();
+    [$a, $b, $c] = Bem::factory()->count(3)->for($sala)->create();
+    $id = gerarConferencia([$a, $b, $c]);
+
+    $this->putJson("/api/conferencias/{$id}/itens", ['itens' => [
+        ['id' => itemDe($id, $a)->id, 'resultado' => 'encontrado', 'estado_conservacao' => 'bom', 'condicao_uso' => 'em_uso'],
+        ['id' => itemDe($id, $b)->id, 'resultado' => 'encontrado', 'sala_encontrada_id' => $outraSala->id, 'estado_conservacao' => 'pessimo', 'condicao_uso' => 'sem_uso'],
+        ['id' => itemDe($id, $c)->id, 'resultado' => null],
+    ]])
+        ->assertOk()
+        ->assertJsonPath('data.totais.encontrados', 2)
+        ->assertJsonPath('data.totais.pendentes', 1);
+
+    // Ao voltar depois, o que foi salvo continua lá, e a sala mostra o que falta.
+    $resposta = $this->getJson("/api/conferencias/{$id}/itens?sala_id={$sala->id}")->assertOk();
+    expect($resposta->json('salas.0.pendentes'))->toBe(1)
+        ->and(collect($resposta->json('data'))->firstWhere('bem.id', $b->id))
+        ->toMatchArray(['resultado' => 'encontrado', 'sala_encontrada_id' => $outraSala->id, 'estado_conservacao' => 'pessimo', 'condicao_uso' => 'sem_uso']);
+
+    expect($b->fresh()->sala_id)->toBe($sala->id);
+});
+
+test('salvar a sala recusa sala inativa e condição de uso inválida, sem gravar nada', function () {
+    gestoraConectada();
+    [$a, $b] = Bem::factory()->count(2)->create();
+    $inativa = Sala::factory()->inativa()->create();
+    $id = gerarConferencia([$a, $b]);
+
+    $this->putJson("/api/conferencias/{$id}/itens", ['itens' => [
+        ['id' => itemDe($id, $a)->id, 'resultado' => 'encontrado'],
+        ['id' => itemDe($id, $b)->id, 'resultado' => 'encontrado', 'sala_encontrada_id' => $inativa->id],
+    ]])->assertUnprocessable()->assertJsonValidationErrors('itens.1.sala_encontrada_id');
+
+    $this->putJson("/api/conferencias/{$id}/itens", ['itens' => [
+        ['id' => itemDe($id, $a)->id, 'resultado' => 'encontrado', 'condicao_uso' => 'baixado'],
+    ]])->assertUnprocessable()->assertJsonValidationErrors('itens.0.condicao_uso');
+
+    expect(itemDe($id, $a)->resultado)->toBeNull();
+});
+
+test('concluir aplica a condição de uso e grava as ocorrências com a conferência de origem', function () {
+    gestoraConectada();
+    $origem = Sala::factory()->create(['nome' => 'Sala 03']);
+    $destino = Sala::factory()->create(['nome' => 'Sala 05']);
+    $bem = Bem::factory()->for($origem)->conservacao(EstadoConservacao::Bom)->create();
+    $id = gerarConferencia([$bem], 'Semestre');
+
+    $this->putJson("/api/conferencias/{$id}/itens", ['itens' => [
+        ['id' => itemDe($id, $bem)->id, 'resultado' => 'encontrado', 'sala_encontrada_id' => $destino->id, 'estado_conservacao' => 'regular', 'condicao_uso' => 'sem_uso'],
+    ]])->assertOk();
+    $this->postJson("/api/conferencias/{$id}/concluir", ['realizada_em' => '2026-11-06'])->assertOk();
+
+    $bem->refresh();
+    expect($bem->status)->toBe(StatusBem::SemUso)
+        ->and($bem->sala_id)->toBe($destino->id)
+        ->and($bem->estado_conservacao)->toBe(EstadoConservacao::Regular);
+
+    $ocorrencias = $this->getJson("/api/bens/{$bem->id}")->json('data.ocorrencias');
+    expect(collect($ocorrencias)->map(fn ($o) => [$o['tipo'], $o['valor_anterior'], $o['valor_novo'], $o['conferencia']['nome'] ?? null])->sortBy(0)->values()->all())->toBe([
+        ['conservacao', 'Bom', 'Regular', 'Semestre'],
+        ['sala', 'Sala 03', 'Sala 05', 'Semestre'],
+        ['uso', 'Em uso', 'Sem uso', 'Semestre'],
+    ]);
+});
+
+test('confirmar o bem como está não gera ocorrência', function () {
+    gestoraConectada();
+    $bem = Bem::factory()->conservacao(EstadoConservacao::Bom)->create();
+    $id = gerarConferencia([$bem]);
+
+    $this->putJson("/api/conferencias/{$id}/itens", ['itens' => [
+        ['id' => itemDe($id, $bem)->id, 'resultado' => 'encontrado', 'sala_encontrada_id' => $bem->sala_id, 'estado_conservacao' => 'bom', 'condicao_uso' => 'em_uso'],
+    ]])->assertOk();
+    $this->postJson("/api/conferencias/{$id}/concluir", ['realizada_em' => '2026-11-06'])->assertOk();
+
+    expect(Ocorrencia::count())->toBe(0)
+        ->and($bem->fresh()->resultado_ultima_conferencia)->toBe(ResultadoConferencia::Encontrado);
+});
+
+// --- Ocorrências manuais -----------------------------------------------------
+
+test('mudar de sala, mudar a conservação, mudar o uso e dar baixa pela ficha gravam ocorrências', function () {
+    gestoraConectada();
+    $origem = Sala::factory()->create(['nome' => 'Sala 03']);
+    $destino = Sala::factory()->create(['nome' => 'Sala 05']);
+    $bem = Bem::factory()->for($origem)->conservacao(EstadoConservacao::Bom)->create();
+
+    $this->patchJson("/api/bens/{$bem->id}/sala", ['sala_id' => $destino->id])->assertOk();
+    $this->patchJson("/api/bens/{$bem->id}", ['estado_conservacao' => 'pessimo'])->assertOk();
+    $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'sem_uso'])->assertOk();
+    $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'baixado', 'baixa_data' => '2026-11-05', 'baixa_observacao' => 'Processo 9'])
+        ->assertOk()
+        ->assertJsonPath('data.ocorrencias.0.usuario', 'Christine');
+
+    expect(Ocorrencia::orderBy('id')->get()->map(fn ($o) => [$o->tipo->value, $o->valor_anterior, $o->valor_novo, $o->data->toDateString(), $o->observacao])->all())->toBe([
+        ['sala', 'Sala 03', 'Sala 05', '2026-11-06', null],
+        ['conservacao', 'Bom', 'Péssimo', '2026-11-06', null],
+        ['uso', 'Em uso', 'Sem uso', '2026-11-06', null],
+        ['baixa', 'Sem uso', 'Baixado', '2026-11-05', 'Processo 9'],
+    ]);
 });
 
 // --- Concluir ---------------------------------------------------------------
