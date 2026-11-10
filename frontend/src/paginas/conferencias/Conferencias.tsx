@@ -1,4 +1,4 @@
-import { AlertTriangle, ClipboardCheck, FileText, MapPin, Plus } from 'lucide-react'
+import { AlertTriangle, ArrowRight, ClipboardCheck, FileText, MapPin, Play } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
@@ -7,40 +7,67 @@ import { consulta } from '../../services/api'
 import { formatarData, plural } from '../../services/formatos'
 import type { Bem, Conferencia, Pagina } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
+import { IniciarConferencia } from './IniciarConferencia'
 import { ResolverPendencia } from './ResolverPendencia'
 
 const COR_SITUACAO: Record<Conferencia['situacao'], CorSelo> = { aberta: 'azul', concluida: 'verde', cancelada: 'cinza' }
 
-// Conferências dos bens e pendências da gestora.
-// Em cima, os bens não localizados ainda sem resolução: é o que mais pede
-// atenção, porque a gestora responde por eles. Embaixo, as conferências.
+// Gerenciamento das conferências.
+// Só existe uma conferência aberta por vez: se há uma, a tela convida a
+// continuar; se não há, oferece iniciar. Depois vêm os bens não localizados
+// ainda sem resolução (a gestora responde por eles) e o histórico.
 export function Conferencias() {
   const { usuario } = useAutenticacao()
   const [pagina, setPagina] = useState(1)
   const [versaoPendencias, setVersaoPendencias] = useState(0)
   const conferencias = useApi<Pagina<Conferencia>>(`/conferencias${consulta({ pagina, por_pagina: 20 })}`)
   const pendencias = useApi<{ data: Bem[] }>('/pendencias', versaoPendencias)
+  const abertas = useApi<Pagina<Conferencia>>('/conferencias?situacao=aberta&por_pagina=1')
+  const aberta = abertas.dados?.data[0]
+  const [iniciando, setIniciando] = useState(false)
 
   return (
     <>
       <Cabecalho
         titulo="Conferências"
-        subtitulo="Gere a conferência dos bens, passe a folha a limpo e acompanhe os bens não localizados."
+        subtitulo="Inicie a conferência dos bens, confira sala por sala e acompanhe os bens não localizados."
         acoes={
-          usuario?.pode_alterar && (
-            <Link to="/conferencias/nova" className="botao-primario">
-              <Plus className="size-4" /> Gerar conferência
-            </Link>
+          usuario?.pode_alterar &&
+          abertas.dados &&
+          !aberta && (
+            <button type="button" className="botao-primario" onClick={() => setIniciando(true)}>
+              <Play className="size-4" /> Iniciar conferência
+            </button>
           )
         }
       />
+
+      {aberta && (
+        <section className="cartao mb-6 flex flex-wrap items-center justify-between gap-4 border-cead-100 bg-cead-50 p-5">
+          <div>
+            <p className="text-xs font-semibold tracking-wide text-cead-700 uppercase">Conferência em andamento</p>
+            <p className="mt-1 text-lg font-bold text-cead-900">{aberta.nome}</p>
+            {aberta.totais && (
+              <p className="text-sm text-slate-600">
+                {aberta.totais.itens - aberta.totais.pendentes} de {plural(aberta.totais.itens, 'bem verificado', 'bens verificados')}. Só pode haver uma
+                conferência aberta por vez.
+              </p>
+            )}
+          </div>
+          <Link to={`/conferencias/${aberta.id}`} className="botao-primario">
+            {usuario?.pode_alterar ? 'Continuar conferência' : 'Acompanhar'} <ArrowRight className="size-4" />
+          </Link>
+        </section>
+      )}
+
+      {iniciando && <IniciarConferencia aoFechar={() => setIniciando(false)} />}
 
       <Pendencias bens={pendencias.dados?.data} erro={pendencias.erro} podeResolver={Boolean(usuario?.pode_alterar)} aoResolver={() => setVersaoPendencias((v) => v + 1)} />
 
       <section className="cartao overflow-hidden">
         <div className="border-b border-slate-200 px-4 py-3">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <ClipboardCheck className="size-4" /> Conferências geradas
+            <ClipboardCheck className="size-4" /> Histórico de conferências
           </h2>
         </div>
         {conferencias.erro && (
@@ -74,7 +101,7 @@ export function Conferencias() {
                   <td className="text-xs text-slate-600">
                     {conferencia.totais && (
                       <>
-                        {conferencia.totais.itens - conferencia.totais.pendentes} de {conferencia.totais.itens} lançados
+                        {conferencia.totais.itens - conferencia.totais.pendentes} de {conferencia.totais.itens} verificados
                         {conferencia.totais.nao_localizados > 0 && (
                           <span className="block text-red-700">{plural(conferencia.totais.nao_localizados, 'não localizado', 'não localizados')}</span>
                         )}
@@ -88,7 +115,7 @@ export function Conferencias() {
             </tbody>
           </table>
           {conferencias.carregando && !conferencias.dados && <Carregando />}
-          {conferencias.dados?.data.length === 0 && <Carregando texto="Nenhuma conferência gerada ainda." />}
+          {conferencias.dados?.data.length === 0 && <Carregando texto="Nenhuma conferência iniciada ainda." />}
         </div>
         {conferencias.dados && conferencias.dados.meta.total > 0 && (
           <Paginacao

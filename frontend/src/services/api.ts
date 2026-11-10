@@ -87,6 +87,10 @@ export async function apiPost<T>(caminho: string, corpo?: unknown): Promise<T> {
   return (await requisitar('POST', caminho, corpo ?? {})).json() as Promise<T>
 }
 
+export async function apiPut<T>(caminho: string, corpo: unknown): Promise<T> {
+  return (await requisitar('PUT', caminho, corpo)).json() as Promise<T>
+}
+
 export async function apiPatch<T>(caminho: string, corpo: unknown): Promise<T> {
   return (await requisitar('PATCH', caminho, corpo)).json() as Promise<T>
 }

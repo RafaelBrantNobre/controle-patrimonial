@@ -1,4 +1,4 @@
-import { ClipboardList, Eye, Pencil, Plus } from 'lucide-react'
+import { ClipboardList, Eye, FilePlus2, Pencil, Plus } from 'lucide-react'
 import { Link } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
 import { FiltrosDeBens } from '../../componentes/FiltrosDeBens'
@@ -88,6 +88,15 @@ export function ListaDeBens() {
                     <Link to={`/bens/${bem.id}`} className="inline-flex p-1.5 text-slate-500 hover:text-cead-700" title="Ver ficha">
                       <Eye className="size-4" />
                     </Link>
+                    {usuario?.pode_alterar && (
+                      <Link
+                        to={`/bens/${bem.id}?ocorrencia=1`}
+                        className="inline-flex p-1.5 text-slate-500 hover:text-cead-700"
+                        title="Registrar ocorrência"
+                      >
+                        <FilePlus2 className="size-4" />
+                      </Link>
+                    )}
                     {usuario?.pode_alterar && !bem.baixado && (
                       <Link
                         to={`/bens/${bem.id}/editar`}

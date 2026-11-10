@@ -84,8 +84,22 @@ export type Bem = {
     resolucao_rotulo: string | null
     processo_numero: string | null
   }[]
+  // Só na ficha: o histórico de ocorrências do bem.
+  ocorrencias?: Ocorrencia[]
   cadastrado_em: string | null
   atualizado_em: string | null
+}
+
+export type Ocorrencia = {
+  id: number
+  tipo: 'sala' | 'conservacao' | 'uso' | 'baixa'
+  tipo_rotulo: string
+  valor_anterior: string | null
+  valor_novo: string | null
+  observacao: string | null
+  data: string
+  usuario: string
+  conferencia: { id: number; nome: string } | null
 }
 
 export type ResultadoConferencia = 'encontrado' | 'nao_localizado'
@@ -109,12 +123,17 @@ export type ItemDeConferencia = {
   id: number
   conferencia_id: number
   bem: Bem
+  // Sala do bem quando a conferência foi gerada: a da folha impressa.
+  sala_registrada_id: number | null
+  sala_registrada?: Sala | null
   resultado: ResultadoConferencia | null
   resultado_rotulo: string | null
   sala_encontrada_id: number | null
   sala_encontrada?: Sala | null
   estado_conservacao: EstadoConservacao | null
   estado_conservacao_rotulo: string | null
+  condicao_uso: 'em_uso' | 'sem_uso' | null
+  condicao_uso_rotulo: string | null
   conferido_em: string | null
   conferido_por?: { id: number; nome: string } | null
 }
@@ -123,7 +142,8 @@ export type ItemDeConferencia = {
 export type ItensDaConferencia = {
   data: ItemDeConferencia[]
   conferencia: Conferencia
-  salas: { id: number; nome: string; andar: string; total: number; pendentes: number }[]
+  // id nulo é o grupo "Sem localização": bens sem sala registrada.
+  salas: { id: number | null; nome: string; total: number; pendentes: number }[]
 }
 
 export const SITUACOES_DE_CONFERENCIA = {

@@ -66,10 +66,16 @@ export function ResolverPendencia({
           <p>Informe onde e quando o bem apareceu. Se for outra sala, a mudança entra no histórico.</p>
           <Campo rotulo="Sala onde estava" erro={erro?.doCampo('sala_id')}>
             <select className="entrada" value={salaId} onChange={(e) => setSalaId(e.target.value)}>
-              {!salas.dados?.data.some((sala) => sala.id === bem.sala_id) && <option value={bem.sala_id}>{bem.sala?.nome}</option>}
+              {!salas.dados?.data.some((sala) => sala.id === bem.sala_id) && (
+                <option value={bem.sala_id}>
+                  {bem.sala?.nome}
+                  {bem.sala?.andar && ` · ${bem.sala.andar.nome}`}
+                </option>
+              )}
               {salas.dados?.data.map((sala) => (
                 <option key={sala.id} value={sala.id}>
                   {sala.nome}
+                  {sala.andar && ` · ${sala.andar.nome}`}
                 </option>
               ))}
             </select>

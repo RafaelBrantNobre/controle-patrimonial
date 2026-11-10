@@ -11,8 +11,7 @@ import { useApi } from '../../services/useApi'
 // Detalhes da sala (wireframe): dados da sala e todos os bens dela, na ordem
 // da conferência (por tipo e número de patrimônio).
 // O cartão de conferência resume os bens da sala pela última conferência.
-// "Iniciar conferência" gera uma conferência com os bens da sala; para o
-// perfil consulta, abre a folha da sala em Relatórios.
+// O botão "Conferências" leva à tela onde a conferência é iniciada ou continuada.
 // Fora do back-end por enquanto: capacidade, responsável e o histórico de
 // mudanças da sala.
 export function DetalhesDaSala() {
@@ -83,10 +82,8 @@ export function DetalhesDaSala() {
               />
             )}
             <Link
-              to={usuario?.pode_alterar ? `/conferencias/nova?sala_id=${dados.id}` : `/relatorios?sala_id=${dados.id}`}
-              className="botao-primario"
-            >
-              <ClipboardCheck className="size-4" /> {usuario?.pode_alterar ? 'Iniciar conferência' : 'Folha de conferência'}
+              to="/conferencias" className="botao-primario">
+              <ClipboardCheck className="size-4" /> Conferências
             </Link>
           </div>
         </div>

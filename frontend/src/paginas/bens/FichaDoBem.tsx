@@ -1,24 +1,28 @@
-import { ArrowRightLeft, CircleSlash, ClipboardCheck, FileText, History, MapPin, Pencil, RefreshCw } from 'lucide-react'
+import { ArrowRightLeft, CircleSlash, ClipboardCheck, FilePlus2, FileText, History, MapPin, Pencil, RefreshCw, Wrench } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { Link, useLocation, useParams } from 'react-router'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
 import { Aviso, Campo, Carregando, SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/ui'
 import { ResolverPendencia } from '../conferencias/ResolverPendencia'
 import { apiPatch, consulta, ErroDaApi } from '../../services/api'
 import { formatarData, hojeIso } from '../../services/formatos'
-import type { Andar, Bem, Pagina, Sala } from '../../services/tipos'
+import { ROTULOS_CONSERVACAO, type Andar, type Bem, type EstadoConservacao, type Pagina, type Sala } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
 
 // Ficha do bem (RF15). Não há wireframe próprio: segue o padrão das outras
-// telas e reúne as operações da tarefa 2.8 (mudar de sala, de situação e
-// dar baixa), que só o administrador faz.
+// telas. "Registrar ocorrência" reúne o que pode acontecer com o bem (mudou
+// de sala, de estado de conservação, de condição de uso, ou foi baixado),
+// e só o administrador registra. Cada registro entra no histórico de
+// ocorrências, com a data e quem registrou. Com ?ocorrencia=1 na URL, a
+// ficha já abre perguntando o tipo da ocorrência.
 export function FichaDoBem() {
   const { id } = useParams()
   const { usuario } = useAutenticacao()
   const location = useLocation()
   const [versao, setVersao] = useState(0)
   const [mensagem, setMensagem] = useState<string | null>((location.state as { mensagem?: string } | null)?.mensagem ?? null)
-  const [acao, setAcao] = useState<'sala' | 'status' | 'baixa' | null>(null)
+  const [parametros] = useSearchParams()
+  const [acao, setAcao] = useState<'escolher' | 'sala' | 'conservacao' | 'status' | 'baixa' | null>(parametros.get('ocorrencia') ? 'escolher' : null)
 
   const resposta = useApi<{ data: Bem }>(`/bens/${id}`, versao)
 
@@ -54,23 +58,13 @@ export function FichaDoBem() {
         {usuario?.pode_alterar && (
           <div className="flex flex-wrap gap-2">
             {!bem.baixado && (
-              <>
-                <Link to={`/bens/${bem.id}/editar`} className="botao-secundario">
-                  <Pencil className="size-4" /> Editar
-                </Link>
-                <button type="button" className="botao-secundario" onClick={() => setAcao('sala')}>
-                  <ArrowRightLeft className="size-4" /> Mudar de sala
-                </button>
-              </>
+              <Link to={`/bens/${bem.id}/editar`} className="botao-secundario">
+                <Pencil className="size-4" /> Editar
+              </Link>
             )}
-            <button type="button" className="botao-secundario" onClick={() => setAcao('status')}>
-              <RefreshCw className="size-4" /> Mudar situação
+            <button type="button" className="botao-primario" onClick={() => setAcao('escolher')}>
+              <FilePlus2 className="size-4" /> Registrar ocorrência
             </button>
-            {!bem.baixado && (
-              <button type="button" className="botao border border-red-200 bg-white text-red-700 hover:bg-red-50" onClick={() => setAcao('baixa')}>
-                <CircleSlash className="size-4" /> Dar baixa
-              </button>
-            )}
           </div>
         )}
       </div>
@@ -89,6 +83,40 @@ export function FichaDoBem() {
         </div>
       )}
 
+      {usuario?.pode_alterar && acao === 'escolher' && (
+        <section className="cartao mb-6 space-y-4 border-cead-100 p-6">
+          <div>
+            <h2 className="font-semibold text-cead-900">Registrar ocorrência</h2>
+            <p className="text-sm text-slate-500">O que aconteceu com este bem?</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {!bem.baixado && (
+              <button type="button" className="botao-secundario justify-start" onClick={() => setAcao('sala')}>
+                <ArrowRightLeft className="size-4" /> Mudou de sala
+              </button>
+            )}
+            {!bem.baixado && (
+              <button type="button" className="botao-secundario justify-start" onClick={() => setAcao('conservacao')}>
+                <Wrench className="size-4" /> Mudou a conservação
+              </button>
+            )}
+            <button type="button" className="botao-secundario justify-start" onClick={() => setAcao('status')}>
+              <RefreshCw className="size-4" /> {bem.baixado ? 'Desfazer a baixa' : 'Mudou a condição de uso'}
+            </button>
+            {!bem.baixado && (
+              <button type="button" className="botao justify-start border border-red-200 bg-white text-red-700 hover:bg-red-50" onClick={() => setAcao('baixa')}>
+                <CircleSlash className="size-4" /> Baixa
+              </button>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <button type="button" className="botao-secundario" onClick={() => setAcao(null)}>
+              Cancelar
+            </button>
+          </div>
+        </section>
+      )}
+      {acao === 'conservacao' && <MudarConservacao bem={bem} aoCancelar={() => setAcao(null)} aoConcluir={concluir} />}
       {acao === 'sala' && <MudarSala bem={bem} aoCancelar={() => setAcao(null)} aoConcluir={concluir} />}
       {acao === 'status' && <MudarStatus bem={bem} aoCancelar={() => setAcao(null)} aoConcluir={concluir} />}
       {acao === 'baixa' && <DarBaixa bem={bem} aoCancelar={() => setAcao(null)} aoConcluir={concluir} />}
@@ -134,6 +162,53 @@ export function FichaDoBem() {
       </div>
 
       <ConferenciaDoBem bem={bem} podeResolver={Boolean(usuario?.pode_alterar)} aoResolver={() => concluir('Pendência resolvida.')} />
+
+      <section className="cartao mt-6 p-6">
+        <h2 className="mb-4 flex items-center gap-2 font-semibold text-cead-900">
+          <History className="size-4" /> Histórico de ocorrências
+        </h2>
+        {(bem.ocorrencias ?? []).length === 0 ? (
+          <p className="text-sm text-slate-500">Nenhuma ocorrência registrada para este bem.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="tabela">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Ocorrência</th>
+                  <th>De</th>
+                  <th>Para</th>
+                  <th>Registrada por</th>
+                  <th>Origem</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bem.ocorrencias?.map((ocorrencia) => (
+                  <tr key={ocorrencia.id}>
+                    <td className="whitespace-nowrap">{formatarData(ocorrencia.data)}</td>
+                    <td>
+                      {ocorrencia.tipo_rotulo}
+                      {ocorrencia.observacao && <span className="block text-xs text-slate-500">{ocorrencia.observacao}</span>}
+                    </td>
+                    <td className="text-slate-600">{ocorrencia.valor_anterior ?? '—'}</td>
+                    <td className="font-medium text-slate-800">{ocorrencia.valor_novo ?? '—'}</td>
+                    <td className="text-slate-600">{ocorrencia.usuario}</td>
+                    <td>
+                      {ocorrencia.conferencia ? (
+                        <Link to={`/conferencias/${ocorrencia.conferencia.id}`} className="text-cead-700 hover:underline">
+                          {ocorrencia.conferencia.nome}
+                        </Link>
+                      ) : (
+                        <span className="text-slate-500">Registro manual</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </>
   )
 }
@@ -341,13 +416,42 @@ function MudarSala({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
   )
 }
 
+function MudarConservacao({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
+  const opcoes = (Object.keys(ROTULOS_CONSERVACAO) as EstadoConservacao[]).filter((estado) => estado !== bem.estado_conservacao)
+  const [estado, setEstado] = useState<EstadoConservacao>(opcoes[0])
+
+  return (
+    <PainelDeAcao
+      titulo="Mudar o estado de conservação"
+      textoBotao="Confirmar"
+      aoCancelar={aoCancelar}
+      enviar={async () => {
+        const resposta = await apiPatch<{ data: Bem }>(`/bens/${bem.id}`, { estado_conservacao: estado })
+        aoConcluir(`Conservação alterada para ${resposta.data.estado_conservacao_rotulo.toLowerCase()}.`)
+      }}
+    >
+      {(erro) => (
+        <Campo rotulo={`Novo estado (hoje: ${bem.estado_conservacao_rotulo})`} erro={erro?.doCampo('estado_conservacao')}>
+          <select className="entrada" value={estado} onChange={(e) => setEstado(e.target.value as EstadoConservacao)}>
+            {opcoes.map((opcao) => (
+              <option key={opcao} value={opcao}>
+                {ROTULOS_CONSERVACAO[opcao]}
+              </option>
+            ))}
+          </select>
+        </Campo>
+      )}
+    </PainelDeAcao>
+  )
+}
+
 function MudarStatus({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
   const opcoes = (['em_uso', 'sem_uso'] as const).filter((status) => status !== bem.status)
   const [status, setStatus] = useState<string>(opcoes[0])
 
   return (
     <PainelDeAcao
-      titulo={bem.baixado ? 'Desfazer a baixa' : 'Mudar a situação de uso'}
+      titulo={bem.baixado ? 'Desfazer a baixa' : 'Mudar a condição de uso'}
       textoBotao="Confirmar"
       aoCancelar={aoCancelar}
       enviar={async () => {

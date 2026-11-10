@@ -39,7 +39,7 @@ export function PainelDeGerencia() {
         <Atalho icone={UserPlus} selo="Equipe" titulo="Cadastrar Novo Usuário" texto="Adicione servidores à equipe e defina o nível de acesso." para="/usuarios/novo" acao="Cadastrar membro" />
         <Atalho icone={Building2} selo="Espaços" titulo="Cadastrar Ambiente / Sala" texto="Ao criar uma sala, ela fica disponível para receber bens." para="/ambientes/novo" acao="Novo local físico" />
         <Atalho icone={KeyRound} selo="Segurança" titulo="Controle de Acessos" texto="Redefina senhas e gerencie os acessos da equipe." para="/usuarios" acao="Gerenciar credenciais" />
-        <Atalho icone={DatabaseBackup} selo="Exportar" titulo="Backup e Exportação" texto="Gere a planilha completa do levantamento, com todos os bens." para="/relatorios" acao="Baixar base (.xlsx)" />
+        <Atalho icone={DatabaseBackup} selo="Exportar" titulo="Relatórios" texto="Consulte o resultado de cada conferência realizada." para="/relatorios" acao="Ver relatórios" />
       </div>
 
       <div className="mb-6 grid gap-6 lg:grid-cols-2">

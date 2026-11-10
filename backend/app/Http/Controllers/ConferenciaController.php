@@ -157,6 +157,7 @@ class ConferenciaController extends Controller
      * registrada vêm por último, no grupo "Sem localização" (id nulo).
      * Filtros opcionais: ?sala_id= (sala registrada), ?sem_sala=1 e
      * ?resultado=pendente, encontrado ou nao_localizado.
+     * Com ?resumo=1 vêm só a conferência e as salas, sem os bens.
      * Traz junto as salas da conferência, com total e pendentes de cada uma,
      * para a tela lançar sala por sala.
      */
@@ -175,6 +176,7 @@ class ConferenciaController extends Controller
 
         $itens = $this->itensNaOrdemDaFolha($conferencia)
             ->select('conferencia_item.*')
+            ->when($request->boolean('resumo'), fn ($query) => $query->whereRaw('1 = 0'))
             ->when($request->integer('sala_id'), fn ($query, int $salaId) => $query->where('conferencia_item.sala_registrada_id', $salaId))
             ->when($request->boolean('sem_sala'), fn ($query) => $query->whereNull('conferencia_item.sala_registrada_id'))
             ->when($request->query('resultado'), fn ($query, string $resultado) => $resultado === 'pendente'

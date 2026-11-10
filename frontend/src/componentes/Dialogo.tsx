@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 
 // Popup no meio da tela, com fundo escurecido. Esc e o clique fora fecham,
 // a não ser enquanto a ação está em andamento (ocupado).
@@ -22,14 +22,23 @@ export function Dialogo({
     return () => window.removeEventListener('keydown', aoTeclar)
   }, [aoFechar, ocupado])
 
+  // Só fecha no clique fora se o clique começou no fundo. Assim, selecionar
+  // um texto e soltar o mouse fora do cartão não fecha o popup.
+  const comecouNoFundo = useRef(false)
+
   return (
-    <div className="nao-imprimir fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={() => !ocupado && aoFechar()}>
+    <div
+      className="nao-imprimir fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+      onMouseDown={(evento) => {
+        comecouNoFundo.current = evento.target === evento.currentTarget
+      }}
+      onClick={(evento) => comecouNoFundo.current && evento.target === evento.currentTarget && !ocupado && aoFechar()}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="titulo-dialogo"
         className="cartao w-full max-w-lg p-6 shadow-xl"
-        onClick={(evento) => evento.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <h2 id="titulo-dialogo" className="flex items-center gap-2 text-lg font-bold text-cead-900">
