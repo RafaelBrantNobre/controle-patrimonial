@@ -9,14 +9,13 @@ use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /*
-| Ambiente dentro de um andar. É onde o bem fica.
+| Ambiente do prédio. É onde o bem fica.
 */
 #[Table('sala')]
-#[Fillable(['andar_id', 'nome', 'descricao', 'ativo'])]
+#[Fillable(['nome', 'descricao', 'ativo'])]
 class Sala extends Model
 {
     /** @use HasFactory<SalaFactory> */
@@ -27,14 +26,6 @@ class Sala extends Model
     protected $attributes = [
         'ativo' => true,
     ];
-
-    /**
-     * @return BelongsTo<Andar, $this>
-     */
-    public function andar(): BelongsTo
-    {
-        return $this->belongsTo(Andar::class);
-    }
 
     /**
      * @return HasMany<Bem, $this>

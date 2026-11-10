@@ -23,15 +23,16 @@ class BemController extends Controller
 {
     /**
      * Colunas de cada ordenação aceita em ?ordenar=. A primeira decide, as
-     * outras desempatam. "local" é a ordem do levantamento: andar, sala, tipo.
+     * outras desempatam. "local" é a ordem do levantamento: sala e tipo. Os
+     * bens sem localização vêm primeiro.
      */
     private const ORDENACOES = [
-        'local' => ['andar.ordem', 'sala.nome', 'tipo_patrimonio.nome', 'bem.numero_patrimonio'],
+        'local' => ['sala.nome', 'tipo_patrimonio.nome', 'bem.numero_patrimonio'],
         'numero' => ['bem.numero_patrimonio'],
         'codigo' => ['bem.codigo_interno'],
         'tipo' => ['tipo_patrimonio.nome', 'bem.numero_patrimonio'],
-        'status' => ['bem.status', 'andar.ordem', 'sala.nome'],
-        'conservacao' => ['bem.estado_conservacao', 'andar.ordem', 'sala.nome'],
+        'status' => ['bem.status', 'sala.nome'],
+        'conservacao' => ['bem.estado_conservacao', 'sala.nome'],
         'cadastro' => ['bem.created_at'],
     ];
 
@@ -40,7 +41,8 @@ class BemController extends Controller
      * Filtros, todos opcionais e combináveis:
      *   ?numero=      número de patrimônio ou código interno exato (RF12)
      *   ?busca=       parte do número, do código, da descrição ou da marca
-     *   ?andar_id=, ?sala_id=, ?tipo_patrimonio_id=, ?status= (RF13)
+     *   ?sala_id=, ?tipo_patrimonio_id=, ?status= (RF13)
+     *   ?sem_sala=1   só os bens sem localização
      *   ?estado_conservacao=  um ou mais estados, separados por vírgula
      *   ?conferencia= nunca, encontrado, nao_localizado ou em_aberto
      *   ?ordenar=     local (padrão), numero, codigo, tipo, status, conservacao, cadastro
@@ -53,7 +55,7 @@ class BemController extends Controller
         $direcao = $filtros['direcao'] ?? 'asc';
 
         $bens = FiltroDeBens::consulta($filtros)
-            ->with(['sala.andar', 'tipoPatrimonio', 'itemEmConferenciaAberta.conferencia'])
+            ->with(['sala', 'tipoPatrimonio', 'itemEmConferenciaAberta.conferencia'])
             ->tap(function ($query) use ($filtros, $direcao) {
                 foreach (self::ORDENACOES[$filtros['ordenar'] ?? 'local'] as $coluna) {
                     $query->orderBy($coluna, $direcao);
@@ -83,7 +85,7 @@ class BemController extends Controller
             ->get();
 
         return BemResource::collection($bens)->additional([
-            'sala' => new SalaResource($sala->load('andar')),
+            'sala' => new SalaResource($sala),
             'total' => $bens->count(),
         ]);
     }
@@ -99,7 +101,8 @@ class BemController extends Controller
 
     /**
      * POST /api/bens
-     * O código interno é gerado pelo sistema (PD07).
+     * O código interno é gerado pelo sistema (PD07). Sem sala_id, o bem
+     * entra sem localização, até a sala ser confirmada numa conferência.
      */
     public function store(BemRequest $request): BemResource
     {

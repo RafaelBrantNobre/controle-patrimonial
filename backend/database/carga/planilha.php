@@ -14,8 +14,6 @@
 | as chaves abaixo estão em minúsculas e sem acento.
 |
 | Pendências que afetam este arquivo (página 01, seção 6):
-|   - PD09: a planilha não diz o andar de nenhuma sala. Todas estão em
-|     "Andar a definir" até alguém informar o andar certo em 'salas'.
 |   - PD03: conversão do estado da aba Principal, proposta no relatório de
 |     mudanças da tabela bem, seção 6.3, ainda a confirmar.
 */
@@ -23,41 +21,33 @@
 return [
 
     /*
-    | Andares e a ordem deles no relatório. Toda sala precisa apontar para
-    | um andar desta lista.
-    */
-    'andares' => [
-        'Andar a definir' => 0,
-    ],
-
-    /*
-    | Salas do sistema: nome => andar. Os nomes juntam o número da sala,
-    | quando a planilha informa, com o uso dela.
+    | Salas do sistema. Os nomes juntam o número da sala, quando a planilha
+    | informa, com o uso dela.
     */
     'salas' => [
-        'Sala 01 - Videoconferência' => 'Andar a definir',
-        'Sala 02 - Estúdio de vídeo' => 'Andar a definir',
-        'Sala 03 - Sala de reunião' => 'Andar a definir',
-        'Podcast' => 'Andar a definir',
-        'Sala 05 - Suporte TI' => 'Andar a definir',
-        'Sala 06 - Laboratório de Informática' => 'Andar a definir',
-        'Logística' => 'Andar a definir',
-        'Sala 07 - LED' => 'Andar a definir',
-        'Sala 08 - DTE' => 'Andar a definir',
-        'Sala 11 - Coordenação pedagógica' => 'Andar a definir',
-        'Sala 14' => 'Andar a definir',
-        'Secretaria UAB' => 'Andar a definir',
-        'Coordenação UAB' => 'Andar a definir',
-        'Coordenação de projetos' => 'Andar a definir',
-        'Monitoramento' => 'Andar a definir',
-        'Administrativo' => 'Andar a definir',
-        'Diretoria CEAD' => 'Andar a definir',
-        'Almoxarifado' => 'Andar a definir',
-        'Recepção' => 'Andar a definir',
-        'Sala de equipamentos' => 'Andar a definir',
-        'Corredor' => 'Andar a definir',
-        'Corredor das salas' => 'Andar a definir',
-        'Corredor em frente à diretoria' => 'Andar a definir',
+        'Sala 01 - Videoconferência',
+        'Sala 02 - Estúdio de vídeo',
+        'Sala 03 - Sala de reunião',
+        'Podcast',
+        'Sala 05 - Suporte TI',
+        'Sala 06 - Laboratório de Informática',
+        'Logística',
+        'Sala 07 - LED',
+        'Sala 08 - DTE',
+        'Sala 11 - Coordenação pedagógica',
+        'Sala 14',
+        'Secretaria UAB',
+        'Coordenação UAB',
+        'Coordenação de projetos',
+        'Monitoramento',
+        'Administrativo',
+        'Diretoria CEAD',
+        'Almoxarifado',
+        'Recepção',
+        'Sala de equipamentos',
+        'Corredor',
+        'Corredor das salas',
+        'Corredor em frente à diretoria',
     ],
 
     /*

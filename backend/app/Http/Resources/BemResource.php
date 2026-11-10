@@ -8,7 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /*
 | Dados do bem que o front-end recebe (tarefa 2.6). Serve para a lista e
-| para a ficha (RF15): traz tipo, sala e andar juntos, a situação de uso e
+| para a ficha (RF15): traz tipo e sala juntos, a situação de uso e
 | o estado de conservação com o texto pronto para a tela, e a data da
 | última mudança.
 |

@@ -40,7 +40,7 @@ class ConferenciaController extends Controller
     private const RELACOES = ['criadaPor', 'concluidaPor'];
 
     /** Relações que a resposta de um item traz. */
-    private const RELACOES_DO_ITEM = ['bem.sala.andar', 'bem.tipoPatrimonio', 'salaRegistrada.andar', 'salaEncontrada.andar', 'conferidoPor'];
+    private const RELACOES_DO_ITEM = ['bem.sala', 'bem.tipoPatrimonio', 'salaRegistrada', 'salaEncontrada', 'conferidoPor'];
 
     /**
      * GET /api/conferencias
@@ -190,15 +190,14 @@ class ConferenciaController extends Controller
 
         $salas = $this->itensNaOrdemDaFolha($conferencia)
             ->toBase()
-            ->select('sala.id', 'sala.nome', 'andar.nome as andar')
+            ->select('sala.id', 'sala.nome')
             ->selectRaw('count(*) as total')
             ->selectRaw('sum(case when conferencia_item.resultado is null then 1 else 0 end) as pendentes')
-            ->groupBy('sala.id', 'sala.nome', 'andar.nome', 'andar.ordem')
+            ->groupBy('sala.id', 'sala.nome')
             ->get()
             ->map(fn ($sala) => [
                 'id' => $sala->id === null ? null : (int) $sala->id,
                 'nome' => $sala->nome ?? 'Sem localização',
-                'andar' => $sala->andar,
                 'total' => (int) $sala->total,
                 'pendentes' => (int) $sala->pendentes,
             ]);
@@ -312,18 +311,16 @@ class ConferenciaController extends Controller
     }
 
     /**
-     * Itens da conferência com bem, sala registrada, andar e tipo juntos, já
-     * na ordem de andar e sala da folha.
+     * Itens da conferência com bem, sala registrada e tipo juntos, já na
+     * ordem de sala. Os bens sem sala registrada vêm por último.
      */
     private function itensNaOrdemDaFolha(Conferencia $conferencia)
     {
         return $conferencia->itens()
             ->join('bem', 'bem.id', '=', 'conferencia_item.bem_id')
             ->leftJoin('sala', 'sala.id', '=', 'conferencia_item.sala_registrada_id')
-            ->leftJoin('andar', 'andar.id', '=', 'sala.andar_id')
             ->join('tipo_patrimonio', 'tipo_patrimonio.id', '=', 'bem.tipo_patrimonio_id')
             ->orderByRaw('case when sala.id is null then 1 else 0 end')
-            ->orderBy('andar.ordem')
             ->orderBy('sala.nome');
     }
 

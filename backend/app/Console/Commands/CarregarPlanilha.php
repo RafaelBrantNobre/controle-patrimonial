@@ -17,7 +17,7 @@ use Illuminate\Console\Command;
 |   php artisan patrimonio:carregar-planilha caminho.xlsx --fonte=salas --do-zero
 |
 | --simular   faz tudo e gera o relatório, mas não grava nada no banco.
-| --do-zero   apaga bens, histórico, salas, andares e tipos antes de carregar.
+| --do-zero   apaga bens, histórico, salas e tipos antes de carregar.
 |             Só no período de testes: em produção, o comando recusa.
 | --fonte     principal (aba Principal) ou salas (uma aba por sala). Fica
 |             obrigatório até a Christine dizer qual é a fonte certa.
@@ -90,7 +90,7 @@ class CarregarPlanilha extends Command
             if ($simular) {
                 $this->warn('Com --simular, a opção --do-zero é ignorada: nada é apagado.');
             } else {
-                $this->warn('Apagando bens, histórico, salas, andares e tipos ('.Bem::count().' bens)...');
+                $this->warn('Apagando bens, histórico, salas e tipos ('.Bem::count().' bens)...');
                 CargaInicial::apagarDadosDoPatrimonio();
             }
         }

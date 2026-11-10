@@ -86,20 +86,3 @@ test('a consulta filtra e ordena pelo estado de conservação', function () {
     $this->getJson('/api/bens?estado_conservacao=quebrado')->assertUnprocessable();
     $this->getJson('/api/bens?ordenar=conservacao')->assertOk()->assertJsonPath('data.0.estado_conservacao', 'bom');
 });
-
-test('o relatório filtra, conta e exporta o estado de conservação', function () {
-    Bem::factory()->conservacao(EstadoConservacao::Pessimo)->create();
-    Bem::factory()->semUso()->conservacao(EstadoConservacao::Novo)->create();
-
-    $periodo = 'inicio=2026-07-01&fim=2026-12-31';
-
-    $this->getJson("/api/relatorio?{$periodo}")
-        ->assertJsonPath('totais.por_estado_conservacao.pessimo', 1)
-        ->assertJsonPath('totais.por_estado_conservacao.novo', 1)
-        ->assertJsonPath('totais.por_status.sem_uso', 1);
-
-    $this->getJson("/api/relatorio?{$periodo}&estado_conservacao=novo")
-        ->assertJsonPath('totais.bens', 1)
-        ->assertJsonPath('andares.0.salas.0.bens.0.estado_conservacao_rotulo', 'Novo')
-        ->assertJsonPath('andares.0.salas.0.bens.0.status_rotulo', 'Sem uso');
-});

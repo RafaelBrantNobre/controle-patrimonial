@@ -24,6 +24,7 @@ use Illuminate\Support\Str;
 | Bem nunca é apagado: a saída do patrimônio ativo é a baixa (RN07).
 | Todo bem recebe um codigo_interno gerado pelo sistema (PD07), como
 | CP-000123, tenha ou não número de patrimônio.
+| sala_id nulo é o bem sem localização: ainda não teve a sala confirmada.
 | status é a situação de uso (em uso, sem uso, baixado) e estado_conservacao
 | é a condição física (novo a sucata). Uma não depende da outra.
 | Mudar de sala e de status passa por mudarDeSala() e alterarStatus()
@@ -66,11 +67,11 @@ class Bem extends Model
 
     /** Relações carregadas na ficha do bem (RF15), para ela sair igual em todas as rotas. */
     public const RELACOES_DA_FICHA = [
-        'sala.andar',
+        'sala',
         'tipoPatrimonio',
         'usuarioUltimaMudanca',
-        'ultimaMovimentacao.salaOrigem.andar',
-        'ultimaMovimentacao.salaDestino.andar',
+        'ultimaMovimentacao.salaOrigem',
+        'ultimaMovimentacao.salaDestino',
         'ultimaMovimentacao.usuario',
         'itemEmConferenciaAberta.conferencia',
         'pendenciaAberta.conferencia',
@@ -263,7 +264,7 @@ class Bem extends Model
      */
     public function mudarDeSala(Sala $destino, User $usuario, ?int $conferenciaId = null): void
     {
-        $this->registrarOcorrencia(TipoOcorrencia::Sala, $this->sala?->nome, $destino->nome, $usuario, $conferenciaId);
+        $this->registrarOcorrencia(TipoOcorrencia::Sala, $this->sala?->nome ?? 'Sem localização', $destino->nome, $usuario, $conferenciaId);
 
         $this->movimentacoes()->create([
             'sala_origem_id' => $this->sala_id,

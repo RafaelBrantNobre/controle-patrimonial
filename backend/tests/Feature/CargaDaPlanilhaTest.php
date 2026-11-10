@@ -2,7 +2,6 @@
 
 use App\Enums\EstadoConservacao;
 use App\Enums\StatusBem;
-use App\Models\Andar;
 use App\Models\Bem;
 use App\Models\Sala;
 use App\Models\TipoPatrimonio;
@@ -84,7 +83,6 @@ test('a carga da aba Principal cria salas, tipos e bens, e rejeita o que não d�
         ->assertSuccessful();
 
     expect(Bem::count())->toBe(3)
-        ->and(Andar::pluck('nome')->all())->toBe(['Andar a definir'])
         ->and(Sala::pluck('nome')->sort()->values()->all())->toBe(['Sala 01 - Videoconferência', 'Sala 05 - Suporte TI', 'Sala 07 - LED'])
         ->and(TipoPatrimonio::pluck('nome')->sort()->values()->all())->toBe(['Bancada', 'Cadeira', 'Computador']);
 

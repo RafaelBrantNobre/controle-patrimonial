@@ -1,12 +1,10 @@
 <?php
 
-use App\Http\Controllers\AndarController;
 use App\Http\Controllers\AutenticacaoController;
 use App\Http\Controllers\BemController;
 use App\Http\Controllers\ConferenciaController;
 use App\Http\Controllers\MudancaDeBemController;
 use App\Http\Controllers\PendenciaController;
-use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\SalaController;
 use App\Http\Controllers\TipoPatrimonioController;
 use Illuminate\Support\Facades\DB;
@@ -67,17 +65,12 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
     Route::post('/logout', [AutenticacaoController::class, 'logout']); // RF02
 
     // Locais e tipos (2.5): listar e ver um.
-    Route::apiResource('andares', AndarController::class)->only(['index', 'show'])->parameters(['andares' => 'andar']);
     Route::apiResource('salas', SalaController::class)->only(['index', 'show'])->parameters(['salas' => 'sala']);
     Route::apiResource('tipos-patrimonio', TipoPatrimonioController::class)->only(['index', 'show'])->parameters(['tipos-patrimonio' => 'tipo']);
 
     // Bens (2.6): consultar, filtrar, ver a ficha e listar os bens de uma sala.
     Route::apiResource('bens', BemController::class)->only(['index', 'show'])->parameters(['bens' => 'bem']);
     Route::get('/salas/{sala}/bens', [BemController::class, 'daSala']);
-
-    // Relatório do levantamento (2.10): na tela e em planilha.
-    Route::get('/relatorio', [RelatorioController::class, 'index']);
-    Route::get('/relatorio/planilha', [RelatorioController::class, 'planilha']);
 
     // Conferência dos bens: acompanhar as conferências e as pendências.
     Route::get('/conferencias', [ConferenciaController::class, 'index']);
@@ -90,7 +83,6 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
 
         // Locais e tipos (2.5): cadastrar, editar, inativar e excluir.
         // Inativar e reativar é um PATCH com {"ativo": false} ou {"ativo": true}.
-        Route::apiResource('andares', AndarController::class)->except(['index', 'show'])->parameters(['andares' => 'andar']);
         Route::apiResource('salas', SalaController::class)->except(['index', 'show'])->parameters(['salas' => 'sala']);
         Route::apiResource('tipos-patrimonio', TipoPatrimonioController::class)->except(['index', 'show'])->parameters(['tipos-patrimonio' => 'tipo']);
 

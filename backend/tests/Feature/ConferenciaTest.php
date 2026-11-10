@@ -241,7 +241,7 @@ test('marcar selecionados como encontrados mantém o que já tinha sido lançado
 test('a lista de itens vem na ordem da folha, com as salas e os pendentes de cada uma', function () {
     gestoraConectada();
     $salaA = Sala::factory()->create(['nome' => 'A - Recepção']);
-    $salaB = Sala::factory()->for($salaA->andar)->create(['nome' => 'B - Suporte']);
+    $salaB = Sala::factory()->create(['nome' => 'B - Suporte']);
     $bemB = Bem::factory()->for($salaB)->create();
     $bemA = Bem::factory()->for($salaA)->create();
     $id = gerarConferencia([$bemB, $bemA]);
@@ -251,8 +251,8 @@ test('a lista de itens vem na ordem da folha, com as salas e os pendentes de cad
 
     expect($resposta->json('data.*.bem.id'))->toBe([$bemA->id, $bemB->id])
         ->and($resposta->json('salas'))->toBe([
-            ['id' => $salaA->id, 'nome' => 'A - Recepção', 'andar' => $salaA->andar->nome, 'total' => 1, 'pendentes' => 0],
-            ['id' => $salaB->id, 'nome' => 'B - Suporte', 'andar' => $salaA->andar->nome, 'total' => 1, 'pendentes' => 1],
+            ['id' => $salaA->id, 'nome' => 'A - Recepção', 'total' => 1, 'pendentes' => 0],
+            ['id' => $salaB->id, 'nome' => 'B - Suporte', 'total' => 1, 'pendentes' => 1],
         ]);
 
     $this->getJson("/api/conferencias/{$id}/itens?resultado=pendente")->assertJsonCount(1, 'data');
@@ -364,6 +364,42 @@ test('mudar de sala, mudar a conservação, mudar o uso e dar baixa pela ficha g
         ['uso', 'Em uso', 'Sem uso', '2026-11-06', null],
         ['baixa', 'Sem uso', 'Baixado', '2026-11-05', 'Processo 9'],
     ]);
+});
+
+test('o bem sem localização entra na etapa "Sem localização", e a sala onde foi encontrado é obrigatória', function () {
+    gestoraConectada();
+    $comSala = Bem::factory()->create();
+    $semSala = Bem::factory()->create(['sala_id' => null]);
+    $sala = Sala::factory()->create(['nome' => 'Sala 05']);
+    $id = $this->postJson('/api/conferencias', ['nome' => 'Prédio', 'modo' => 'filtro'])->assertCreated()->json('data.id');
+    $item = itemDe($id, $semSala);
+
+    $resumo = $this->getJson("/api/conferencias/{$id}/itens?resumo=1")->assertOk();
+    expect($resumo->json('data'))->toBe([])
+        ->and($resumo->json('salas'))->toBe([
+            ['id' => $comSala->sala_id, 'nome' => $comSala->sala->nome, 'total' => 1, 'pendentes' => 1],
+            ['id' => null, 'nome' => 'Sem localização', 'total' => 1, 'pendentes' => 1],
+        ]);
+
+    $this->getJson("/api/conferencias/{$id}/itens?sem_sala=1")
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.bem.id', $semSala->id);
+
+    $this->putJson("/api/conferencias/{$id}/itens", ['itens' => [['id' => $item->id, 'resultado' => 'encontrado']]])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('itens.0.sala_encontrada_id');
+    $this->patchJson("/api/conferencias/{$id}/itens/{$item->id}", ['resultado' => 'encontrado'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('sala_encontrada_id');
+
+    $this->putJson("/api/conferencias/{$id}/itens", ['itens' => [
+        ['id' => $item->id, 'resultado' => 'encontrado', 'sala_encontrada_id' => $sala->id],
+        ['id' => itemDe($id, $comSala)->id, 'resultado' => 'encontrado'],
+    ]])->assertOk();
+    $this->postJson("/api/conferencias/{$id}/concluir", ['realizada_em' => '2026-11-06'])->assertOk();
+
+    expect($semSala->fresh()->sala_id)->toBe($sala->id)
+        ->and(Ocorrencia::sole()->only(['valor_anterior', 'valor_novo']))->toBe(['valor_anterior' => 'Sem localização', 'valor_novo' => 'Sala 05']);
 });
 
 // --- Concluir ---------------------------------------------------------------

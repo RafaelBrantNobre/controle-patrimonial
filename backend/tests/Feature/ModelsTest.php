@@ -2,7 +2,6 @@
 
 use App\Enums\PerfilUsuario;
 use App\Enums\StatusBem;
-use App\Models\Andar;
 use App\Models\Bem;
 use App\Models\Sala;
 use App\Models\TipoPatrimonio;
@@ -15,25 +14,21 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-test('o andar lista as suas salas e a sala sabe o seu andar', function () {
-    $andar = Andar::factory()->create(['nome' => 'Térreo', 'ordem' => 0]);
-    Sala::factory()->count(2)->for($andar)->create();
-
-    expect($andar->salas)->toHaveCount(2)
-        ->and($andar->salas->first()->andar->nome)->toBe('Térreo');
-});
-
-test('o bem chega ao tipo, à sala e ao andar pelos relacionamentos', function () {
-    $andar = Andar::factory()->create(['nome' => '1º andar', 'ordem' => 1]);
-    $sala = Sala::factory()->for($andar)->create(['nome' => 'Sala 05 - Suporte TI']);
+test('o bem chega ao tipo e à sala pelos relacionamentos', function () {
+    $sala = Sala::factory()->create(['nome' => 'Sala 05 - Suporte TI']);
     $tipo = TipoPatrimonio::factory()->create(['nome' => 'Computador']);
     $bem = Bem::factory()->for($sala)->for($tipo)->create();
 
     expect($bem->tipoPatrimonio->nome)->toBe('Computador')
         ->and($bem->sala->nome)->toBe('Sala 05 - Suporte TI')
-        ->and($bem->sala->andar->nome)->toBe('1º andar')
         ->and($sala->bens)->toHaveCount(1)
         ->and($tipo->bens)->toHaveCount(1);
+});
+
+test('o bem pode ficar sem localização', function () {
+    $bem = Bem::factory()->create(['sala_id' => null]);
+
+    expect($bem->fresh()->sala)->toBeNull();
 });
 
 test('o status do bem vira o enum StatusBem', function () {
@@ -67,24 +62,13 @@ test('o bem guarda quem fez a última mudança (RN09)', function () {
         ->and($bem->data_ultima_mudanca->format('d/m/Y'))->toBe('20/10/2026');
 });
 
-test('os andares saem na ordem do relatório, e não em ordem alfabética', function () {
-    Andar::factory()->create(['nome' => '2º andar', 'ordem' => 2]);
-    Andar::factory()->create(['nome' => 'Térreo', 'ordem' => 0]);
-    Andar::factory()->create(['nome' => '1º andar', 'ordem' => 1]);
-
-    expect(Andar::ordenados()->pluck('nome')->all())->toBe(['Térreo', '1º andar', '2º andar']);
-});
-
 test('os filtros de ativos deixam de fora o que foi inativado (RN08)', function () {
-    $andar = Andar::factory()->create();
-    Andar::factory()->inativo()->create();
-    Sala::factory()->for($andar)->create();
-    Sala::factory()->for($andar)->inativa()->create();
+    Sala::factory()->create();
+    Sala::factory()->inativa()->create();
     TipoPatrimonio::factory()->create();
     TipoPatrimonio::factory()->inativo()->create();
 
-    expect(Andar::ativos()->count())->toBe(1)
-        ->and(Sala::ativas()->count())->toBe(1)
+    expect(Sala::ativas()->count())->toBe(1)
         ->and(TipoPatrimonio::ativos()->count())->toBe(1);
 });
 

@@ -43,7 +43,8 @@ class BemRequest extends FormRequest
             'tipo_patrimonio_id' => [$presenca, 'integer', Rule::exists('tipo_patrimonio', 'id')],
             // Na edição, sala e status podem vir no formulário, desde que iguais aos
             // atuais. A mudança é recusada mais abaixo, em after().
-            'sala_id' => [$presenca, 'integer', Rule::exists('sala', 'id')],
+            // Sem sala, o bem fica sem localização até a primeira conferência.
+            'sala_id' => ['sometimes', 'nullable', 'integer', Rule::exists('sala', 'id')],
             'status' => $cadastro
                 ? ['sometimes', Rule::enum(StatusBem::class)->except(StatusBem::Baixado)]
                 : ['sometimes', Rule::enum(StatusBem::class)],
@@ -103,7 +104,7 @@ class BemRequest extends FormRequest
                     return;
                 }
 
-                // Cadastro: sala inativa não recebe bens novos. Sala ativa só existe em andar ativo (tarefa 2.5).
+                // Cadastro: sala inativa não recebe bens novos.
                 if (! $erros->has('sala_id') && $this->filled('sala_id')) {
                     if (! Sala::whereKey($this->integer('sala_id'))->value('ativo')) {
                         $erros->add('sala_id', 'A sala escolhida está inativa e não recebe bens novos. Escolha outra sala ou reative-a.');

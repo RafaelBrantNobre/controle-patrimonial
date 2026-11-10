@@ -44,7 +44,7 @@ class ListarBensRequest extends FormRequest
         return [
             'busca' => ['sometimes', 'nullable', 'string', 'max:120'],
             'numero' => ['sometimes', 'nullable', 'string', 'max:20'],
-            'andar_id' => ['sometimes', 'nullable', 'integer'],
+            'sem_sala' => ['sometimes', 'nullable', 'boolean'],
             'sala_id' => ['sometimes', 'nullable', 'integer'],
             'tipo_patrimonio_id' => ['sometimes', 'nullable', 'integer'],
             'status' => ['sometimes', 'array'],
@@ -65,7 +65,7 @@ class ListarBensRequest extends FormRequest
         return [
             'busca.max' => 'A busca pode ter no máximo 120 caracteres.',
             'numero.max' => 'O número de patrimônio pode ter no máximo 20 caracteres.',
-            'andar_id.integer' => 'O andar do filtro não é válido.',
+            'sem_sala.boolean' => 'O filtro de bens sem localização deve ser 1 ou 0.',
             'sala_id.integer' => 'A sala do filtro não é válida.',
             'tipo_patrimonio_id.integer' => 'O tipo do filtro não é válido.',
             'status.array' => 'A situação do filtro não é válida.',

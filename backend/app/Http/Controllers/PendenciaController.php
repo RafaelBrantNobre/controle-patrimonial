@@ -28,7 +28,7 @@ class PendenciaController extends Controller
     {
         $bens = Bem::query()
             ->whereHas('pendenciasAbertas')
-            ->with(['sala.andar', 'tipoPatrimonio', 'pendenciaAberta.conferencia'])
+            ->with(['sala', 'tipoPatrimonio', 'pendenciaAberta.conferencia'])
             ->orderBy('numero_patrimonio')
             ->orderBy('id')
             ->get();

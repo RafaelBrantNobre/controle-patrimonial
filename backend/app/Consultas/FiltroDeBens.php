@@ -13,7 +13,8 @@ use Illuminate\Database\Eloquent\Builder;
 | bens de um filtro (POST /api/conferencias), para as duas telas
 | selecionarem exatamente os mesmos bens.
 |
-| A consulta já junta sala, andar e tipo, que as ordenações usam. A
+| A consulta já junta sala e tipo, que as ordenações usam. A sala entra
+| por left join, porque o bem pode estar sem localização (sala nula). A
 | ordenação e a paginação ficam com quem chama.
 */
 class FiltroDeBens
@@ -29,8 +30,7 @@ class FiltroDeBens
     {
         return Bem::query()
             ->select('bem.*')
-            ->join('sala', 'sala.id', '=', 'bem.sala_id')
-            ->join('andar', 'andar.id', '=', 'sala.andar_id')
+            ->leftJoin('sala', 'sala.id', '=', 'bem.sala_id')
             ->join('tipo_patrimonio', 'tipo_patrimonio.id', '=', 'bem.tipo_patrimonio_id')
             ->when($filtros['numero'] ?? null, function ($query, string $numero) {
                 $query->where(fn ($query) => $query
@@ -45,7 +45,7 @@ class FiltroDeBens
                     ->orWhere('bem.descricao', 'like', $padrao)
                     ->orWhere('bem.marca', 'like', $padrao));
             })
-            ->when($filtros['andar_id'] ?? null, fn ($query, int $andarId) => $query->where('andar.id', $andarId))
+            ->when($filtros['sem_sala'] ?? false, fn ($query) => $query->whereNull('bem.sala_id'))
             ->when($filtros['sala_id'] ?? null, fn ($query, int $salaId) => $query->where('bem.sala_id', $salaId))
             ->when($filtros['tipo_patrimonio_id'] ?? null, fn ($query, int $tipoId) => $query->where('bem.tipo_patrimonio_id', $tipoId))
             ->when($filtros['status'] ?? null, fn ($query, array $status) => $query->whereIn('bem.status', $status))

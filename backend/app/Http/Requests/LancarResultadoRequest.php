@@ -61,7 +61,14 @@ class LancarResultadoRequest extends FormRequest
                 }
 
                 $bem = $this->item()->bem;
-                $salaId = $this->integer('sala_encontrada_id') ?: $bem->sala_id;
+                $salaId = $this->integer('sala_encontrada_id') ?: ($this->item()->sala_registrada_id ?? $bem->sala_id);
+
+                // Bem sem localização: a sala onde ele foi encontrado é obrigatória.
+                if ($salaId === null) {
+                    $validator->errors()->add('sala_encontrada_id', 'Informe a sala onde o bem foi encontrado.');
+
+                    return;
+                }
 
                 if ($salaId === $bem->sala_id) {
                     return;
