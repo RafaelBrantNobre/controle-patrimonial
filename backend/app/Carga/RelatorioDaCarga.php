@@ -81,7 +81,6 @@ class RelatorioDaCarga
             ['Bens importados', count($r->importadas)],
             ['Linhas rejeitadas', count($r->rejeitadas)],
             ['Bens importados com aviso', count($r->comAvisos())],
-            ['Andares criados', implode(', ', $r->andaresCriados) ?: 'nenhum'],
             ['Salas criadas', count($r->salasCriadas)],
             ['Tipos criados', count($r->tiposCriados)],
             ['', ''],

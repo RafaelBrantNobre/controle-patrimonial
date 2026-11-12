@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\StatusBem;
-use App\Models\Andar;
 use App\Models\Bem;
 use App\Models\Sala;
 use App\Models\TipoPatrimonio;
@@ -75,7 +74,6 @@ test('o bem é cadastrado com todos os dados', function () {
         'origem' => 'convênio MCT x SECTES',
         'quantidade' => 2,
         'status' => 'sem_uso',
-        'observacao' => 'Estado na planilha: Sem uso',
     ])
         ->assertCreated()
         ->assertJsonPath('data.numero_patrimonio', '1634456-1')
@@ -84,13 +82,43 @@ test('o bem é cadastrado com todos os dados', function () {
         ->assertJsonPath('data.status', 'sem_uso');
 });
 
-test('tipo e sala são obrigatórios, com mensagens em português', function () {
+test('o tipo é obrigatório, com mensagem em português', function () {
     entrarComoAdministrador();
 
     $this->postJson('/api/bens', [])
         ->assertUnprocessable()
         ->assertJsonPath('errors.tipo_patrimonio_id.0', 'Escolha o tipo do bem.')
-        ->assertJsonPath('errors.sala_id.0', 'Escolha a sala onde o bem está.');
+        ->assertJsonMissingPath('errors.sala_id');
+});
+
+test('o bem pode ser cadastrado sem sala e aparece no filtro de bens sem localização', function () {
+    entrarComoAdministrador();
+    $tipo = TipoPatrimonio::factory()->create();
+    Bem::factory()->create();
+
+    $id = $this->postJson('/api/bens', ['tipo_patrimonio_id' => $tipo->id, 'numero_patrimonio' => '1623431-6'])
+        ->assertCreated()
+        ->assertJsonPath('data.sala_id', null)
+        ->assertJsonPath('data.sala', null)
+        ->json('data.id');
+
+    $this->getJson('/api/bens')->assertJsonPath('meta.total', 2);
+    $this->getJson('/api/bens?sem_sala=1')
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $id);
+});
+
+test('o bem sem localização recebe a sala pela mudança de sala, com histórico', function () {
+    entrarComoAdministrador();
+    $bem = Bem::factory()->create(['sala_id' => null]);
+    $sala = Sala::factory()->create(['nome' => 'Sala 05']);
+
+    $this->patchJson("/api/bens/{$bem->id}/sala", ['sala_id' => $sala->id])
+        ->assertOk()
+        ->assertJsonPath('data.sala.nome', 'Sala 05')
+        ->assertJsonPath('data.ultima_movimentacao.sala_origem', null)
+        ->assertJsonPath('data.ocorrencias.0.valor_anterior', 'Sem localização')
+        ->assertJsonPath('data.ocorrencias.0.valor_novo', 'Sala 05');
 });
 
 test('o número de patrimônio não se repete e a mensagem diz qual bem já o usa (RN01)', function () {
@@ -246,13 +274,11 @@ test('a busca encontra parte do número, da descrição ou da marca', function (
         ->and($this->getJson('/api/bens?busca=lenovo')->json('data.0.marca'))->toBe('Lenovo');
 });
 
-test('os filtros de andar, sala, tipo e situação se combinam (RF13)', function () {
+test('os filtros de sala, tipo e situação se combinam (RF13)', function () {
     entrarComoConsulta();
-    $terreo = Andar::factory()->create();
-    $primeiro = Andar::factory()->create();
-    $recepcao = Sala::factory()->for($terreo)->create();
-    $suporte = Sala::factory()->for($primeiro)->create();
-    $laboratorio = Sala::factory()->for($primeiro)->create();
+    $recepcao = Sala::factory()->create();
+    $suporte = Sala::factory()->create();
+    $laboratorio = Sala::factory()->create();
     $computador = TipoPatrimonio::factory()->create();
     $cadeira = TipoPatrimonio::factory()->create();
 
@@ -261,10 +287,9 @@ test('os filtros de andar, sala, tipo e situação se combinam (RF13)', function
     Bem::factory()->for($suporte)->for($computador, 'tipoPatrimonio')->semUso()->create();
     Bem::factory()->for($laboratorio)->for($cadeira, 'tipoPatrimonio')->baixado()->create();
 
-    expect($this->getJson("/api/bens?andar_id={$primeiro->id}")->json('meta.total'))->toBe(3)
-        ->and($this->getJson("/api/bens?sala_id={$suporte->id}")->json('meta.total'))->toBe(2)
+    expect($this->getJson("/api/bens?sala_id={$suporte->id}")->json('meta.total'))->toBe(2)
         ->and($this->getJson("/api/bens?tipo_patrimonio_id={$computador->id}")->json('meta.total'))->toBe(3)
-        ->and($this->getJson("/api/bens?andar_id={$primeiro->id}&tipo_patrimonio_id={$computador->id}&status=em_uso")->json('meta.total'))->toBe(1)
+        ->and($this->getJson("/api/bens?sala_id={$suporte->id}&tipo_patrimonio_id={$computador->id}&status=em_uso")->json('meta.total'))->toBe(1)
         ->and($this->getJson('/api/bens?status=sem_uso,baixado')->json('meta.total'))->toBe(2);
 });
 
@@ -288,19 +313,17 @@ test('filtro de situação ou ordenação inválidos respondem com mensagem clar
     $this->getJson('/api/bens?ordenar=preco')->assertUnprocessable();
 });
 
-test('a lista sai na ordem do levantamento e pode ser ordenada de outro jeito (RNF03)', function () {
+test('a lista sai em ordem de sala e pode ser ordenada de outro jeito (RNF03)', function () {
     entrarComoConsulta();
-    $terreo = Andar::factory()->create(['ordem' => 0]);
-    $primeiro = Andar::factory()->create(['ordem' => 1]);
     $tipo = TipoPatrimonio::factory()->create();
-    $noPrimeiro = Bem::factory()->for(Sala::factory()->for($primeiro))->for($tipo, 'tipoPatrimonio')->create(['numero_patrimonio' => '100']);
-    $noTerreo = Bem::factory()->for(Sala::factory()->for($terreo))->for($tipo, 'tipoPatrimonio')->create(['numero_patrimonio' => '200']);
+    $naSalaB = Bem::factory()->for(Sala::factory()->state(['nome' => 'B - Suporte']))->for($tipo, 'tipoPatrimonio')->create(['numero_patrimonio' => '100']);
+    $naSalaA = Bem::factory()->for(Sala::factory()->state(['nome' => 'A - Recepção']))->for($tipo, 'tipoPatrimonio')->create(['numero_patrimonio' => '200']);
 
     $ids = fn (string $url) => collect($this->getJson($url)->json('data'))->pluck('id')->all();
 
-    expect($ids('/api/bens'))->toBe([$noTerreo->id, $noPrimeiro->id])
-        ->and($ids('/api/bens?ordenar=numero'))->toBe([$noPrimeiro->id, $noTerreo->id])
-        ->and($ids('/api/bens?ordenar=numero&direcao=desc'))->toBe([$noTerreo->id, $noPrimeiro->id]);
+    expect($ids('/api/bens'))->toBe([$naSalaA->id, $naSalaB->id])
+        ->and($ids('/api/bens?ordenar=numero'))->toBe([$naSalaB->id, $naSalaA->id])
+        ->and($ids('/api/bens?ordenar=numero&direcao=desc'))->toBe([$naSalaA->id, $naSalaB->id]);
 });
 
 test('a listagem é paginada', function () {
@@ -314,10 +337,10 @@ test('a listagem é paginada', function () {
     $this->getJson('/api/bens?pagina=2')->assertJsonCount(5, 'data');
 });
 
-test('a ficha traz todos os dados, com andar e quem fez a última mudança (RF15)', function () {
+test('a ficha traz todos os dados, com a sala e quem fez a última mudança (RF15)', function () {
     entrarComoConsulta();
     $quemMudou = User::factory()->administrador()->create(['nome' => 'Rafael']);
-    $sala = Sala::factory()->for(Andar::factory()->state(['nome' => '1º andar']))->create(['nome' => 'Sala 05']);
+    $sala = Sala::factory()->create(['nome' => 'Sala 05']);
     $bem = Bem::factory()->for($sala)->create([
         'data_ultima_mudanca' => '2026-10-20',
         'usuario_ultima_mudanca_id' => $quemMudou->id,
@@ -327,7 +350,6 @@ test('a ficha traz todos os dados, com andar e quem fez a última mudança (RF15
         ->assertOk()
         ->assertJsonPath('data.codigo_interno', $bem->codigo_interno)
         ->assertJsonPath('data.sala.nome', 'Sala 05')
-        ->assertJsonPath('data.sala.andar.nome', '1º andar')
         ->assertJsonPath('data.data_ultima_mudanca', '2026-10-20')
         ->assertJsonPath('data.usuario_ultima_mudanca.nome', 'Rafael');
 });

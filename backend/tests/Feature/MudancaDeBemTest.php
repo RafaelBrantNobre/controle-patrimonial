@@ -227,6 +227,6 @@ test('sala que aparece no histórico não pode ser excluída, mesmo vazia', func
     foreach ([$origem, $passagem] as $sala) {
         $this->deleteJson("/api/salas/{$sala->id}")
             ->assertConflict()
-            ->assertJsonPath('message', 'Esta sala aparece no histórico de mudanças de bens e não pode ser excluída. Se ela não é mais usada, inative-a.');
+            ->assertJsonPath('message', 'Esta sala aparece no histórico de mudanças ou de conferências de bens e não pode ser excluída. Se ela não é mais usada, inative-a.');
     }
 });

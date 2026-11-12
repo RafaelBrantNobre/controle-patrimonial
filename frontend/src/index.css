@@ -1,69 +1,72 @@
-:root {
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-  color: #1f2933;
-  background: #f5f7fa;
+@import 'tailwindcss';
+
+/* Cores do wireframe do Figma (CEAD - Gestão Patrimonial). */
+@theme {
+  --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --color-cead-50: #eef4fb;
+  --color-cead-100: #dbe7f6;
+  --color-cead-600: #1d4f8f;
+  --color-cead-700: #143f75;
+  --color-cead-800: #0f3463;
+  --color-cead-900: #0b2a52;
 }
 
-body {
-  margin: 0;
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased;
+  }
 }
 
-.pagina {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 48px 16px;
+/* Base dos botões. É @utility para os outros botões poderem usar com @apply. */
+@utility botao {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
 }
 
-h1 {
-  margin: 0;
-  font-size: 1.75rem;
+@layer components {
+  .cartao {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .botao-primario {
+    @apply botao bg-cead-800 text-white hover:bg-cead-700;
+  }
+
+  .botao-secundario {
+    @apply botao border border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
+  }
+
+  .botao-verde {
+    @apply botao bg-emerald-700 text-white hover:bg-emerald-600;
+  }
+
+  .rotulo {
+    @apply mb-1 block text-xs font-semibold tracking-wide text-slate-600 uppercase;
+  }
+
+  .entrada {
+    @apply w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cead-600 focus:bg-white focus:ring-2 focus:ring-cead-100 disabled:opacity-60;
+  }
+
+  .tabela {
+    @apply w-full text-left text-sm;
+  }
+
+  .tabela th {
+    @apply border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase;
+  }
+
+  .tabela td {
+    @apply border-b border-slate-100 px-4 py-3 align-middle;
+  }
 }
 
-.subtitulo {
-  margin: 4px 0 24px;
-  color: #52606d;
-}
+/* Na impressão só aparece a folha de conferência. */
+@media print {
+  .nao-imprimir {
+    display: none !important;
+  }
 
-.lista {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  background: #fff;
-  border: 1px solid #d9e2ec;
-  border-radius: 8px;
-}
-
-.lista li {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #d9e2ec;
-}
-
-.lista li:last-child {
-  border-bottom: 0;
-}
-
-.ok {
-  color: #0b6b3a;
-}
-
-.erro {
-  color: #b42318;
-}
-
-.aviso {
-  margin-top: 16px;
-  padding: 12px 16px;
-  background: #fff4e5;
-  border: 1px solid #f5c98b;
-  border-radius: 8px;
-  line-height: 1.5;
-}
-
-code {
-  font-family: Consolas, 'Courier New', monospace;
-  font-size: 0.9em;
+  body {
+    background: white;
+  }
 }

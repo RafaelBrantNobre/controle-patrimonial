@@ -2,12 +2,11 @@
 
 namespace Database\Factories;
 
-use App\Models\Andar;
 use App\Models\Sala;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * Gera salas falsas para testes. Cria o andar junto, se nenhum for informado.
+ * Gera salas falsas para testes.
  *
  * @extends Factory<Sala>
  */
@@ -19,7 +18,6 @@ class SalaFactory extends Factory
     public function definition(): array
     {
         return [
-            'andar_id' => Andar::factory(),
             'nome' => 'Sala '.fake()->unique()->numerify('###'),
             'descricao' => null,
             'ativo' => true,

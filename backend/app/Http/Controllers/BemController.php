@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Consultas\FiltroDeBens;
+use App\Enums\EstadoConservacao;
 use App\Http\Requests\BemRequest;
 use App\Http\Requests\ListarBensRequest;
 use App\Http\Resources\BemResource;
@@ -21,15 +23,16 @@ class BemController extends Controller
 {
     /**
      * Colunas de cada ordenação aceita em ?ordenar=. A primeira decide, as
-     * outras desempatam. "local" é a ordem do levantamento: andar, sala, tipo.
+     * outras desempatam. "local" é a ordem do levantamento: sala e tipo. Os
+     * bens sem localização vêm primeiro.
      */
     private const ORDENACOES = [
-        'local' => ['andar.ordem', 'sala.nome', 'tipo_patrimonio.nome', 'bem.numero_patrimonio'],
+        'local' => ['sala.nome', 'tipo_patrimonio.nome', 'bem.numero_patrimonio'],
         'numero' => ['bem.numero_patrimonio'],
         'codigo' => ['bem.codigo_interno'],
         'tipo' => ['tipo_patrimonio.nome', 'bem.numero_patrimonio'],
-        'status' => ['bem.status', 'andar.ordem', 'sala.nome'],
-        'conservacao' => ['bem.estado_conservacao', 'andar.ordem', 'sala.nome'],
+        'status' => ['bem.status', 'sala.nome'],
+        'conservacao' => ['bem.estado_conservacao', 'sala.nome'],
         'cadastro' => ['bem.created_at'],
     ];
 
@@ -38,8 +41,10 @@ class BemController extends Controller
      * Filtros, todos opcionais e combináveis:
      *   ?numero=      número de patrimônio ou código interno exato (RF12)
      *   ?busca=       parte do número, do código, da descrição ou da marca
-     *   ?andar_id=, ?sala_id=, ?tipo_patrimonio_id=, ?status= (RF13)
+     *   ?sala_id=, ?tipo_patrimonio_id=, ?status= (RF13)
+     *   ?sem_sala=1   só os bens sem localização
      *   ?estado_conservacao=  um ou mais estados, separados por vírgula
+     *   ?conferencia= nunca, encontrado, nao_localizado ou em_aberto
      *   ?ordenar=     local (padrão), numero, codigo, tipo, status, conservacao, cadastro
      *   ?direcao=     asc (padrão) ou desc
      * Bens baixados aparecem, sinalizados em "baixado" (RN05).
@@ -49,30 +54,8 @@ class BemController extends Controller
         $filtros = $request->validated();
         $direcao = $filtros['direcao'] ?? 'asc';
 
-        $bens = Bem::query()
-            ->select('bem.*')
-            ->join('sala', 'sala.id', '=', 'bem.sala_id')
-            ->join('andar', 'andar.id', '=', 'sala.andar_id')
-            ->join('tipo_patrimonio', 'tipo_patrimonio.id', '=', 'bem.tipo_patrimonio_id')
-            ->with(['sala.andar', 'tipoPatrimonio'])
-            ->when($filtros['numero'] ?? null, function ($query, string $numero) {
-                $query->where(fn ($query) => $query
-                    ->where('bem.numero_patrimonio', $numero)
-                    ->orWhere('bem.codigo_interno', $numero));
-            })
-            ->when($filtros['busca'] ?? null, function ($query, string $busca) {
-                $padrao = $this->padraoDeBusca($busca);
-                $query->where(fn ($query) => $query
-                    ->where('bem.numero_patrimonio', 'like', $padrao)
-                    ->orWhere('bem.codigo_interno', 'like', $padrao)
-                    ->orWhere('bem.descricao', 'like', $padrao)
-                    ->orWhere('bem.marca', 'like', $padrao));
-            })
-            ->when($filtros['andar_id'] ?? null, fn ($query, int $andarId) => $query->where('andar.id', $andarId))
-            ->when($filtros['sala_id'] ?? null, fn ($query, int $salaId) => $query->where('bem.sala_id', $salaId))
-            ->when($filtros['tipo_patrimonio_id'] ?? null, fn ($query, int $tipoId) => $query->where('bem.tipo_patrimonio_id', $tipoId))
-            ->when($filtros['status'] ?? null, fn ($query, array $status) => $query->whereIn('bem.status', $status))
-            ->when($filtros['estado_conservacao'] ?? null, fn ($query, array $estados) => $query->whereIn('bem.estado_conservacao', $estados))
+        $bens = FiltroDeBens::consulta($filtros)
+            ->with(['sala', 'tipoPatrimonio', 'itemEmConferenciaAberta.conferencia'])
             ->tap(function ($query) use ($filtros, $direcao) {
                 foreach (self::ORDENACOES[$filtros['ordenar'] ?? 'local'] as $coluna) {
                     $query->orderBy($coluna, $direcao);
@@ -95,14 +78,14 @@ class BemController extends Controller
         $bens = $sala->bens()
             ->select('bem.*')
             ->join('tipo_patrimonio', 'tipo_patrimonio.id', '=', 'bem.tipo_patrimonio_id')
-            ->with('tipoPatrimonio')
+            ->with(['tipoPatrimonio', 'itemEmConferenciaAberta.conferencia'])
             ->orderBy('tipo_patrimonio.nome')
             ->orderBy('bem.numero_patrimonio')
             ->orderBy('bem.id')
             ->get();
 
         return BemResource::collection($bens)->additional([
-            'sala' => new SalaResource($sala->load('andar')),
+            'sala' => new SalaResource($sala),
             'total' => $bens->count(),
         ]);
     }
@@ -118,7 +101,8 @@ class BemController extends Controller
 
     /**
      * POST /api/bens
-     * O código interno é gerado pelo sistema (PD07).
+     * O código interno é gerado pelo sistema (PD07). Sem sala_id, o bem
+     * entra sem localização, até a sala ser confirmada numa conferência.
      */
     public function store(BemRequest $request): BemResource
     {
@@ -133,7 +117,17 @@ class BemController extends Controller
      */
     public function update(BemRequest $request, Bem $bem): BemResource
     {
-        $bem->update($request->safe()->except(['sala_id', 'status']));
+        $dados = $request->safe()->except(['sala_id', 'status', 'estado_conservacao']);
+        $conservacao = $request->validated('estado_conservacao');
+
+        // A conservação muda por alterarConservacao(), que grava a ocorrência.
+        DB::transaction(function () use ($bem, $dados, $conservacao, $request) {
+            $bem->update($dados);
+
+            if ($conservacao !== null) {
+                $bem->alterarConservacao(EstadoConservacao::from($conservacao), $request->user());
+            }
+        });
 
         return new BemResource($bem->load(Bem::RELACOES_DA_FICHA));
     }

@@ -5,6 +5,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 /*
 | Testes da estrutura do banco (tarefa 2.2).
@@ -13,14 +14,9 @@ use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
 
-function criarAndar(string $nome = 'Térreo', int $ordem = 0): int
+function criarSala(string $nome = 'Sala 05 - Suporte TI'): int
 {
-    return DB::table('andar')->insertGetId(['nome' => $nome, 'ordem' => $ordem]);
-}
-
-function criarSala(int $andarId, string $nome = 'Sala 05 - Suporte TI'): int
-{
-    return DB::table('sala')->insertGetId(['andar_id' => $andarId, 'nome' => $nome]);
+    return DB::table('sala')->insertGetId(['nome' => $nome]);
 }
 
 function criarTipo(string $nome = 'Computador'): int
@@ -38,7 +34,7 @@ function criarBem(int $salaId, int $tipoId, array $dados = []): int
 }
 
 test('um bem novo nasce em uso, com quantidade 1 e ativo nos cadastros', function () {
-    $sala = criarSala(criarAndar());
+    $sala = criarSala();
     $bem = DB::table('bem')->find(criarBem($sala, criarTipo()));
 
     expect($bem->status)->toBe('em_uso')
@@ -49,7 +45,7 @@ test('um bem novo nasce em uso, com quantidade 1 e ativo nos cadastros', functio
 });
 
 test('o número de patrimônio não se repete (RN01)', function () {
-    $sala = criarSala(criarAndar());
+    $sala = criarSala();
     $tipo = criarTipo();
     criarBem($sala, $tipo, ['numero_patrimonio' => '1634456-1']);
 
@@ -57,7 +53,7 @@ test('o número de patrimônio não se repete (RN01)', function () {
 })->throws(QueryException::class);
 
 test('vários bens podem ficar sem número de patrimônio (PD07)', function () {
-    $sala = criarSala(criarAndar());
+    $sala = criarSala();
     $tipo = criarTipo();
     criarBem($sala, $tipo);
     criarBem($sala, $tipo);
@@ -66,37 +62,32 @@ test('vários bens podem ficar sem número de patrimônio (PD07)', function () {
 });
 
 test('o código interno não se repete', function () {
-    $sala = criarSala(criarAndar());
+    $sala = criarSala();
     $tipo = criarTipo();
     criarBem($sala, $tipo, ['codigo_interno' => 'CP-00001']);
 
     criarBem($sala, $tipo, ['codigo_interno' => 'CP-00001']);
 })->throws(QueryException::class);
 
-test('o mesmo nome de sala pode existir em andares diferentes, mas não no mesmo andar', function () {
-    $terreo = criarAndar('Térreo', 0);
-    $primeiro = criarAndar('1º andar', 1);
-    criarSala($terreo, 'Sala 05');
-    criarSala($primeiro, 'Sala 05');
-
-    expect(DB::table('sala')->where('nome', 'Sala 05')->count())->toBe(2);
-
-    criarSala($terreo, 'Sala 05');
+test('o nome da sala não se repete', function () {
+    criarSala('Sala 05');
+    criarSala('Sala 05');
 })->throws(QueryException::class);
+
+test('a tabela de andares não existe mais, e o bem pode ficar sem sala', function () {
+    $bem = DB::table('bem')->insertGetId(['codigo_interno' => 'CP-000001', 'tipo_patrimonio_id' => criarTipo()]);
+
+    expect(Schema::hasTable('andar'))->toBeFalse()
+        ->and(Schema::hasColumn('sala', 'andar_id'))->toBeFalse()
+        ->and(DB::table('bem')->find($bem)->sala_id)->toBeNull();
+});
 
 test('bem não pode apontar para uma sala que não existe (RN02)', function () {
     criarBem(999, criarTipo());
 })->throws(QueryException::class);
 
-test('andar com salas não pode ser apagado (RN08)', function () {
-    $andar = criarAndar();
-    criarSala($andar);
-
-    DB::table('andar')->where('id', $andar)->delete();
-})->throws(QueryException::class);
-
 test('sala com bens não pode ser apagada (RN08)', function () {
-    $sala = criarSala(criarAndar());
+    $sala = criarSala();
     criarBem($sala, criarTipo());
 
     DB::table('sala')->where('id', $sala)->delete();
@@ -104,7 +95,7 @@ test('sala com bens não pode ser apagada (RN08)', function () {
 
 test('tipo com bens não pode ser apagado (RN08)', function () {
     $tipo = criarTipo();
-    criarBem(criarSala(criarAndar()), $tipo);
+    criarBem(criarSala(), $tipo);
 
     DB::table('tipo_patrimonio')->where('id', $tipo)->delete();
 })->throws(QueryException::class);
@@ -126,7 +117,7 @@ test('o e-mail do usuário não se repete', function () {
 
 test('a última mudança guarda quem a fez (RN09)', function () {
     $usuario = User::factory()->administrador()->create();
-    $bem = criarBem(criarSala(criarAndar()), criarTipo(), [
+    $bem = criarBem(criarSala(), criarTipo(), [
         'data_ultima_mudanca' => '2026-10-16',
         'usuario_ultima_mudanca_id' => $usuario->id,
     ]);

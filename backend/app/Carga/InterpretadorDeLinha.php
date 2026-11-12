@@ -71,7 +71,6 @@ class InterpretadorDeLinha
         }
 
         $this->numero($linha, $resultado);
-        $resultado->observacao = $this->observacao($linha, $resultado);
 
         return $resultado;
     }
@@ -159,7 +158,7 @@ class InterpretadorDeLinha
         }
 
         if (mb_strlen($resto) > 120) {
-            $resultado->avisos[] = 'Descrição cortada em 120 caracteres; o texto completo está na observação.';
+            $resultado->avisos[] = 'Descrição cortada em 120 caracteres.';
             $resto = rtrim(mb_substr($resto, 0, 120));
         }
 
@@ -220,7 +219,7 @@ class InterpretadorDeLinha
      * e 900345721. Quando o número vem no meio de outro texto, como
      * "Série C 85018848" ou "900284315 (Convênio)", ele é separado e a linha
      * ganha um aviso. Texto que não é plaqueta, como "Ilegível" ou um ramal,
-     * deixa o bem sem número, e o texto vai para a observação.
+     * deixa o bem sem número, e o texto fica no aviso do relatório da carga.
      */
     private function numero(LinhaDaPlanilha $linha, LinhaInterpretada $resultado): void
     {
@@ -248,28 +247,5 @@ class InterpretadorDeLinha
         }
 
         $resultado->avisos[] = "A coluna Patrimônio tem \"{$texto}\", que não é um número de plaqueta. O bem entrou sem número.";
-    }
-
-    private function observacao(LinhaDaPlanilha $linha, LinhaInterpretada $resultado): string
-    {
-        $partes = ["Carga inicial: planilha de novembro de 2024, aba \"{$linha->aba}\", linha {$linha->linha}."];
-        $partes[] = "Patrimônio na planilha: \"{$linha->patrimonio}\".";
-        $partes[] = "Descrição na planilha: \"{$linha->descricao}\".";
-
-        if ($this->fonte === self::FONTE_PRINCIPAL || trim($linha->local) !== '') {
-            $partes[] = "Local na planilha: \"{$linha->local}\".";
-        }
-
-        $partes[] = "Estado na planilha: \"{$linha->estado}\".";
-
-        if (trim($linha->conferente) !== '') {
-            $partes[] = "Conferido por: {$linha->conferente}.";
-        }
-
-        foreach ($resultado->avisos as $aviso) {
-            $partes[] = "Aviso: {$aviso}";
-        }
-
-        return implode(' ', $partes);
     }
 }

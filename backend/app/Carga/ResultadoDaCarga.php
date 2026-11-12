@@ -5,7 +5,7 @@ namespace App\Carga;
 /*
 | O que aconteceu numa carga (tarefa 2.12, RF29): quantas linhas foram
 | lidas, quais entraram e com qual código interno, quais foram rejeitadas e
-| por quê, e o que foi criado de andar, sala e tipo.
+| por quê, e o que foi criado de sala e tipo.
 */
 final class ResultadoDaCarga
 {
@@ -16,9 +16,6 @@ final class ResultadoDaCarga
 
     /** @var array<int, LinhaInterpretada> */
     public array $rejeitadas = [];
-
-    /** @var array<int, string> */
-    public array $andaresCriados = [];
 
     /** @var array<int, string> */
     public array $salasCriadas = [];

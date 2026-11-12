@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\AndarController;
 use App\Http\Controllers\AutenticacaoController;
 use App\Http\Controllers\BemController;
+use App\Http\Controllers\ConferenciaController;
 use App\Http\Controllers\MudancaDeBemController;
-use App\Http\Controllers\RelatorioController;
+use App\Http\Controllers\PendenciaController;
 use App\Http\Controllers\SalaController;
 use App\Http\Controllers\TipoPatrimonioController;
 use Illuminate\Support\Facades\DB;
@@ -65,7 +65,6 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
     Route::post('/logout', [AutenticacaoController::class, 'logout']); // RF02
 
     // Locais e tipos (2.5): listar e ver um.
-    Route::apiResource('andares', AndarController::class)->only(['index', 'show'])->parameters(['andares' => 'andar']);
     Route::apiResource('salas', SalaController::class)->only(['index', 'show'])->parameters(['salas' => 'sala']);
     Route::apiResource('tipos-patrimonio', TipoPatrimonioController::class)->only(['index', 'show'])->parameters(['tipos-patrimonio' => 'tipo']);
 
@@ -73,16 +72,17 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
     Route::apiResource('bens', BemController::class)->only(['index', 'show'])->parameters(['bens' => 'bem']);
     Route::get('/salas/{sala}/bens', [BemController::class, 'daSala']);
 
-    // Relatório do levantamento (2.10): na tela e em planilha.
-    Route::get('/relatorio', [RelatorioController::class, 'index']);
-    Route::get('/relatorio/planilha', [RelatorioController::class, 'planilha']);
+    // Conferência dos bens: acompanhar as conferências e as pendências.
+    Route::get('/conferencias', [ConferenciaController::class, 'index']);
+    Route::get('/conferencias/{conferencia}', [ConferenciaController::class, 'show']);
+    Route::get('/conferencias/{conferencia}/itens', [ConferenciaController::class, 'itens']);
+    Route::get('/pendencias', [PendenciaController::class, 'index']);
 
     // 3. Alteração: só administrador -----------------------------------------
     Route::middleware('perfil:administrador')->group(function () {
 
         // Locais e tipos (2.5): cadastrar, editar, inativar e excluir.
         // Inativar e reativar é um PATCH com {"ativo": false} ou {"ativo": true}.
-        Route::apiResource('andares', AndarController::class)->except(['index', 'show'])->parameters(['andares' => 'andar']);
         Route::apiResource('salas', SalaController::class)->except(['index', 'show'])->parameters(['salas' => 'sala']);
         Route::apiResource('tipos-patrimonio', TipoPatrimonioController::class)->except(['index', 'show'])->parameters(['tipos-patrimonio' => 'tipo']);
 
@@ -92,6 +92,17 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
         // Mudança de sala e de status, incluindo a baixa (2.8).
         Route::patch('/bens/{bem}/sala', [MudancaDeBemController::class, 'mudarSala']);
         Route::patch('/bens/{bem}/status', [MudancaDeBemController::class, 'alterarStatus']);
+
+        // Conferência dos bens: gerar, lançar a folha, concluir e cancelar.
+        Route::post('/conferencias', [ConferenciaController::class, 'store']);
+        Route::patch('/conferencias/{conferencia}/itens/{item}', [ConferenciaController::class, 'lancar']);
+        Route::put('/conferencias/{conferencia}/itens', [ConferenciaController::class, 'salvarItens']);
+        Route::post('/conferencias/{conferencia}/encontrados', [ConferenciaController::class, 'marcarEncontrados']);
+        Route::post('/conferencias/{conferencia}/concluir', [ConferenciaController::class, 'concluir']);
+        Route::post('/conferencias/{conferencia}/cancelar', [ConferenciaController::class, 'cancelar']);
+
+        // Pendência do bem não localizado: localizado depois ou processo administrativo.
+        Route::post('/bens/{bem}/pendencia', [PendenciaController::class, 'resolver']);
 
         // Importação da planilha (2.12) entra aqui.
 

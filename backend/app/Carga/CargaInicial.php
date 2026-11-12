@@ -2,7 +2,6 @@
 
 namespace App\Carga;
 
-use App\Models\Andar;
 use App\Models\Bem;
 use App\Models\Movimentacao;
 use App\Models\Sala;
@@ -17,7 +16,7 @@ use Throwable;
 |   2. Recusa número de patrimônio repetido: a primeira linha com o número
 |      entra e as seguintes são rejeitadas, apontando para a primeira (RN11).
 |      Número que já existe no sistema também é recusado (RN01).
-|   3. Cria os andares, salas e tipos que as linhas aceitas usam (RF28).
+|   3. Cria as salas e os tipos que as linhas aceitas usam (RF28).
 |   4. Grava os bens.
 |
 | Tudo acontece numa transação só: ou a carga inteira entra, ou nada entra.
@@ -58,7 +57,7 @@ class CargaInicial
     }
 
     /**
-     * Apaga bens, histórico, salas, andares e tipos, para a carga começar do
+     * Apaga bens, histórico, salas e tipos, para a carga começar do
      * zero. Só para o período de testes: quem chama confere o ambiente.
      */
     public static function apagarDadosDoPatrimonio(): void
@@ -67,7 +66,6 @@ class CargaInicial
             Movimentacao::query()->delete();
             Bem::query()->delete();
             Sala::query()->delete();
-            Andar::query()->delete();
             TipoPatrimonio::query()->delete();
         });
     }
@@ -112,16 +110,15 @@ class CargaInicial
      */
     private function gravar(array $aceitas, ResultadoDaCarga $resultado): void
     {
-        $andares = [];
         $salas = [];
         $tipos = [];
 
         foreach ($aceitas as $linha) {
-            $nomeDoAndar = $this->mapeamento['salas'][$linha->sala]
-                ?? throw new \RuntimeException("A sala \"{$linha->sala}\" não tem andar em 'salas' no mapeamento.");
+            if (! in_array($linha->sala, $this->mapeamento['salas'], true)) {
+                throw new \RuntimeException("A sala \"{$linha->sala}\" não está em 'salas' no mapeamento.");
+            }
 
-            $andares[$nomeDoAndar] ??= $this->andar($nomeDoAndar, $resultado);
-            $salas[$linha->sala] ??= $this->sala($linha->sala, $andares[$nomeDoAndar], $resultado);
+            $salas[$linha->sala] ??= $this->sala($linha->sala, $resultado);
             $tipos[$linha->tipo] ??= $this->tipo($linha->tipo, $resultado);
 
             $bem = Bem::create([
@@ -133,26 +130,15 @@ class CargaInicial
                 'origem' => $linha->origem,
                 'status' => $linha->status,
                 'estado_conservacao' => $linha->estadoConservacao,
-                'observacao' => $linha->observacao,
             ]);
 
             $resultado->importadas[] = [$linha, $bem->codigo_interno];
         }
     }
 
-    private function andar(string $nome, ResultadoDaCarga $resultado): Andar
+    private function sala(string $nome, ResultadoDaCarga $resultado): Sala
     {
-        $andar = Andar::firstOrCreate(['nome' => $nome], ['ordem' => $this->mapeamento['andares'][$nome] ?? 0]);
-        if ($andar->wasRecentlyCreated) {
-            $resultado->andaresCriados[] = $nome;
-        }
-
-        return $andar;
-    }
-
-    private function sala(string $nome, Andar $andar, ResultadoDaCarga $resultado): Sala
-    {
-        $sala = Sala::firstOrCreate(['andar_id' => $andar->id, 'nome' => $nome]);
+        $sala = Sala::firstOrCreate(['nome' => $nome]);
         if ($sala->wasRecentlyCreated) {
             $resultado->salasCriadas[] = $nome;
         }

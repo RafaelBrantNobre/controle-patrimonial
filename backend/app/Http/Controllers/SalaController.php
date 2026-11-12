@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SalaRequest;
 use App\Http\Resources\SalaResource;
-use App\Models\Andar;
 use App\Models\Sala;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,25 +11,20 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /*
 | Salas do prédio (tarefa 2.5).
-| RF06 cadastrar e editar, sempre num andar. RF07 inativar.
-| RN08 sala com bens não é excluída.
+| RF06 cadastrar e editar. RF07 inativar. RN08 sala com bens não é excluída.
 */
 class SalaController extends Controller
 {
     /**
      * GET /api/salas
-     * Filtros: ?busca= (parte do nome), ?andar_id= e ?ativo=1 ou 0.
-     * Sai agrupada por andar, na ordem do relatório, e por nome dentro do andar.
+     * Filtros: ?busca= (parte do nome) e ?ativo=1 ou 0. Sai em ordem de nome.
      */
     public function index(Request $request): AnonymousResourceCollection
     {
         $salas = Sala::query()
-            ->with('andar')
             ->withCount('bens')
             ->when($request->filled('busca'), fn ($query) => $query->where('nome', 'like', $this->padraoDeBusca($request->string('busca')->toString())))
-            ->when($request->filled('andar_id'), fn ($query) => $query->where('andar_id', $request->integer('andar_id')))
             ->when($request->filled('ativo'), fn ($query) => $query->where('ativo', $request->boolean('ativo')))
-            ->orderBy(Andar::select('ordem')->whereColumn('andar.id', 'sala.andar_id'))
             ->orderBy('nome')
             ->paginate($this->porPagina($request), pageName: 'pagina')
             ->withQueryString();
@@ -43,7 +37,7 @@ class SalaController extends Controller
      */
     public function show(Sala $sala): SalaResource
     {
-        return new SalaResource($sala->load('andar')->loadCount('bens'));
+        return new SalaResource($sala->loadCount('bens'));
     }
 
     /**
@@ -53,7 +47,7 @@ class SalaController extends Controller
     {
         $sala = Sala::create($request->validated());
 
-        return new SalaResource($sala->load('andar')->loadCount('bens'));
+        return new SalaResource($sala->loadCount('bens'));
     }
 
     /**
@@ -64,7 +58,7 @@ class SalaController extends Controller
     {
         $sala->update($request->validated());
 
-        return new SalaResource($sala->load('andar')->loadCount('bens'));
+        return new SalaResource($sala->loadCount('bens'));
     }
 
     /**
@@ -82,7 +76,7 @@ class SalaController extends Controller
 
         if ($sala->apareceNoHistorico()) {
             return response()->json([
-                'message' => 'Esta sala aparece no histórico de mudanças de bens e não pode ser excluída. Se ela não é mais usada, inative-a.',
+                'message' => 'Esta sala aparece no histórico de mudanças ou de conferências de bens e não pode ser excluída. Se ela não é mais usada, inative-a.',
             ], 409);
         }
 
