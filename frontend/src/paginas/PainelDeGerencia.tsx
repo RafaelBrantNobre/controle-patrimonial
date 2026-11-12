@@ -65,22 +65,12 @@ export function PainelDeGerencia() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="cartao space-y-3 p-6 lg:col-span-2">
+      <div>
+        <section className="cartao space-y-3 p-6">
           <h2 className="flex items-center gap-2 font-semibold text-cead-900">
             <Users className="size-4" /> Membros da Equipe com Acesso
           </h2>
           {/* Desativado: A lista de membros, o último acesso e a ativação de cada pessoa dependem da gestão de usuários na API (tarefa 3.3). */}
-          <Desativado />
-        </section>
-        <section className="cartao space-y-3 p-6">
-          <h2 className="flex items-center gap-2 font-semibold text-cead-900">
-            <Settings2 className="size-4" /> Parâmetros Operacionais
-          </h2>
-          <p className="text-sm text-slate-500">
-            Hoje o sistema gera o código interno no formato <span className="font-mono font-semibold">CP-000123</span> para todo bem.
-          </p>
-          {/* Desativado: Prefixo da plaqueta e próximo número de tombamento configuráveis ainda não existem na API. */}
           <Desativado />
         </section>
       </div>

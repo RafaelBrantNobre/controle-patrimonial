@@ -565,7 +565,7 @@ Essas partes aparecem nas telas numa caixa **Desativado** (componente `Desativad
 | Ambientes | código ou sigla da sala, tipo de espaço, responsável, capacidade e histórico da sala |
 | Relatórios | baixar cada conferência em planilha (XLSX), no formato da planilha de 2024 |
 | Conferências | iniciar a conferência a partir de um arquivo (planilha ou SIAD): depende do formato do arquivo |
-| Gerência e Usuários | listar, cadastrar, editar e desativar usuários (tarefa 3.3) e parâmetros da plaqueta |
+| Gerência e Usuários | listar, cadastrar, editar e desativar usuários (tarefa 3.3) |
 
 Diferenças de nomes entre o wireframe e a API:
 
