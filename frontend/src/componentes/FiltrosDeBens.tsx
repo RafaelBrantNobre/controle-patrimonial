@@ -1,13 +1,7 @@
+import { Cartao, Entrada, Selecao } from '../components/ui'
 import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import {
-  ROTULOS_STATUS,
-  SITUACOES_DE_CONFERENCIA,
-  type Pagina,
-  type Sala,
-  type StatusBem,
-  type TipoPatrimonio,
-} from '../services/tipos'
+import { ROTULOS_STATUS, SITUACOES_DE_CONFERENCIA, type Pagina, type Sala, type StatusBem, type TipoPatrimonio } from '../services/tipos'
 import { useApi } from '../services/useApi'
 
 // Valor da opção "Sem localização" no seletor de sala (vira ?sem_sala=1).
@@ -36,11 +30,11 @@ export function FiltrosDeBens({
   const tipos = useApi<Pagina<TipoPatrimonio>>('/tipos-patrimonio?por_pagina=100')
 
   return (
-    <section className="cartao mb-6 space-y-4 p-4">
+    <Cartao as="section" className="mb-6 space-y-4 p-4">
       <label className="relative block">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-        <input
-          className="entrada pl-9"
+        <Entrada
+          className="pl-9"
           placeholder="Buscar por tombamento (ex: 1634456-1), código interno (CP-000123), descrição ou marca"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
@@ -51,8 +45,7 @@ export function FiltrosDeBens({
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label>
           <span className="rotulo">Sala / Ambiente</span>
-          <select
-            className="entrada"
+          <Selecao
             value={filtro('sem_sala') ? SEM_SALA : filtro('sala_id')}
             onChange={(e) => (e.target.value === SEM_SALA ? mudarFiltro('sem_sala', '1') : mudarFiltro('sala_id', e.target.value))}
           >
@@ -63,42 +56,42 @@ export function FiltrosDeBens({
                 {sala.nome}
               </option>
             ))}
-          </select>
+          </Selecao>
         </label>
         <label>
           <span className="rotulo">Tipo do item</span>
-          <select className="entrada" value={filtro('tipo_patrimonio_id')} onChange={(e) => mudarFiltro('tipo_patrimonio_id', e.target.value)}>
+          <Selecao value={filtro('tipo_patrimonio_id')} onChange={(e) => mudarFiltro('tipo_patrimonio_id', e.target.value)}>
             <option value="">Todos os tipos</option>
             {tipos.dados?.data.map((tipo) => (
               <option key={tipo.id} value={tipo.id}>
                 {tipo.nome}
               </option>
             ))}
-          </select>
+          </Selecao>
         </label>
         <label>
           <span className="rotulo">Situação de uso</span>
-          <select className="entrada" value={filtro('status')} onChange={(e) => mudarFiltro('status', e.target.value)}>
+          <Selecao value={filtro('status')} onChange={(e) => mudarFiltro('status', e.target.value)}>
             <option value="">Todas as situações</option>
             {(Object.keys(ROTULOS_STATUS) as StatusBem[]).map((status) => (
               <option key={status} value={status}>
                 {ROTULOS_STATUS[status]}
               </option>
             ))}
-          </select>
+          </Selecao>
         </label>
         <label>
           <span className="rotulo">Conferência</span>
-          <select className="entrada" value={filtro('conferencia')} onChange={(e) => mudarFiltro('conferencia', e.target.value)}>
+          <Selecao value={filtro('conferencia')} onChange={(e) => mudarFiltro('conferencia', e.target.value)}>
             <option value="">Todas</option>
             {(Object.keys(SITUACOES_DE_CONFERENCIA) as (keyof typeof SITUACOES_DE_CONFERENCIA)[]).map((situacao) => (
               <option key={situacao} value={situacao}>
                 {SITUACOES_DE_CONFERENCIA[situacao]}
               </option>
             ))}
-          </select>
+          </Selecao>
         </label>
       </div>
-    </section>
+    </Cartao>
   )
 }

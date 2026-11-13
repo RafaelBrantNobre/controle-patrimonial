@@ -1,8 +1,9 @@
+import { Titulo, LinkBotao, Botao, Cartao, RolagemTabela, Tabela, Selecao, Entrada, Aviso, Campo, Carregando } from '../../components/ui'
 import { ArrowRightLeft, CircleSlash, ClipboardCheck, FilePlus2, FileText, History, MapPin, Pencil, RefreshCw, Wrench } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
-import { Aviso, Campo, Carregando, SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/ui'
+import { SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/SelosDeBem'
 import { ResolverPendencia } from '../conferencias/ResolverPendencia'
 import { apiPatch, ErroDaApi } from '../../services/api'
 import { formatarData, hojeIso } from '../../services/formatos'
@@ -22,7 +23,9 @@ export function FichaDoBem() {
   const [versao, setVersao] = useState(0)
   const [mensagem, setMensagem] = useState<string | null>((location.state as { mensagem?: string } | null)?.mensagem ?? null)
   const [parametros] = useSearchParams()
-  const [acao, setAcao] = useState<'escolher' | 'sala' | 'conservacao' | 'status' | 'baixa' | null>(parametros.get('ocorrencia') ? 'escolher' : null)
+  const [acao, setAcao] = useState<'escolher' | 'sala' | 'conservacao' | 'status' | 'baixa' | null>(
+    parametros.get('ocorrencia') ? 'escolher' : null,
+  )
 
   const resposta = useApi<{ data: Bem }>(`/bens/${id}`, versao)
 
@@ -48,7 +51,7 @@ export function FichaDoBem() {
       </p>
       <div className="mt-1 mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-cead-900">{bem.tipo_patrimonio?.nome}</h1>
+          <Titulo>{bem.tipo_patrimonio?.nome}</Titulo>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500">
             <span className="font-mono font-semibold text-cead-800">{bem.numero_patrimonio ?? 'sem patrimônio'}</span>·
             <span className="font-mono">{bem.codigo_interno}</span>
@@ -58,13 +61,13 @@ export function FichaDoBem() {
         {usuario?.pode_alterar && (
           <div className="flex flex-wrap gap-2">
             {!bem.baixado && (
-              <Link to={`/bens/${bem.id}/editar`} className="botao-secundario">
+              <LinkBotao variante="secundario" to={`/bens/${bem.id}/editar`}>
                 <Pencil className="size-4" /> Editar
-              </Link>
+              </LinkBotao>
             )}
-            <button type="button" className="botao-primario" onClick={() => setAcao('escolher')}>
+            <Botao variante="primario" type="button" onClick={() => setAcao('escolher')}>
               <FilePlus2 className="size-4" /> Registrar ocorrência
-            </button>
+            </Botao>
           </div>
         )}
       </div>
@@ -84,37 +87,42 @@ export function FichaDoBem() {
       )}
 
       {usuario?.pode_alterar && acao === 'escolher' && (
-        <section className="cartao mb-6 space-y-4 border-cead-100 p-6">
+        <Cartao as="section" className="mb-6 space-y-4 border-cead-100 p-6">
           <div>
             <h2 className="font-semibold text-cead-900">Registrar ocorrência</h2>
             <p className="text-sm text-slate-500">O que aconteceu com este bem?</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {!bem.baixado && (
-              <button type="button" className="botao-secundario justify-start" onClick={() => setAcao('sala')}>
+              <Botao variante="secundario" type="button" className="justify-start" onClick={() => setAcao('sala')}>
                 <ArrowRightLeft className="size-4" /> Mudou de sala
-              </button>
+              </Botao>
             )}
             {!bem.baixado && (
-              <button type="button" className="botao-secundario justify-start" onClick={() => setAcao('conservacao')}>
+              <Botao variante="secundario" type="button" className="justify-start" onClick={() => setAcao('conservacao')}>
                 <Wrench className="size-4" /> Mudou a conservação
-              </button>
+              </Botao>
             )}
-            <button type="button" className="botao-secundario justify-start" onClick={() => setAcao('status')}>
+            <Botao variante="secundario" type="button" className="justify-start" onClick={() => setAcao('status')}>
               <RefreshCw className="size-4" /> {bem.baixado ? 'Desfazer a baixa' : 'Mudou a condição de uso'}
-            </button>
+            </Botao>
             {!bem.baixado && (
-              <button type="button" className="botao justify-start border border-red-200 bg-white text-red-700 hover:bg-red-50" onClick={() => setAcao('baixa')}>
+              <Botao
+                variante="simples"
+                type="button"
+                className="justify-start border border-red-200 bg-white text-red-700 hover:bg-red-50"
+                onClick={() => setAcao('baixa')}
+              >
                 <CircleSlash className="size-4" /> Baixa
-              </button>
+              </Botao>
             )}
           </div>
           <div className="flex justify-end">
-            <button type="button" className="botao-secundario" onClick={() => setAcao(null)}>
+            <Botao variante="secundario" type="button" onClick={() => setAcao(null)}>
               Cancelar
-            </button>
+            </Botao>
           </div>
-        </section>
+        </Cartao>
       )}
       {acao === 'conservacao' && <MudarConservacao bem={bem} aoCancelar={() => setAcao(null)} aoConcluir={concluir} />}
       {acao === 'sala' && <MudarSala bem={bem} aoCancelar={() => setAcao(null)} aoConcluir={concluir} />}
@@ -122,7 +130,7 @@ export function FichaDoBem() {
       {acao === 'baixa' && <DarBaixa bem={bem} aoCancelar={() => setAcao(null)} aoConcluir={concluir} />}
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <section className="cartao p-6 lg:col-span-2">
+        <Cartao as="section" className="p-6 lg:col-span-2">
           <h2 className="mb-4 font-semibold text-cead-900">Dados do bem</h2>
           <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-3">
             <Dado rotulo="Tombamento">{bem.numero_patrimonio ?? 'sem patrimônio'}</Dado>
@@ -145,9 +153,9 @@ export function FichaDoBem() {
               <SeloConservacao estado={bem.estado_conservacao} rotulo={bem.estado_conservacao_rotulo} />
             </Dado>
           </dl>
-        </section>
+        </Cartao>
 
-        <section className="cartao p-6">
+        <Cartao as="section" className="p-6">
           <h2 className="mb-4 flex items-center gap-2 font-semibold text-cead-900">
             <History className="size-4" /> Última mudança
           </h2>
@@ -161,20 +169,20 @@ export function FichaDoBem() {
             </Dado>
             <Dado rotulo="Cadastrado em">{formatarData(bem.cadastrado_em)}</Dado>
           </dl>
-        </section>
+        </Cartao>
       </div>
 
       <ConferenciaDoBem bem={bem} podeResolver={Boolean(usuario?.pode_alterar)} aoResolver={() => concluir('Pendência resolvida.')} />
 
-      <section className="cartao mt-6 p-6">
+      <Cartao as="section" className="mt-6 p-6">
         <h2 className="mb-4 flex items-center gap-2 font-semibold text-cead-900">
           <History className="size-4" /> Histórico de ocorrências
         </h2>
         {(bem.ocorrencias ?? []).length === 0 ? (
           <p className="text-sm text-slate-500">Nenhuma ocorrência registrada para este bem.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="tabela">
+          <RolagemTabela>
+            <Tabela>
               <thead>
                 <tr>
                   <th>Data</th>
@@ -208,10 +216,10 @@ export function FichaDoBem() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+            </Tabela>
+          </RolagemTabela>
         )}
-      </section>
+      </Cartao>
     </>
   )
 }
@@ -223,7 +231,7 @@ function ConferenciaDoBem({ bem, podeResolver, aoResolver }: { bem: Bem; podeRes
   const historico = bem.historico_conferencias ?? []
 
   return (
-    <section className="cartao mt-6 p-6">
+    <Cartao as="section" className="mt-6 p-6">
       <h2 className="mb-4 flex flex-wrap items-center gap-2 font-semibold text-cead-900">
         <ClipboardCheck className="size-4" /> Conferência <SeloConferencia bem={bem} />
       </h2>
@@ -241,17 +249,22 @@ function ConferenciaDoBem({ bem, podeResolver, aoResolver }: { bem: Bem; podeRes
       {bem.pendencia && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           <p>
-            <strong>Não localizado desde {formatarData(bem.pendencia.desde)}</strong>, na conferência {bem.pendencia.conferencia}. A pendência fecha quando
-            o bem aparecer ou com o número do processo administrativo.
+            <strong>Não localizado desde {formatarData(bem.pendencia.desde)}</strong>, na conferência {bem.pendencia.conferencia}. A
+            pendência fecha quando o bem aparecer ou com o número do processo administrativo.
           </p>
           {podeResolver && (
             <div className="flex gap-2">
-              <button type="button" className="botao-secundario px-3 py-1 text-xs" onClick={() => setResolvendo('localizado')}>
+              <Botao variante="secundario" type="button" className="px-3 py-1 text-xs" onClick={() => setResolvendo('localizado')}>
                 <MapPin className="size-3.5" /> Localizado
-              </button>
-              <button type="button" className="botao-secundario px-3 py-1 text-xs" onClick={() => setResolvendo('processo_administrativo')}>
+              </Botao>
+              <Botao
+                variante="secundario"
+                type="button"
+                className="px-3 py-1 text-xs"
+                onClick={() => setResolvendo('processo_administrativo')}
+              >
                 <FileText className="size-3.5" /> Processo
-              </button>
+              </Botao>
             </div>
           )}
         </div>
@@ -260,8 +273,8 @@ function ConferenciaDoBem({ bem, podeResolver, aoResolver }: { bem: Bem; podeRes
       {historico.length === 0 ? (
         <p className="text-sm text-slate-500">Este bem ainda não entrou numa conferência concluída.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="tabela">
+        <RolagemTabela>
+          <Tabela>
             <thead>
               <tr>
                 <th>Conferência</th>
@@ -290,8 +303,8 @@ function ConferenciaDoBem({ bem, podeResolver, aoResolver }: { bem: Bem; podeRes
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </Tabela>
+        </RolagemTabela>
       )}
 
       {resolvendo && (
@@ -305,7 +318,7 @@ function ConferenciaDoBem({ bem, podeResolver, aoResolver }: { bem: Bem; podeRes
           }}
         />
       )}
-    </section>
+    </Cartao>
   )
 }
 
@@ -350,19 +363,19 @@ function PainelDeAcao({
   }
 
   return (
-    <form onSubmit={aoEnviar} className="cartao mb-6 space-y-4 border-cead-100 p-6">
+    <Cartao as="form" onSubmit={aoEnviar} className="mb-6 space-y-4 border-cead-100 p-6">
       <h2 className="font-semibold text-cead-900">{titulo}</h2>
       {erro && <Aviso>{erro.message}</Aviso>}
       {children(erro)}
       <div className="flex justify-end gap-2">
-        <button type="button" className="botao-secundario" onClick={aoCancelar}>
+        <Botao variante="secundario" type="button" onClick={aoCancelar}>
           Cancelar
-        </button>
-        <button type="submit" className="botao-primario" disabled={enviando}>
+        </Botao>
+        <Botao variante="primario" type="submit" disabled={enviando}>
           {enviando ? 'Salvando...' : textoBotao}
-        </button>
+        </Botao>
       </div>
-    </form>
+    </Cartao>
   )
 }
 
@@ -383,7 +396,7 @@ function MudarSala({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
       {(erro) => (
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo rotulo="Sala de destino" obrigatorio erro={erro?.doCampo('sala_id')}>
-            <select className="entrada" value={salaId} onChange={(e) => setSalaId(e.target.value)} required>
+            <Selecao value={salaId} onChange={(e) => setSalaId(e.target.value)} required>
               <option value="">Selecione a sala...</option>
               {salas.dados?.data
                 .filter((sala) => sala.id !== bem.sala_id)
@@ -392,7 +405,7 @@ function MudarSala({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
                     {sala.nome}
                   </option>
                 ))}
-            </select>
+            </Selecao>
           </Campo>
         </div>
       )}
@@ -416,13 +429,13 @@ function MudarConservacao({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
     >
       {(erro) => (
         <Campo rotulo={`Novo estado (hoje: ${bem.estado_conservacao_rotulo})`} erro={erro?.doCampo('estado_conservacao')}>
-          <select className="entrada" value={estado} onChange={(e) => setEstado(e.target.value as EstadoConservacao)}>
+          <Selecao value={estado} onChange={(e) => setEstado(e.target.value as EstadoConservacao)}>
             {opcoes.map((opcao) => (
               <option key={opcao} value={opcao}>
                 {ROTULOS_CONSERVACAO[opcao]}
               </option>
             ))}
-          </select>
+          </Selecao>
         </Campo>
       )}
     </PainelDeAcao>
@@ -449,13 +462,13 @@ function MudarStatus({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
             <p className="text-sm text-slate-600">Os dados da baixa serão apagados, e a mudança fica registrada com data e usuário.</p>
           )}
           <Campo rotulo="Nova situação" erro={erro?.doCampo('status')}>
-            <select className="entrada" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <Selecao value={status} onChange={(e) => setStatus(e.target.value)}>
               {opcoes.map((opcao) => (
                 <option key={opcao} value={opcao}>
                   {opcao === 'em_uso' ? 'Em uso' : 'Sem uso'}
                 </option>
               ))}
-            </select>
+            </Selecao>
           </Campo>
         </>
       )}
@@ -484,10 +497,10 @@ function DarBaixa({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
       {(erro) => (
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo rotulo="Data da baixa" obrigatorio erro={erro?.doCampo('baixa_data')}>
-            <input type="date" className="entrada" max={hojeIso()} value={data} onChange={(e) => setData(e.target.value)} required />
+            <Entrada type="date" max={hojeIso()} value={data} onChange={(e) => setData(e.target.value)} required />
           </Campo>
           <Campo rotulo="Observação" erro={erro?.doCampo('baixa_observacao')} ajuda="ex: número do processo">
-            <input className="entrada" value={observacao} onChange={(e) => setObservacao(e.target.value)} />
+            <Entrada value={observacao} onChange={(e) => setObservacao(e.target.value)} />
           </Campo>
         </div>
       )}

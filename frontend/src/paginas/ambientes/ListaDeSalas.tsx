@@ -1,8 +1,22 @@
+import {
+  Tooltip,
+  LinkBotao,
+  Cartao,
+  Botao,
+  Entrada,
+  RolagemTabela,
+  Tabela,
+  Aviso,
+  Cabecalho,
+  Carregando,
+  Indicador,
+  Paginacao,
+} from '../../components/ui'
 import { Building2, DoorOpen, Eye, Package, Pencil, Plus, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
-import { Aviso, Cabecalho, Carregando, Indicador, Paginacao, SeloAtivo } from '../../componentes/ui'
+import { SeloAtivo } from '../../componentes/SelosDeBem'
 import { consulta } from '../../services/api'
 import type { Bem, Pagina, Sala } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
@@ -57,45 +71,50 @@ export function ListaDeSalas() {
         subtitulo="Gestão das salas e ambientes onde ficam os bens."
         acoes={
           usuario?.pode_alterar && (
-            <Link to="/ambientes/novo" className="botao-primario">
+            <LinkBotao variante="primario" to="/ambientes/novo">
               <Plus className="size-4" /> Nova Sala / Ambiente
-            </Link>
+            </LinkBotao>
           )
         }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2">
         <Indicador titulo="Total de ambientes" valor={todasAtivas.dados?.meta.total ?? '…'} detalhe="salas ativas" icone={Building2} />
-        <Indicador titulo="Bens alocados" valor={bens.dados?.meta.total.toLocaleString('pt-BR') ?? '…'} detalhe="itens cadastrados" icone={Package} />
+        <Indicador
+          titulo="Bens alocados"
+          valor={bens.dados?.meta.total.toLocaleString('pt-BR') ?? '…'}
+          detalhe="itens cadastrados"
+          icone={Package}
+        />
       </div>
 
-      <section className="cartao mb-6 flex flex-wrap items-center gap-3 p-4">
+      <Cartao as="section" className="mb-6 flex flex-wrap items-center gap-3 p-4">
         <div className="flex rounded-lg bg-slate-100 p-1 text-xs">
           {ABAS.map((aba) => (
-            <button
+            <Botao
               key={aba.valor}
               type="button"
               onClick={() => mudarFiltro('ativo', aba.valor)}
               className={`rounded-md px-3 py-1.5 font-medium ${filtro('ativo') === aba.valor ? 'bg-white text-cead-900 shadow-sm' : 'text-slate-500'}`}
             >
               {aba.rotulo}
-            </button>
+            </Botao>
           ))}
         </div>
         <label className="relative ml-auto block w-full sm:w-72">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-          <input className="entrada pl-9" placeholder="Buscar sala pelo nome..." value={busca} onChange={(e) => setBusca(e.target.value)} />
+          <Entrada className="pl-9" placeholder="Buscar sala pelo nome..." value={busca} onChange={(e) => setBusca(e.target.value)} />
         </label>
-      </section>
+      </Cartao>
 
-      <section className="cartao overflow-hidden">
+      <Cartao as="section" className="overflow-hidden">
         {salas.erro && (
           <div className="p-4">
             <Aviso>{salas.erro}</Aviso>
           </div>
         )}
-        <div className="overflow-x-auto">
-          <table className="tabela">
+        <RolagemTabela>
+          <Tabela>
             <thead>
               <tr>
                 <th>Identificação da sala</th>
@@ -119,28 +138,39 @@ export function ListaDeSalas() {
                     </Link>
                   </td>
                   <td className="text-center">
-                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">{sala.bens_count ?? 0} bens</span>
+                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                      {sala.bens_count ?? 0} bens
+                    </span>
                   </td>
                   <td>
                     <SeloAtivo ativo={sala.ativo} />
                   </td>
                   <td className="text-right whitespace-nowrap">
-                    <Link to={`/ambientes/${sala.id}`} className="inline-flex items-center gap-1 p-1.5 text-xs font-medium text-cead-700 hover:underline">
+                    <Link
+                      to={`/ambientes/${sala.id}`}
+                      className="inline-flex items-center gap-1 p-1.5 text-xs font-medium text-cead-700 hover:underline"
+                    >
                       <Eye className="size-4" /> Ver bens
                     </Link>
                     {usuario?.pode_alterar && (
-                      <Link to={`/ambientes/${sala.id}/editar`} className="inline-flex p-1.5 text-slate-500 hover:text-cead-700" title="Editar sala">
-                        <Pencil className="size-4" />
-                      </Link>
+                      <Tooltip texto={'Editar sala'}>
+                        <Link
+                          to={`/ambientes/${sala.id}/editar`}
+                          className="inline-flex p-1.5 text-slate-500 hover:text-cead-700"
+                          aria-label="Editar sala"
+                        >
+                          <Pencil className="size-4" />
+                        </Link>
+                      </Tooltip>
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabela>
           {salas.carregando && !salas.dados && <Carregando />}
           {salas.dados?.data.length === 0 && <Carregando texto="Nenhuma sala encontrada com estes filtros." />}
-        </div>
+        </RolagemTabela>
         {salas.dados && (
           <Paginacao
             pagina={salas.dados.meta.current_page}
@@ -151,7 +181,7 @@ export function ListaDeSalas() {
             aoMudar={(nova) => mudarFiltro('pagina', String(nova))}
           />
         )}
-      </section>
+      </Cartao>
     </>
   )
 }

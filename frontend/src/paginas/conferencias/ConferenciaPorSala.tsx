@@ -1,9 +1,22 @@
+import {
+  Titulo,
+  ConfirmarEnvio,
+  Cartao,
+  Botao,
+  RolagemTabela,
+  Tabela,
+  Selecao,
+  Entrada,
+  Dialogo,
+  Aviso,
+  Carregando,
+  Selo,
+  type CorSelo,
+} from '../../components/ui'
 import { ArrowLeft, ArrowRight, Ban, Check, CheckCheck, CheckCircle2, CircleSlash, Save } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
-import { Dialogo } from '../../componentes/Dialogo'
-import { Aviso, Carregando, Selo, type CorSelo } from '../../componentes/ui'
 import { apiPost, apiPut, ErroDaApi } from '../../services/api'
 import { formatarData, hojeIso, plural } from '../../services/formatos'
 import {
@@ -148,12 +161,12 @@ export function ConferenciaPorSala() {
         / {conferencia.nome}
       </p>
 
-      <section className="cartao mt-3 mb-4 p-5">
+      <Cartao as="section" className="mt-3 mb-4 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold text-cead-900">
+            <Titulo className="flex flex-wrap items-center gap-2">
               {conferencia.nome} <Selo cor={COR_SITUACAO[conferencia.situacao]}>{conferencia.situacao_rotulo}</Selo>
-            </h1>
+            </Titulo>
             <p className="mt-1 text-sm text-slate-500">
               Iniciada por {conferencia.criada_por?.nome} em {formatarData(conferencia.criada_em)}
               {conferencia.realizada_em && <> · realizada em {formatarData(conferencia.realizada_em)}</>}
@@ -161,9 +174,13 @@ export function ConferenciaPorSala() {
             </p>
           </div>
           {podeLancar && (
-            <button type="button" className="botao border border-red-200 bg-white text-red-700 hover:bg-red-50" onClick={() => setCancelando(true)}>
+            <Botao
+              type="button"
+              className="border border-red-200 bg-white text-red-700 hover:bg-red-50"
+              onClick={() => setCancelando(true)}
+            >
               <Ban className="size-4" /> Cancelar conferência
-            </button>
+            </Botao>
           )}
         </div>
         {totais && (
@@ -180,11 +197,11 @@ export function ConferenciaPorSala() {
             </div>
           </div>
         )}
-      </section>
+      </Cartao>
 
       <nav className="mb-4 flex flex-wrap gap-2" aria-label="Etapas da conferência">
         {salas.map((item, posicao) => (
-          <button
+          <Botao
             key={item.id ?? 'sem-sala'}
             type="button"
             onClick={() => irPara(posicao)}
@@ -192,28 +209,34 @@ export function ConferenciaPorSala() {
             title={temAlteracoes ? 'Salve ou descarte as alterações desta sala antes de mudar de etapa.' : undefined}
             aria-current={posicao === etapa ? 'step' : undefined}
             className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 ${
-              posicao === etapa ? 'border-cead-700 bg-cead-800 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-cead-600'
+              posicao === etapa
+                ? 'border-cead-700 bg-cead-800 text-white'
+                : 'border-slate-200 bg-white text-slate-700 hover:border-cead-600'
             }`}
           >
             <span className="opacity-70">{posicao + 1}.</span> {item.nome}
             {item.pendentes === 0 ? (
               <Check className={`size-3.5 ${posicao === etapa ? '' : 'text-emerald-600'}`} aria-label="completa" />
             ) : (
-              <span className={`rounded-full px-1.5 ${posicao === etapa ? 'bg-white/20' : 'bg-amber-100 text-amber-800'}`}>{item.pendentes}</span>
+              <span className={`rounded-full px-1.5 ${posicao === etapa ? 'bg-white/20' : 'bg-amber-100 text-amber-800'}`}>
+                {item.pendentes}
+              </span>
             )}
-          </button>
+          </Botao>
         ))}
-        <button
+        <Botao
           type="button"
           onClick={() => irPara(salas.length)}
           disabled={temAlteracoes || salvando}
           aria-current={etapa === salas.length ? 'step' : undefined}
           className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 ${
-            etapa === salas.length ? 'border-cead-700 bg-cead-800 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-cead-600'
+            etapa === salas.length
+              ? 'border-cead-700 bg-cead-800 text-white'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-cead-600'
           }`}
         >
           <CheckCircle2 className="size-3.5" /> Conclusão
-        </button>
+        </Botao>
       </nav>
 
       {mensagem && (
@@ -238,7 +261,7 @@ export function ConferenciaPorSala() {
       )}
 
       {sala ? (
-        <section className="cartao overflow-hidden">
+        <Cartao as="section" className="overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
             <div>
               <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
@@ -246,14 +269,20 @@ export function ConferenciaPorSala() {
               </p>
               <h2 className="text-lg font-bold text-cead-900">{sala.nome}</h2>
               <p className="text-xs text-slate-500">
-                {plural(sala.total, 'bem', 'bens')} · {sala.pendentes ? plural(sala.pendentes, 'pendente', 'pendentes') : 'todos com resultado'}
+                {plural(sala.total, 'bem', 'bens')} ·{' '}
+                {sala.pendentes ? plural(sala.pendentes, 'pendente', 'pendentes') : 'todos com resultado'}
                 {sala.id === null && ' · informe a sala onde cada bem foi encontrado'}
               </p>
             </div>
             {podeLancar && (
-              <button type="button" className="botao-verde" onClick={marcarPendentes} disabled={salvando || itens.every((item) => linha(item).resultado !== null)}>
+              <Botao
+                variante="sucesso"
+                type="button"
+                onClick={marcarPendentes}
+                disabled={salvando || itens.every((item) => linha(item).resultado !== null)}
+              >
                 <CheckCheck className="size-4" /> Marcar os pendentes como encontrados
-              </button>
+              </Botao>
             )}
           </div>
 
@@ -265,8 +294,8 @@ export function ConferenciaPorSala() {
           {lista.carregando && <Carregando texto="Carregando os bens da sala..." />}
 
           {itens.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="tabela">
+            <RolagemTabela>
+              <Tabela>
                 <thead>
                   <tr>
                     <th>Tombamento</th>
@@ -283,7 +312,10 @@ export function ConferenciaPorSala() {
                     const encontrado = atual.resultado === 'encontrado'
                     const mudouDeSala = encontrado && item.sala_registrada_id !== null && atual.sala !== String(item.sala_registrada_id)
                     return (
-                      <tr key={item.id} className={atual.resultado === 'nao_localizado' ? 'bg-red-50/60' : atual.resultado === null ? 'bg-amber-50/40' : ''}>
+                      <tr
+                        key={item.id}
+                        className={atual.resultado === 'nao_localizado' ? 'bg-red-50/60' : atual.resultado === null ? 'bg-amber-50/40' : ''}
+                      >
                         <td className="font-mono text-xs whitespace-nowrap">
                           <Link to={`/bens/${item.bem.id}`} className="font-semibold text-cead-800 hover:underline">
                             {item.bem.numero_patrimonio ?? 'sem patrimônio'}
@@ -297,24 +329,26 @@ export function ConferenciaPorSala() {
                         <td className="whitespace-nowrap">
                           {podeLancar ? (
                             <div className="inline-flex overflow-hidden rounded-lg border border-slate-200 text-xs font-medium">
-                              <button
+                              <Botao
                                 type="button"
                                 aria-pressed={encontrado}
                                 onClick={() => mudar(item, { resultado: encontrado ? null : 'encontrado' })}
                                 className={`px-2.5 py-1.5 ${encontrado ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
                               >
                                 Encontrado
-                              </button>
-                              <button
+                              </Botao>
+                              <Botao
                                 type="button"
                                 aria-pressed={atual.resultado === 'nao_localizado'}
                                 onClick={() => mudar(item, { resultado: atual.resultado === 'nao_localizado' ? null : 'nao_localizado' })}
                                 className={`border-l border-slate-200 px-2.5 py-1.5 ${
-                                  atual.resultado === 'nao_localizado' ? 'bg-red-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
+                                  atual.resultado === 'nao_localizado'
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-white text-slate-600 hover:bg-slate-50'
                                 }`}
                               >
                                 Não localizado
-                              </button>
+                              </Botao>
                             </div>
                           ) : (
                             <Selo cor={encontrado ? 'verde' : atual.resultado === 'nao_localizado' ? 'vermelho' : 'amarelo'}>
@@ -324,7 +358,7 @@ export function ConferenciaPorSala() {
                         </td>
                         <td>
                           {podeLancar ? (
-                            <select
+                            <Selecao
                               className={`entrada py-1 text-xs ${mudouDeSala ? 'border-amber-400 bg-amber-50' : ''}`}
                               value={atual.sala}
                               disabled={!encontrado}
@@ -347,15 +381,17 @@ export function ConferenciaPorSala() {
                                   {opcao.nome}
                                 </option>
                               ))}
-                            </select>
+                            </Selecao>
                           ) : (
-                            <span className={mudouDeSala ? 'text-amber-700' : 'text-slate-600'}>{encontrado ? (item.sala_encontrada?.nome ?? '—') : '—'}</span>
+                            <span className={mudouDeSala ? 'text-amber-700' : 'text-slate-600'}>
+                              {encontrado ? (item.sala_encontrada?.nome ?? '—') : '—'}
+                            </span>
                           )}
                         </td>
                         <td>
                           {podeLancar ? (
-                            <select
-                              className="entrada py-1 text-xs"
+                            <Selecao
+                              className="py-1 text-xs"
                               value={atual.estado}
                               disabled={!encontrado}
                               onChange={(e) => mudar(item, { estado: e.target.value as EstadoConservacao })}
@@ -366,15 +402,15 @@ export function ConferenciaPorSala() {
                                   {ROTULOS_CONSERVACAO[estado]}
                                 </option>
                               ))}
-                            </select>
+                            </Selecao>
                           ) : (
                             <span className="text-slate-600">{item.estado_conservacao_rotulo ?? '—'}</span>
                           )}
                         </td>
                         <td>
                           {podeLancar ? (
-                            <select
-                              className="entrada py-1 text-xs"
+                            <Selecao
+                              className="py-1 text-xs"
                               value={atual.uso}
                               disabled={!encontrado}
                               onChange={(e) => mudar(item, { uso: e.target.value as Uso })}
@@ -382,7 +418,7 @@ export function ConferenciaPorSala() {
                             >
                               <option value="em_uso">Em uso</option>
                               <option value="sem_uso">Sem uso</option>
-                            </select>
+                            </Selecao>
                           ) : (
                             <span className="text-slate-600">{item.condicao_uso_rotulo ?? '—'}</span>
                           )}
@@ -391,37 +427,50 @@ export function ConferenciaPorSala() {
                     )
                   })}
                 </tbody>
-              </table>
-            </div>
+              </Tabela>
+            </RolagemTabela>
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3">
-            <button type="button" className="botao-secundario" onClick={() => irPara(etapa - 1)} disabled={etapa === 0 || temAlteracoes || salvando}>
+            <Botao
+              variante="secundario"
+              type="button"
+              onClick={() => irPara(etapa - 1)}
+              disabled={etapa === 0 || temAlteracoes || salvando}
+            >
               <ArrowLeft className="size-4" /> Sala anterior
-            </button>
+            </Botao>
             <div className="flex flex-wrap gap-2">
               {podeLancar && temAlteracoes && (
-                <button type="button" className="botao text-slate-500 hover:text-slate-700" onClick={() => setAlteradas(new Map())} disabled={salvando}>
+                <Botao
+                  variante="simples"
+                  type="button"
+                  className="text-slate-500 hover:text-slate-700"
+                  onClick={() => setAlteradas(new Map())}
+                  disabled={salvando}
+                >
                   Descartar alterações
-                </button>
+                </Botao>
               )}
               {podeLancar ? (
-                <button
+                <Botao
+                  variante="primario"
                   type="button"
-                  className="botao-primario"
+
                   onClick={() => (novosNaoLocalizados.length ? setConfirmando(true) : void salvar())}
                   disabled={salvando || lista.carregando}
                 >
-                  <Save className="size-4" /> {salvando ? 'Salvando...' : 'Salvar sala e ir para a próxima'} <ArrowRight className="size-4" />
-                </button>
+                  <Save className="size-4" /> {salvando ? 'Salvando...' : 'Salvar sala e ir para a próxima'}{' '}
+                  <ArrowRight className="size-4" />
+                </Botao>
               ) : (
-                <button type="button" className="botao-secundario" onClick={() => irPara(etapa + 1)}>
+                <Botao variante="secundario" type="button" onClick={() => irPara(etapa + 1)}>
                   Próxima <ArrowRight className="size-4" />
-                </button>
+                </Botao>
               )}
             </div>
           </div>
-        </section>
+        </Cartao>
       ) : (
         <Conclusao
           conferencia={conferencia}
@@ -436,23 +485,16 @@ export function ConferenciaPorSala() {
       )}
 
       {confirmando && (
-        <Dialogo
+        <ConfirmarEnvio
           titulo={
             <>
               <CircleSlash className="size-5 text-red-600" /> Bens não localizados
             </>
           }
           aoFechar={() => setConfirmando(false)}
-          rodape={
-            <>
-              <button type="button" className="botao-secundario" onClick={() => setConfirmando(false)}>
-                Voltar
-              </button>
-              <button type="button" className="botao bg-red-700 text-white hover:bg-red-600" onClick={() => void salvar()}>
-                Confirmar e salvar a sala
-              </button>
-            </>
-          }
+          aoConfirmar={() => void salvar()}
+          confirmar="Confirmar e salvar a sala"
+          variante="perigo"
         >
           <p>
             Você marcou {plural(novosNaoLocalizados.length, 'bem como não localizado', 'bens como não localizados')} em{' '}
@@ -466,10 +508,10 @@ export function ConferenciaPorSala() {
             ))}
           </ul>
           <p>
-            Ao concluir a conferência, cada um vira uma <strong className="text-red-700">pendência da gestora</strong>, que só fecha quando o bem aparecer
-            ou com o número do processo administrativo.
+            Ao concluir a conferência, cada um vira uma <strong className="text-red-700">pendência da gestora</strong>, que só fecha quando
+            o bem aparecer ou com o número do processo administrativo.
           </p>
-        </Dialogo>
+        </ConfirmarEnvio>
       )}
 
       {cancelando && (
@@ -521,15 +563,15 @@ function Conclusao({
   }
 
   return (
-    <section className="cartao space-y-4 p-6">
+    <Cartao as="section" className="space-y-4 p-6">
       <h2 className="flex items-center gap-2 text-lg font-bold text-cead-900">
         <CheckCircle2 className="size-5 text-emerald-600" /> Conclusão
       </h2>
 
       {conferencia.situacao === 'concluida' && (
         <p className="text-sm text-slate-600">
-          Conferência concluída em {formatarData(conferencia.concluida_em)}. Os resultados já foram aplicados aos bens, e as salas acima mostram o que foi
-          registrado.
+          Conferência concluída em {formatarData(conferencia.concluida_em)}. Os resultados já foram aplicados aos bens, e as salas acima
+          mostram o que foi registrado.
         </p>
       )}
       {conferencia.situacao === 'cancelada' && <p className="text-sm text-slate-600">Conferência cancelada. Nada mudou nos bens.</p>}
@@ -541,14 +583,14 @@ function Conclusao({
               Ainda há salas com bens sem resultado. Volte a cada uma antes de concluir:
               <span className="mt-2 flex flex-wrap gap-2">
                 {comPendentes.map(({ sala, posicao }) => (
-                  <button
+                  <Botao
                     key={sala.id ?? 'sem-sala'}
                     type="button"
                     className="rounded-md border border-amber-300 bg-white px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
                     onClick={() => aoIrParaSala(posicao)}
                   >
                     {sala.nome} ({sala.pendentes})
-                  </button>
+                  </Botao>
                 ))}
               </span>
             </Aviso>
@@ -565,11 +607,16 @@ function Conclusao({
             <div className="flex flex-wrap items-end gap-3">
               <label>
                 <span className="rotulo">Dia em que a conferência foi feita</span>
-                <input type="date" className="entrada" max={hojeIso()} value={data} onChange={(e) => setData(e.target.value)} />
+                <Entrada type="date" max={hojeIso()} value={data} onChange={(e) => setData(e.target.value)} />
               </label>
-              <button type="button" className="botao-primario" onClick={() => void concluir()} disabled={enviando || !data || comPendentes.length > 0}>
+              <Botao
+                variante="primario"
+                type="button"
+                onClick={() => void concluir()}
+                disabled={enviando || !data || comPendentes.length > 0}
+              >
                 <CheckCircle2 className="size-4" /> {enviando ? 'Concluindo...' : 'Concluir conferência'}
-              </button>
+              </Botao>
             </div>
           )}
           {erros.length > 0 && (
@@ -583,11 +630,19 @@ function Conclusao({
           )}
         </>
       )}
-    </section>
+    </Cartao>
   )
 }
 
-function CancelarConferencia({ conferencia, aoFechar, aoCancelar }: { conferencia: Conferencia; aoFechar: () => void; aoCancelar: () => void }) {
+function CancelarConferencia({
+  conferencia,
+  aoFechar,
+  aoCancelar,
+}: {
+  conferencia: Conferencia
+  aoFechar: () => void
+  aoCancelar: () => void
+}) {
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
@@ -614,18 +669,18 @@ function CancelarConferencia({ conferencia, aoFechar, aoCancelar }: { conferenci
       ocupado={enviando}
       rodape={
         <>
-          <button type="button" className="botao-secundario" onClick={aoFechar} disabled={enviando}>
+          <Botao variante="secundario" type="button" onClick={aoFechar} disabled={enviando}>
             Voltar
-          </button>
-          <button type="button" className="botao bg-red-700 text-white hover:bg-red-600" onClick={() => void cancelar()} disabled={enviando}>
+          </Botao>
+          <Botao variante="perigo" type="button" onClick={() => void cancelar()} disabled={enviando}>
             {enviando ? 'Cancelando...' : 'Cancelar conferência'}
-          </button>
+          </Botao>
         </>
       }
     >
       <p>
-        Cancelar <strong className="text-slate-800">{conferencia.nome}</strong>? Nada muda nos bens, e o que foi registrado até agora fica só no
-        histórico da conferência. Depois disso, dá para iniciar uma conferência nova.
+        Cancelar <strong className="text-slate-800">{conferencia.nome}</strong>? Nada muda nos bens, e o que foi registrado até agora fica
+        só no histórico da conferência. Depois disso, dá para iniciar uma conferência nova.
       </p>
       {erro && <Aviso>{erro}</Aviso>}
     </Dialogo>

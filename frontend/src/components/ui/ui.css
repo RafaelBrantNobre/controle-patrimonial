@@ -1,0 +1,196 @@
+/* Base dos botões. É @utility para os outros botões poderem usar com @apply. */
+@utility botao {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@layer components {
+  .cartao {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+
+  .botao-primario {
+    @apply botao bg-cead-800 text-white hover:bg-cead-700;
+  }
+
+  .botao-secundario {
+    @apply botao border border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
+  }
+
+  .botao-verde {
+    @apply botao bg-emerald-700 text-white hover:bg-emerald-600;
+  }
+
+  .rotulo {
+    @apply mb-1 block text-xs font-semibold tracking-wide text-slate-600 uppercase;
+  }
+
+  .entrada {
+    @apply w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cead-600 focus:bg-white focus:ring-2 focus:ring-cead-100 disabled:opacity-60;
+  }
+
+  .tabela {
+    @apply w-full text-left text-sm;
+  }
+
+  .tabela th {
+    @apply border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase;
+  }
+
+  .tabela td {
+    @apply border-b border-slate-100 px-4 py-3 align-middle;
+  }
+}
+
+@layer components {
+  .botao-perigo {
+    @apply botao bg-red-700 text-white hover:bg-red-600;
+  }
+  .controle-selecao {
+    @apply size-4 shrink-0 accent-cead-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cead-600 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+}
+
+@layer components {
+  .dialogo {
+    @apply fixed inset-0 m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto border-0 bg-transparent p-0 text-inherit;
+  }
+  .dialogo::backdrop {
+    @apply bg-slate-900/50;
+  }
+}
+
+/* Paleta noturna centralizada. Os layouts continuam usando utilitários Tailwind. */
+@layer utilities {
+  html[data-tema='escuro'] {
+    --superficie: #172336;
+    --superficie-suave: #101b2c;
+    --borda-ui: #334155;
+    background: #101b2c;
+  }
+  html[data-tema='escuro'] body {
+    background: #101b2c;
+    color: #e2e8f0;
+  }
+  html[data-tema='escuro'] .bg-white,
+  html[data-tema='escuro'] .cartao {
+    background-color: var(--superficie);
+  }
+  html[data-tema='escuro'] .bg-slate-50,
+  html[data-tema='escuro'] .bg-slate-100,
+  html[data-tema='escuro'] .entrada,
+  html[data-tema='escuro'] .tabela th {
+    background-color: var(--superficie-suave);
+  }
+  html[data-tema='escuro'] .text-slate-800,
+  html[data-tema='escuro'] .text-slate-900,
+  html[data-tema='escuro'] .text-cead-900,
+  html[data-tema='escuro'] .entrada {
+    color: #e2e8f0;
+  }
+  html[data-tema='escuro'] .text-slate-700,
+  html[data-tema='escuro'] .text-slate-600,
+  html[data-tema='escuro'] .rotulo {
+    color: #cbd5e1;
+  }
+  html[data-tema='escuro'] .text-slate-500,
+  html[data-tema='escuro'] .text-slate-400,
+  html[data-tema='escuro'] .tabela th {
+    color: #94a3b8;
+  }
+  html[data-tema='escuro'] .text-cead-600,
+  html[data-tema='escuro'] .text-cead-700 {
+    color: #93c5fd;
+  }
+  html[data-tema='escuro'] .border-slate-100,
+  html[data-tema='escuro'] .border-slate-200,
+  html[data-tema='escuro'] .border-slate-300,
+  html[data-tema='escuro'] .cartao,
+  html[data-tema='escuro'] .entrada,
+  html[data-tema='escuro'] .tabela th,
+  html[data-tema='escuro'] .tabela td {
+    border-color: var(--borda-ui);
+  }
+  html[data-tema='escuro'] .botao-secundario {
+    background-color: var(--superficie);
+    color: #cbd5e1;
+    border-color: var(--borda-ui);
+  }
+  html[data-tema='escuro'] .hover\:bg-slate-50:hover,
+  html[data-tema='escuro'] .hover\:bg-slate-100:hover {
+    background-color: #23324a;
+  }
+  html[data-tema='escuro'] .entrada:focus {
+    background-color: var(--superficie);
+  }
+  html[data-tema='escuro'] .bg-emerald-50 {
+    background-color: #10382e;
+  }
+  html[data-tema='escuro'] .text-emerald-600 {
+    color: #6ee7b7;
+  }
+  html[data-tema='escuro'] .text-emerald-700 {
+    color: #6ee7b7;
+  }
+  html[data-tema='escuro'] .text-emerald-800 {
+    color: #6ee7b7;
+  }
+  html[data-tema='escuro'] .text-emerald-900 {
+    color: #6ee7b7;
+  }
+  html[data-tema='escuro'] .bg-red-50 {
+    background-color: #421c27;
+  }
+  html[data-tema='escuro'] .text-red-600 {
+    color: #fca5a5;
+  }
+  html[data-tema='escuro'] .text-red-700 {
+    color: #fca5a5;
+  }
+  html[data-tema='escuro'] .text-red-800 {
+    color: #fca5a5;
+  }
+  html[data-tema='escuro'] .text-red-900 {
+    color: #fca5a5;
+  }
+  html[data-tema='escuro'] .bg-amber-50 {
+    background-color: #3d301b;
+  }
+  html[data-tema='escuro'] .text-amber-600 {
+    color: #fcd34d;
+  }
+  html[data-tema='escuro'] .text-amber-700 {
+    color: #fcd34d;
+  }
+  html[data-tema='escuro'] .text-amber-800 {
+    color: #fcd34d;
+  }
+  html[data-tema='escuro'] .text-amber-900 {
+    color: #fcd34d;
+  }
+  html[data-tema='escuro'] .bg-cead-50 {
+    background-color: #152f50;
+  }
+}
+@media print {
+  html[data-tema] {
+    color-scheme: light;
+  }
+  html[data-tema] body,
+  html[data-tema] .cartao,
+  html[data-tema] .tabela th {
+    background: white;
+    color: #1e293b;
+  }
+}
+
+@media print {
+  html[data-tema='escuro'] body * {
+    color: #1e293b !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+@layer utilities {
+  html[data-tema='escuro'] .text-cead-800 { color: #bfdbfe; }
+}

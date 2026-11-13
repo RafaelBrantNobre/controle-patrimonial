@@ -1,6 +1,5 @@
+import { Botao, Selecao, Entrada, Dialogo, Aviso, Campo } from '../../components/ui'
 import { useState } from 'react'
-import { Dialogo } from '../../componentes/Dialogo'
-import { Aviso, Campo } from '../../componentes/ui'
 import { apiPost, ErroDaApi } from '../../services/api'
 import { hojeIso } from '../../services/formatos'
 import type { Bem, Pagina, Sala } from '../../services/tipos'
@@ -52,12 +51,17 @@ export function ResolverPendencia({
       ocupado={enviando}
       rodape={
         <>
-          <button type="button" className="botao-secundario" onClick={aoFechar} disabled={enviando}>
+          <Botao variante="secundario" type="button" onClick={aoFechar} disabled={enviando}>
             Voltar
-          </button>
-          <button type="button" className="botao-primario" onClick={() => void resolver()} disabled={enviando || (jeito === 'processo_administrativo' ? !processo.trim() : !salaId)}>
+          </Botao>
+          <Botao
+            variante="primario"
+            type="button"
+            onClick={() => void resolver()}
+            disabled={enviando || (jeito === 'processo_administrativo' ? !processo.trim() : !salaId)}
+          >
             {enviando ? 'Salvando...' : 'Fechar pendência'}
-          </button>
+          </Botao>
         </>
       }
     >
@@ -65,29 +69,33 @@ export function ResolverPendencia({
         <>
           <p>Informe onde e quando o bem apareceu. Se for outra sala, a mudança entra no histórico.</p>
           <Campo rotulo="Sala onde estava" erro={erro?.doCampo('sala_id')}>
-            <select className="entrada" value={salaId} onChange={(e) => setSalaId(e.target.value)}>
+            <Selecao value={salaId} onChange={(e) => setSalaId(e.target.value)}>
               {bem.sala_id === null && <option value="">Selecione a sala...</option>}
-              {bem.sala && !salas.dados?.data.some((sala) => sala.id === bem.sala_id) && <option value={bem.sala.id}>{bem.sala.nome}</option>}
+              {bem.sala && !salas.dados?.data.some((sala) => sala.id === bem.sala_id) && (
+                <option value={bem.sala.id}>{bem.sala.nome}</option>
+              )}
               {salas.dados?.data.map((sala) => (
                 <option key={sala.id} value={sala.id}>
                   {sala.nome}
                 </option>
               ))}
-            </select>
+            </Selecao>
           </Campo>
           <Campo rotulo="Dia em que foi localizado" erro={erro?.doCampo('localizado_em')}>
-            <input type="date" className="entrada" max={hojeIso()} value={data} onChange={(e) => setData(e.target.value)} />
+            <Entrada type="date" max={hojeIso()} value={data} onChange={(e) => setData(e.target.value)} />
           </Campo>
         </>
       ) : (
         <>
           <p>O bem continua como não localizado até a baixa. O número do processo fica registrado no histórico de conferências do bem.</p>
           <Campo rotulo="Número do processo" obrigatorio erro={erro?.doCampo('processo_numero')}>
-            <input className="entrada" maxLength={60} value={processo} onChange={(e) => setProcesso(e.target.value)} />
+            <Entrada maxLength={60} value={processo} onChange={(e) => setProcesso(e.target.value)} />
           </Campo>
         </>
       )}
-      {erro && !erro.doCampo('sala_id') && !erro.doCampo('localizado_em') && !erro.doCampo('processo_numero') && <Aviso>{erro.message}</Aviso>}
+      {erro && !erro.doCampo('sala_id') && !erro.doCampo('localizado_em') && !erro.doCampo('processo_numero') && (
+        <Aviso>{erro.message}</Aviso>
+      )}
     </Dialogo>
   )
 }

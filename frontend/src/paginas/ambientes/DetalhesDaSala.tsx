@@ -1,8 +1,9 @@
+import { Titulo, Cartao, LinkBotao, RolagemTabela, Tabela, Aviso, Carregando, Desativado } from '../../components/ui'
 import { ClipboardCheck, DoorOpen, History, Info, Package, Pencil } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
 import { BotaoExcluir } from '../../componentes/Exclusao'
-import { Aviso, Carregando, Desativado, SeloAtivo, SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/ui'
+import { SeloAtivo, SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/SelosDeBem'
 import { apiDelete, apiGet } from '../../services/api'
 import { formatarData } from '../../services/formatos'
 import type { Bem, Sala } from '../../services/tipos'
@@ -45,20 +46,20 @@ export function DetalhesDaSala() {
         / {dados.nome}
       </p>
 
-      <section className="cartao mt-3 mb-6 p-6">
+      <Cartao as="section" className="mt-3 mb-6 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
               <DoorOpen className="size-4" /> Detalhes do ambiente <SeloAtivo ativo={dados.ativo} />
             </p>
-            <h1 className="mt-2 text-2xl font-bold text-cead-900">{dados.nome}</h1>
+            <Titulo className="mt-2">{dados.nome}</Titulo>
             <p className="mt-1 text-sm text-slate-500">Prédio Sede CEAD</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {usuario?.pode_alterar && (
-              <Link to={`/ambientes/${dados.id}/editar`} className="botao-secundario">
+              <LinkBotao variante="secundario" to={`/ambientes/${dados.id}/editar`}>
                 <Pencil className="size-4" /> Editar sala
-              </Link>
+              </LinkBotao>
             )}
             {usuario?.pode_alterar && (
               <BotaoExcluir
@@ -81,21 +82,20 @@ export function DetalhesDaSala() {
                 aoExcluir={() => navegar('/ambientes', { replace: true })}
               />
             )}
-            <Link
-              to="/conferencias" className="botao-primario">
+            <LinkBotao variante="primario" to="/conferencias">
               <ClipboardCheck className="size-4" /> Conferências
-            </Link>
+            </LinkBotao>
           </div>
         </div>
         <p className="mt-4 flex flex-wrap gap-4 border-t border-slate-100 pt-4 text-xs text-slate-500">
           <span>● {dados.bens_count ?? 0} bens alocados</span>
           <span>● {emUso} em uso</span>
         </p>
-      </section>
+      </Cartao>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <section className="cartao p-6">
+          <Cartao as="section" className="p-6">
             <h2 className="mb-4 flex items-center gap-2 font-semibold text-cead-900">
               <Info className="size-4" /> Informações da sala
             </h2>
@@ -117,9 +117,9 @@ export function DetalhesDaSala() {
               <p className="rotulo">Observações técnicas</p>
               <p className="text-sm text-slate-700">{dados.descricao || 'Nenhuma observação cadastrada.'}</p>
             </div>
-          </section>
+          </Cartao>
 
-          <section className="cartao overflow-hidden">
+          <Cartao as="section" className="overflow-hidden">
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
               <h2 className="flex items-center gap-2 font-semibold text-cead-900">
                 <Package className="size-4" /> Bens alocados
@@ -133,8 +133,8 @@ export function DetalhesDaSala() {
                 <Aviso>{bens.erro}</Aviso>
               </div>
             )}
-            <div className="overflow-x-auto">
-              <table className="tabela">
+            <RolagemTabela>
+              <Tabela>
                 <thead>
                   <tr>
                     <th>Tipo do bem</th>
@@ -168,16 +168,16 @@ export function DetalhesDaSala() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabela>
               {bens.carregando && <Carregando />}
               {bens.dados?.data.length === 0 && <Carregando texto="Nenhum bem nesta sala." />}
-            </div>
+            </RolagemTabela>
             {bens.dados && <p className="px-6 py-3 text-xs text-slate-500">Exibindo {bens.dados.total} bens alocados</p>}
-          </section>
+          </Cartao>
         </div>
 
         <aside className="space-y-6">
-          <section className="cartao space-y-3 p-5">
+          <Cartao as="section" className="space-y-3 p-5">
             <h2 className="flex items-center gap-2 font-semibold text-cead-900">
               <ClipboardCheck className="size-4" /> Conferência patrimonial
             </h2>
@@ -211,14 +211,14 @@ export function DetalhesDaSala() {
                 )}
               </dl>
             )}
-          </section>
-          <section className="cartao space-y-3 p-5">
+          </Cartao>
+          <Cartao as="section" className="space-y-3 p-5">
             <h2 className="flex items-center gap-2 font-semibold text-cead-900">
               <History className="size-4" /> Histórico recente
             </h2>
             {/* Desativado: O histórico da sala ainda não tem rota. As mudanças de sala de cada bem aparecem na ficha do bem. */}
             <Desativado />
-          </section>
+          </Cartao>
         </aside>
       </div>
     </>

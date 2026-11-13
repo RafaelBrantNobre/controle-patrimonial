@@ -1,7 +1,7 @@
+import { Titulo, Tooltip, Cartao, Entrada, Radio, Botao, Checkbox, LinkBotao, Campo, Desativado } from '../../components/ui'
 import { Briefcase, Copy, KeyRound, Mail, ShieldCheck, User, UserPlus, Wrench } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { Campo, Desativado } from '../../componentes/ui'
 
 const LETRAS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
 
@@ -33,11 +33,13 @@ export function FormularioDeUsuario() {
         / Cadastrar novo usuário
       </p>
 
-      <section className="cartao mt-3 space-y-6 p-6">
+      <Cartao as="section" className="mt-3 space-y-6 p-6">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
           <div>
-            <h1 className="text-2xl font-bold text-cead-900">Cadastrar Novo Usuário</h1>
-            <p className="mt-1 text-sm text-slate-500">Preencha os dados da pessoa para liberar o acesso ao sistema de patrimônio do CEAD.</p>
+            <Titulo>Cadastrar Novo Usuário</Titulo>
+            <p className="mt-1 text-sm text-slate-500">
+              Preencha os dados da pessoa para liberar o acesso ao sistema de patrimônio do CEAD.
+            </p>
           </div>
           <span className="rounded-full bg-cead-50 px-3 py-1 text-xs font-semibold text-cead-700">CEAD / UNIMONTES</span>
         </div>
@@ -53,20 +55,20 @@ export function FormularioDeUsuario() {
           <Campo rotulo="Nome completo" obrigatorio>
             <span className="relative block">
               <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-              <input className="entrada pl-9" placeholder="ex: Renata Alencar" required />
+              <Entrada className="pl-9" placeholder="ex: Renata Alencar" required />
             </span>
           </Campo>
           <div className="grid gap-4 sm:grid-cols-2">
             <Campo rotulo="E-mail de acesso" obrigatorio>
               <span className="relative block">
                 <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-                <input type="email" className="entrada pl-9" placeholder="usuario@cead.unimontes.br" required />
+                <Entrada type="email" className="pl-9" placeholder="usuario@cead.unimontes.br" required />
               </span>
             </Campo>
             <Campo rotulo="Cargo ou função no CEAD" ajuda="Ainda não guardado pela API.">
               <span className="relative block">
                 <Briefcase className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-                <input className="entrada pl-9" placeholder="ex: Técnico de Audiovisual, Apoio Administrativo" />
+                <Entrada className="pl-9" placeholder="ex: Técnico de Audiovisual, Apoio Administrativo" />
               </span>
             </Campo>
           </div>
@@ -91,7 +93,7 @@ export function FormularioDeUsuario() {
                   <span className="block font-semibold text-slate-800">{opcao.titulo}</span>
                   <span className="block text-xs text-slate-500">{opcao.texto}</span>
                 </span>
-                <input type="radio" name="perfil" checked={perfil === opcao.valor} onChange={() => setPerfil(opcao.valor)} />
+                <Radio name="perfil" checked={perfil === opcao.valor} onChange={() => setPerfil(opcao.valor)} />
               </label>
             ))}
           </div>
@@ -104,25 +106,27 @@ export function FormularioDeUsuario() {
             <div className="rounded-lg border border-slate-200 p-4">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-700">Senha provisória</span>
-                <button type="button" className="text-xs font-semibold text-cead-600 hover:underline" onClick={() => setSenha(gerarSenha())}>
+                <Botao type="button" className="text-xs font-semibold text-cead-600 hover:underline" onClick={() => setSenha(gerarSenha())}>
                   Gerar automaticamente
-                </button>
+                </Botao>
               </div>
               <span className="relative block">
                 <KeyRound className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-                <input className="entrada px-9 font-mono" value={senha} onChange={(e) => setSenha(e.target.value)} minLength={10} />
-                <button
-                  type="button"
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  onClick={() => void navigator.clipboard?.writeText(senha)}
-                  title="Copiar senha"
-                  aria-label="Copiar senha"
-                >
-                  <Copy className="size-4" />
-                </button>
+                <Entrada className="px-9 font-mono" value={senha} onChange={(e) => setSenha(e.target.value)} minLength={10} />
+                <Tooltip texto={'Copiar senha'}>
+                  <Botao
+                    type="button"
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    onClick={() => void navigator.clipboard?.writeText(senha)}
+
+                    aria-label="Copiar senha"
+                  >
+                    <Copy className="size-4" />
+                  </Botao>
+                </Tooltip>
               </span>
               <label className="mt-3 flex items-center gap-2 text-sm text-slate-600">
-                <input type="checkbox" checked={pedirTroca} onChange={(e) => setPedirTroca(e.target.checked)} />
+                <Checkbox checked={pedirTroca} onChange={(e) => setPedirTroca(e.target.checked)} />
                 Solicitar alteração de senha no primeiro acesso
               </label>
             </div>
@@ -130,14 +134,16 @@ export function FormularioDeUsuario() {
         </div>
 
         <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-          <Link to="/usuarios" className="botao-secundario">
+          <LinkBotao variante="secundario" to="/usuarios">
             Cancelar
-          </Link>
-          <button type="submit" className="botao-primario" disabled title="Aguardando a gestão de usuários na API (tarefa 3.3)">
-            <UserPlus className="size-4" /> Cadastrar Usuário
-          </button>
+          </LinkBotao>
+          <Tooltip texto={'Aguardando a gestão de usuários na API (tarefa 3.3)'}>
+            <Botao variante="primario" type="submit" disabled aria-label="Aguardando a gestão de usuários na API (tarefa 3.3)">
+              <UserPlus className="size-4" /> Cadastrar Usuário
+            </Botao>
+          </Tooltip>
         </div>
-      </section>
+      </Cartao>
     </form>
   )
 }

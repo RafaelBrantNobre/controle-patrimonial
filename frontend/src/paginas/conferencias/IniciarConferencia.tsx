@@ -1,8 +1,7 @@
+import { Botao, Entrada, Radio, Dialogo, Aviso, Campo } from '../../components/ui'
 import { Database, FileUp, Play } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { Dialogo } from '../../componentes/Dialogo'
-import { Aviso, Campo } from '../../componentes/ui'
 import { apiPost, ErroDaApi } from '../../services/api'
 import { formatarData, hojeIso } from '../../services/formatos'
 import type { Conferencia } from '../../services/tipos'
@@ -41,24 +40,24 @@ export function IniciarConferencia({ aoFechar }: { aoFechar: () => void }) {
       ocupado={iniciando}
       rodape={
         <>
-          <button type="button" className="botao-secundario" onClick={aoFechar} disabled={iniciando}>
+          <Botao variante="secundario" type="button" onClick={aoFechar} disabled={iniciando}>
             Voltar
-          </button>
-          <button type="button" className="botao-primario" onClick={() => void iniciar()} disabled={iniciando || !nome.trim()}>
+          </Botao>
+          <Botao variante="primario" type="button" onClick={() => void iniciar()} disabled={iniciando || !nome.trim()}>
             {iniciando ? 'Iniciando...' : 'Iniciar e ir para a primeira sala'}
-          </button>
+          </Botao>
         </>
       }
     >
       <Campo rotulo="Nome da conferência" obrigatorio erro={erro?.doCampo('nome')}>
-        <input className="entrada" maxLength={120} value={nome} onChange={(e) => setNome(e.target.value)} />
+        <Entrada maxLength={120} value={nome} onChange={(e) => setNome(e.target.value)} />
       </Campo>
 
       <div>
         <span className="rotulo">Deseja importar um arquivo?</span>
         <div className="space-y-2">
           <label className="flex cursor-not-allowed gap-3 rounded-lg border border-slate-200 p-3 opacity-60">
-            <input type="radio" name="fonte" disabled />
+            <Radio name="fonte" disabled />
             <span>
               <span className="flex items-center gap-1.5 font-semibold text-slate-800">
                 <FileUp className="size-4" /> Importar um arquivo (planilha ou SIAD)
@@ -67,7 +66,7 @@ export function IniciarConferencia({ aoFechar }: { aoFechar: () => void }) {
             </span>
           </label>
           <label className="flex cursor-pointer gap-3 rounded-lg border border-cead-600 bg-cead-50 p-3">
-            <input type="radio" name="fonte" checked readOnly />
+            <Radio name="fonte" checked readOnly />
             <span>
               <span className="flex items-center gap-1.5 font-semibold text-slate-800">
                 <Database className="size-4" /> Pular e usar os bens cadastrados

@@ -1,7 +1,7 @@
+import { Cartao, RolagemTabela, Tabela, Aviso, Cabecalho, Carregando, Desativado, Paginacao } from '../components/ui'
 import { FileSpreadsheet } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { Aviso, Cabecalho, Carregando, Desativado, Paginacao } from '../componentes/ui'
 import { consulta } from '../services/api'
 import { formatarData, plural } from '../services/formatos'
 import type { Conferencia, Pagina } from '../services/tipos'
@@ -19,15 +19,15 @@ export function Relatorios() {
     <>
       <Cabecalho titulo="Relatórios" subtitulo="O resultado de cada conferência concluída." />
 
-      <section className="cartao mb-6 space-y-3 p-5">
+      <Cartao as="section" className="mb-6 space-y-3 p-5">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
           <FileSpreadsheet className="size-4" /> Exportar conferência em planilha (XLSX)
         </h2>
         {/* Desativado: A exportação de cada conferência em planilha (XLSX), no formato da planilha de 2024, ainda não existe na API. Por enquanto o resultado é consultado na própria conferência. */}
         <Desativado />
-      </section>
+      </Cartao>
 
-      <section className="cartao overflow-hidden">
+      <Cartao as="section" className="overflow-hidden">
         <div className="border-b border-slate-200 px-4 py-3">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
             <FileSpreadsheet className="size-4" /> Conferências concluídas
@@ -38,8 +38,8 @@ export function Relatorios() {
             <Aviso>{conferencias.erro}</Aviso>
           </div>
         )}
-        <div className="overflow-x-auto">
-          <table className="tabela">
+        <RolagemTabela>
+          <Tabela>
             <thead>
               <tr>
                 <th>Conferência</th>
@@ -68,10 +68,10 @@ export function Relatorios() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabela>
           {conferencias.carregando && !conferencias.dados && <Carregando />}
           {conferencias.dados?.data.length === 0 && <Carregando texto="Nenhuma conferência concluída ainda." />}
-        </div>
+        </RolagemTabela>
         {conferencias.dados && conferencias.dados.meta.total > 0 && (
           <Paginacao
             pagina={conferencias.dados.meta.current_page}
@@ -82,7 +82,7 @@ export function Relatorios() {
             aoMudar={setPagina}
           />
         )}
-      </section>
+      </Cartao>
     </>
   )
 }

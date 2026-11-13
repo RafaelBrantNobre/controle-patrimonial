@@ -1,8 +1,9 @@
+import { Tooltip, LinkBotao, Cartao, RolagemTabela, Tabela, Aviso, Cabecalho, Carregando, Paginacao } from '../../components/ui'
 import { ClipboardList, Eye, FilePlus2, Pencil, Plus } from 'lucide-react'
 import { Link } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
 import { FiltrosDeBens } from '../../componentes/FiltrosDeBens'
-import { Aviso, Cabecalho, Carregando, Paginacao, SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/ui'
+import { SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/SelosDeBem'
 import { useFiltrosDeBens } from '../../componentes/useFiltrosDeBens'
 import { consulta } from '../../services/api'
 import type { Bem, Pagina } from '../../services/tipos'
@@ -25,16 +26,16 @@ export function ListaDeBens() {
         subtitulo="Consulte, localize e filtre todos os equipamentos cadastrados no prédio."
         acoes={
           usuario?.pode_alterar && (
-            <Link to="/bens/novo" className="botao-primario">
+            <LinkBotao variante="primario" to="/bens/novo">
               <Plus className="size-4" /> Cadastrar Novo Bem
-            </Link>
+            </LinkBotao>
           )
         }
       />
 
       <FiltrosDeBens filtro={filtro} mudarFiltro={mudarFiltro} />
 
-      <section className="cartao overflow-hidden">
+      <Cartao as="section" className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
             <ClipboardList className="size-4" /> Inventário de equipamentos
@@ -48,8 +49,8 @@ export function ListaDeBens() {
           </div>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="tabela">
+        <RolagemTabela>
+          <Tabela>
             <thead>
               <tr>
                 <th>Tombamento</th>
@@ -82,35 +83,41 @@ export function ListaDeBens() {
                     <SeloConferencia bem={bem} />
                   </td>
                   <td className="text-right whitespace-nowrap">
-                    <Link to={`/bens/${bem.id}`} className="inline-flex p-1.5 text-slate-500 hover:text-cead-700" title="Ver ficha">
-                      <Eye className="size-4" />
-                    </Link>
-                    {usuario?.pode_alterar && (
-                      <Link
-                        to={`/bens/${bem.id}?ocorrencia=1`}
-                        className="inline-flex p-1.5 text-slate-500 hover:text-cead-700"
-                        title="Registrar ocorrência"
-                      >
-                        <FilePlus2 className="size-4" />
+                    <Tooltip texto={'Ver ficha'}>
+                      <Link to={`/bens/${bem.id}`} className="inline-flex p-1.5 text-slate-500 hover:text-cead-700" aria-label="Ver ficha">
+                        <Eye className="size-4" />
                       </Link>
+                    </Tooltip>
+                    {usuario?.pode_alterar && (
+                      <Tooltip texto={'Registrar ocorrência'}>
+                        <Link
+                          to={`/bens/${bem.id}?ocorrencia=1`}
+                          className="inline-flex p-1.5 text-slate-500 hover:text-cead-700"
+                          aria-label="Registrar ocorrência"
+                        >
+                          <FilePlus2 className="size-4" />
+                        </Link>
+                      </Tooltip>
                     )}
                     {usuario?.pode_alterar && !bem.baixado && (
-                      <Link
-                        to={`/bens/${bem.id}/editar`}
-                        className="inline-flex p-1.5 text-slate-500 hover:text-cead-700"
-                        title="Editar"
-                      >
-                        <Pencil className="size-4" />
-                      </Link>
+                      <Tooltip texto={'Editar'}>
+                        <Link
+                          to={`/bens/${bem.id}/editar`}
+                          className="inline-flex p-1.5 text-slate-500 hover:text-cead-700"
+                          aria-label="Editar"
+                        >
+                          <Pencil className="size-4" />
+                        </Link>
+                      </Tooltip>
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabela>
           {bens.carregando && !bens.dados && <Carregando />}
           {bens.dados?.data.length === 0 && <Carregando texto="Nenhum bem encontrado com estes filtros." />}
-        </div>
+        </RolagemTabela>
 
         {bens.dados && (
           <Paginacao
@@ -122,7 +129,7 @@ export function ListaDeBens() {
             aoMudar={(nova) => mudarFiltro('pagina', String(nova))}
           />
         )}
-      </section>
+      </Cartao>
     </>
   )
 }
