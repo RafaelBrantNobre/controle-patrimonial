@@ -12,6 +12,7 @@ O frontend usa **React + TypeScript + Tailwind CSS**. Não é necessário trocar
 | Banner de página com grafismo | `BannerPagina.tsx` |
 | Cards de atalhos com cores de destaque | `CartaoDeAcao.tsx` |
 | Formas decorativas do fundo | `FundoMarca.tsx` |
+| Apresentação e estilos da tela de login | `LoginApresentacao.tsx`, `login.css` |
 | Título, subtítulo e ações de uma página | `Cabecalho.tsx`, `Titulo.tsx` |
 | Botões e links com aparência de botão | `Botao.tsx` |
 | Input, select, textarea, checkbox e radio | `Entrada.tsx` |
@@ -37,6 +38,8 @@ O rebranding usa superfícies claras, azul institucional e as seis cores da logo
 `BannerPagina` recebe título, subtítulo, contexto opcional, ícone e ações. `Cabecalho` usa esse banner para manter a identidade nas listagens. `CartaoDeAcao` recebe a prop `cor` (`azul`, `roxo`, `ciano`, `verde` ou `laranja`) e centraliza ícone, selo, descrição e link de ação. O Painel de Gerência combina esses componentes sem alterar as operações da API.
 
 O cabeçalho mostra navegação com ícones em telas grandes e um menu expansível abaixo de 1280 px. O menu do perfil contém a ação de sair; fecha por Escape ou clique fora. A logo usa SVG inline, com enquadramento definido em `.logo-marca`. O grupo de contornos `.texto-marca` mantém o azul original no tema claro e recebe branco no tema escuro; os símbolos coloridos permanecem iguais.
+
+A tela de login usa uma atmosfera azul com os acentos da marca, apresentação institucional e formulário adaptado aos dois temas. Para colocar a logo sobre uma superfície escura, use `<Logo sobreEscuro />`: o texto fica branco, com fundo transparente, independentemente do tema da página. O componente `LoginApresentacao` concentra o conteúdo visual; autenticação e eventos do formulário continuam em `paginas/Login.tsx`.
 
 ## Exemplo de formulário
 

@@ -52,10 +52,6 @@
     height: 100%;
     object-fit: cover;
   }
-  .logo-login {
-    border-radius: 12px;
-    background: #ffffff;
-  }
   .faixa-marca {
     height: 5px;
     background: linear-gradient(
@@ -260,9 +256,6 @@
   html[data-tema='escuro'] .logo-marca .texto-marca {
     fill: #ffffff;
   }
-  html[data-tema='escuro'] .logo-login {
-    background: transparent;
-  }
   html[data-tema='escuro'] .tom-roxo {
     --destaque-texto: #e08cec;
   }
@@ -318,5 +311,11 @@
 @layer utilities {
   html[data-tema='escuro'] .cartao-acao {
     border-bottom-color: var(--destaque);
+  }
+}
+
+@layer utilities {
+  .logo-inversa .texto-marca {
+    fill: #ffffff;
   }
 }

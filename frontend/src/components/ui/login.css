@@ -1,0 +1,267 @@
+/* Tela de acesso: atmosfera azul e acentos das seis cores da marca. */
+@layer components {
+  .login-pagina {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    min-height: 100dvh;
+    flex-direction: column;
+    overflow: clip;
+    background: #061b38;
+  }
+  .login-atmosfera {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 10% 15%, #087ab846, transparent 48%), radial-gradient(ellipse at 95% 90%, #8537b735, transparent 45%),
+      linear-gradient(135deg, #061b38, #0c3157 55%, #0b1b36);
+  }
+  .login-atmosfera::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(#8fc7f522 0.8px, transparent 0.8px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(to bottom, transparent, black 35%, transparent);
+  }
+  .login-atmosfera::after {
+    content: '';
+    position: absolute;
+    width: 1000px;
+    height: 1000px;
+    right: -450px;
+    top: -610px;
+    border: 1px solid #6bcdf524;
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 95px #4bb9e907,
+      0 0 0 190px #6ec7ef05;
+  }
+  .login-topo {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 24px 32px;
+    color: #d4e6fa;
+  }
+  .login-topo .controle-cabecalho {
+    color: #d4e6fa;
+    border: 1px solid #a8cff52b;
+    background: #ffffff06;
+  }
+  .login-topo .controle-cabecalho:hover {
+    background: #ffffff12;
+  }
+  .login-conteudo {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px 48px;
+  }
+  .login-cartao {
+    display: grid;
+    width: 100%;
+    max-width: 960px;
+    overflow: hidden;
+    border: 1px solid #a5c8f129;
+    border-radius: 24px;
+    background: var(--superficie-marca);
+    box-shadow:
+      0 30px 100px #00000040,
+      0 1px 0 #ffffff20 inset;
+  }
+  .login-apresentacao {
+    position: relative;
+    overflow: hidden;
+    padding: 36px;
+    color: #fff;
+    background: radial-gradient(ellipse at 0 100%, #00a9d528, transparent 60%), linear-gradient(150deg, #0b3963, #082852 65%, #092041);
+  }
+  .login-orbitas {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .login-orbitas span {
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    right: -240px;
+    bottom: -170px;
+    border: 55px solid #00a9d517;
+    border-radius: 50%;
+  }
+  .login-orbitas span:nth-child(2) {
+    width: 440px;
+    height: 440px;
+    right: -245px;
+    bottom: -290px;
+    border-color: #8b42b021;
+  }
+  .login-orbitas span:nth-child(3) {
+    width: 260px;
+    height: 260px;
+    right: -190px;
+    top: -120px;
+    border: 1px solid #90d7ff25;
+  }
+  .login-etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #9ed1ff26;
+    border-radius: 99px;
+    padding: 6px 10px;
+    background: #ffffff08;
+    color: #d5eaff;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .login-etiqueta > span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #00c397;
+    box-shadow: 0 0 12px #00c39760;
+  }
+  .login-recurso {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: #d3e3f7;
+  }
+  .login-recurso > span {
+    display: inline-flex;
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--destaque), transparent 60%);
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--destaque), transparent 85%);
+    color: color-mix(in srgb, var(--destaque), white 40%);
+  }
+  .login-paleta {
+    position: absolute;
+    inset: auto 0 0;
+    display: flex;
+    height: 4px;
+  }
+  .login-paleta i {
+    flex: 1;
+    background: #ed0033;
+  }
+  .login-paleta i:nth-child(2) {
+    background: #ff7100;
+  }
+  .login-paleta i:nth-child(3) {
+    background: #ffc800;
+  }
+  .login-paleta i:nth-child(4) {
+    background: #00a9d5;
+  }
+  .login-paleta i:nth-child(5) {
+    background: #00ab80;
+  }
+  .login-paleta i:nth-child(6) {
+    background: #9226a3;
+  }
+  .login-formulario {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 22px;
+    padding: 36px;
+    background: radial-gradient(ellipse at 100% 0, #e7f3ffb0, transparent 65%), #fbfdff;
+  }
+  .login-formulario .entrada {
+    min-height: 44px;
+    border-color: #d5e1ef;
+    background: #fff;
+    box-shadow: 0 2px 3px #153c6b03;
+  }
+  .login-formulario .entrada:focus {
+    border-color: #0865b5;
+  }
+  .login-formulario .botao-primario {
+    min-height: 44px;
+    box-shadow: 0 6px 15px #00549e26;
+  }
+  .login-acesso-restrito {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #6c819b;
+  }
+  .login-rodape {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    text-align: center;
+    color: #a9c1df;
+    font-size: 11px;
+  }
+}
+@layer utilities {
+  html[data-tema='escuro'] .login-formulario {
+    background: radial-gradient(ellipse at 100% 0, #11466b38, transparent 65%), #142439;
+  }
+  html[data-tema='escuro'] .login-formulario .entrada {
+    background: #0e1e33;
+    border-color: #344a64;
+  }
+  html[data-tema='escuro'] .login-acesso-restrito {
+    color: #a6bbd5;
+  }
+}
+@media (min-width: 768px) {
+  .login-cartao {
+    grid-template-columns: 1fr 1fr;
+  }
+  .login-apresentacao {
+    padding: 40px;
+  }
+  .login-formulario {
+    padding: 40px;
+  }
+}
+@media (max-width: 767px) {
+  .login-topo {
+    padding: 16px 20px;
+  }
+  .login-conteudo {
+    justify-content: flex-start;
+    padding: 16px 16px 28px;
+  }
+  .login-cartao {
+    max-width: 480px;
+    border-radius: 20px;
+  }
+  .login-apresentacao {
+    padding: 24px;
+  }
+  .login-apresentacao h2 {
+    font-size: 22px;
+  }
+  .login-apresentacao > div:nth-child(3) {
+    margin-top: 24px;
+  }
+  .login-formulario {
+    padding: 28px 24px;
+  }
+}
