@@ -601,7 +601,7 @@ Fluxo:
 | `GET /api/pendencias` | administrador e consulta | os bens com pendência aberta, cada um uma vez, com a data da primeira conferência em que não foi localizado |
 | `POST /api/bens/{id}/pendencia` | administrador | fecha a pendência: `{"resolucao": "localizado", "sala_id": 5, "localizado_em": "2026-11-06"}` ou `{"resolucao": "processo_administrativo", "processo_numero": "123/2026"}` |
 
-`GET /api/bens` ganhou o filtro `?conferencia=nunca`, `encontrado`, `nao_localizado` ou `em_aberto`. A resposta de um bem traz `data_ultima_conferencia`, `resultado_ultima_conferencia` e, na lista, `em_conferencia` (a conferência aberta em que o bem está). A ficha traz também `pendencia` e `historico_conferencias`.
+`GET /api/bens` ganhou o filtro `?conferencia=nunca`, `encontrado`, `nao_localizado` ou `em_aberto`. As quatro situações não se sobrepõem: o bem que está numa conferência aberta só aparece em `em_aberto`, como no selo da tela. A resposta de um bem traz `data_ultima_conferencia`, `resultado_ultima_conferencia` e, na lista, `em_conferencia` (a conferência aberta em que o bem está). A ficha traz também `pendencia` e `historico_conferencias`.
 
 ### 16.2 Regras
 
