@@ -1,4 +1,4 @@
-import { Titulo, Entrada, Botao, Checkbox } from '../components/ui'
+import { Titulo, Entrada, Botao, Checkbox, Logo, FundoMarca } from '../components/ui'
 import { Eye, EyeOff, Lock, LogIn, Mail, ShieldCheck } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router'
@@ -38,11 +38,12 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-800 via-cead-900 to-slate-900 p-4">
-      <div className="grid w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl md:grid-cols-2">
+    <div className="layout-marca relative flex min-h-screen items-center justify-center p-4">
+      <FundoMarca />
+      <div className="cartao relative grid w-full max-w-4xl overflow-hidden md:grid-cols-2">
         <section className="flex flex-col justify-center gap-5 bg-cead-900 p-10 text-white">
           <div>
-            <p className="text-5xl font-black tracking-tight">CEAD</p>
+            <Logo className="logo-login mb-4 w-full max-w-64" />
             <p className="text-xs tracking-widest text-white/70 uppercase">Centro de Educação a Distância</p>
           </div>
           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs">

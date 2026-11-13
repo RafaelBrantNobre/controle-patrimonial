@@ -7,6 +7,11 @@ O frontend usa **React + TypeScript + Tailwind CSS**. Não é necessário trocar
 | Elemento | Arquivo em `src/components/ui` |
 | --- | --- |
 | Cabeçalho, navegação e identificação do usuário | `Header.tsx` |
+| Logo do projeto | `Logo.tsx` e `src/assets/cead-patrimonio.svg` |
+| Menu do usuário e saída | `PerfilUsuario.tsx` |
+| Banner de página com grafismo | `BannerPagina.tsx` |
+| Cards de atalhos com cores de destaque | `CartaoDeAcao.tsx` |
+| Formas decorativas do fundo | `FundoMarca.tsx` |
 | Título, subtítulo e ações de uma página | `Cabecalho.tsx`, `Titulo.tsx` |
 | Botões e links com aparência de botão | `Botao.tsx` |
 | Input, select, textarea, checkbox e radio | `Entrada.tsx` |
@@ -19,10 +24,19 @@ O frontend usa **React + TypeScript + Tailwind CSS**. Não é necessário trocar
 | Alternância claro/escuro e preferência salva | `ThemeToggle.tsx` |
 | Selos, avisos, carregamento e paginação | `Selo.tsx`, `Aviso.tsx`, `Estados.tsx`, `Paginacao.tsx` |
 | Aparência compartilhada e paleta escura | `ui.css` |
+| Identidade visual, faixa colorida, navegação e destaques | `marca.css` |
 
 `src/index.css` mantém a importação do Tailwind, as cores CEAD, fonte, base da página e regras de impressão. Modifique as classes em `ui.css` para alterar o mesmo elemento em todas as telas. As classes Tailwind de disposição e espaçamento específicas de cada tela continuam na página.
 
 Importe os componentes por `components/ui` (o `index.ts` reúne as exportações). Não copie a estrutura HTML de um controle para outra tela.
+
+## Identidade visual
+
+O rebranding usa superfícies claras, azul institucional e as seis cores da logo na faixa do cabeçalho. `marca.css` concentra os tokens de fundo, superfície, borda e sombra, além das variantes de tema escuro. Os grafismos são formas CSS decorativas, sem imagens adicionais.
+
+`BannerPagina` recebe título, subtítulo, contexto opcional, ícone e ações. `Cabecalho` usa esse banner para manter a identidade nas listagens. `CartaoDeAcao` recebe a prop `cor` (`azul`, `roxo`, `ciano`, `verde` ou `laranja`) e centraliza ícone, selo, descrição e link de ação. O Painel de Gerência combina esses componentes sem alterar as operações da API.
+
+O cabeçalho mostra navegação com ícones em telas grandes e um menu expansível abaixo de 1280 px. O menu do perfil contém a ação de sair; fecha por Escape ou clique fora. A logo usa SVG inline, com enquadramento definido em `.logo-marca`. O grupo de contornos `.texto-marca` mantém o azul original no tema claro e recebe branco no tema escuro; os símbolos coloridos permanecem iguais.
 
 ## Exemplo de formulário
 

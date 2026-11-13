@@ -1,15 +1,16 @@
 @import 'tailwindcss';
 @import './components/ui/ui.css';
+@import './components/ui/marca.css';
 
 /* Cores do wireframe do Figma (CEAD - Gestão Patrimonial). */
 @theme {
   --font-sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
-  --color-cead-50: #eef4fb;
-  --color-cead-100: #dbe7f6;
-  --color-cead-600: #1d4f8f;
-  --color-cead-700: #143f75;
-  --color-cead-800: #0f3463;
-  --color-cead-900: #0b2a52;
+  --color-cead-50: #edf4ff;
+  --color-cead-100: #d5e5fc;
+  --color-cead-600: #0865b5;
+  --color-cead-700: #00549e;
+  --color-cead-800: #00478c;
+  --color-cead-900: #082653;
 }
 
 @layer base {

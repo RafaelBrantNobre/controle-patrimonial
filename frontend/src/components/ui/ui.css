@@ -5,11 +5,18 @@
 
 @layer components {
   .cartao {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    @apply rounded-2xl border bg-white;
+    border-color: var(--borda-marca);
+    box-shadow: var(--sombra-cartao);
   }
 
   .botao-primario {
-    @apply botao bg-cead-800 text-white hover:bg-cead-700;
+    @apply botao text-white;
+    background: linear-gradient(135deg, #0060ab, #004487);
+    box-shadow: 0 3px 7px #00478c18;
+    &:hover {
+      background: linear-gradient(135deg, #0870bf, #00549e);
+    }
   }
 
   .botao-secundario {
@@ -25,7 +32,7 @@
   }
 
   .entrada {
-    @apply w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cead-600 focus:bg-white focus:ring-2 focus:ring-cead-100 disabled:opacity-60;
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cead-600 focus:bg-white focus:ring-2 focus:ring-cead-100 disabled:opacity-60;
   }
 
   .tabela {
@@ -192,5 +199,7 @@
 }
 
 @layer utilities {
-  html[data-tema='escuro'] .text-cead-800 { color: #bfdbfe; }
+  html[data-tema='escuro'] .text-cead-800 {
+    color: #bfdbfe;
+  }
 }

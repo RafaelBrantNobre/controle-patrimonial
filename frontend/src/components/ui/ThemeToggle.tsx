@@ -24,7 +24,7 @@ export function ThemeToggle() {
   const rotulo = escuro ? 'Ativar tema claro' : 'Ativar tema escuro'
   return (
     <Tooltip texto={rotulo}>
-      <Botao aria-label={rotulo} aria-pressed={escuro} onClick={() => setEscuro(!escuro)} className="rounded-md p-1.5 hover:bg-white/10">
+      <Botao aria-label={rotulo} aria-pressed={escuro} onClick={() => setEscuro(!escuro)} className="controle-cabecalho">
         {escuro ? <Sun className="size-4" /> : <Moon className="size-4" />}
       </Botao>
     </Tooltip>

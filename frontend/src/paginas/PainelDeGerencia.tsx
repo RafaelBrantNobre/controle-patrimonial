@@ -1,7 +1,17 @@
-import { Titulo, Cartao, Entrada, Botao, Aviso, Carregando, Desativado } from '../components/ui'
-import { Building2, DatabaseBackup, KeyRound, Plus, Settings2, ShieldCheck, Tags, UserPlus, Users, type LucideIcon } from 'lucide-react'
+import { BannerPagina, CartaoDeAcao, Cartao, Entrada, Botao, Aviso, Carregando, Desativado } from '../components/ui'
+import {
+  Building2,
+  ChartNoAxesCombined,
+  KeyRound,
+  Plus,
+  Settings2,
+  ShieldCheck,
+  Tags,
+  UserPlus,
+  Users,
+  type LucideIcon,
+} from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
 import { useAutenticacao } from '../autenticacao/Autenticacao'
 import { SeloAtivo } from '../componentes/SelosDeBem'
 import { BotaoExcluir, type Vinculos } from '../componentes/Exclusao'
@@ -20,24 +30,22 @@ export function PainelDeGerencia() {
 
   return (
     <>
-      <Cartao as="section" className="mb-6 flex flex-wrap items-center justify-between gap-4 p-6">
-        <div className="flex items-center gap-4">
-          <span className="rounded-xl bg-cead-900 p-3 text-white">
-            <Settings2 className="size-6" />
+      <BannerPagina
+        titulo="Painel de Gerência"
+        contexto="Módulo restrito · Sessão segura ativa"
+        subtitulo="Ferramentas de administração exclusivas da gestão do patrimônio e do suporte de TI."
+        icone={Settings2}
+        acoes={
+          <span className="selo-perfil">
+            <ShieldCheck className="size-5" />
+            {usuario?.perfil_rotulo}
           </span>
-          <div>
-            <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Módulo restrito · Sessão segura ativa</p>
-            <Titulo>Painel de Gerência</Titulo>
-            <p className="text-sm text-slate-500">Ferramentas de administração exclusivas da gestão do patrimônio e do suporte de TI.</p>
-          </div>
-        </div>
-        <span className="flex items-center gap-2 rounded-lg bg-cead-50 px-4 py-2 text-sm text-cead-800">
-          <ShieldCheck className="size-4" /> {usuario?.perfil_rotulo}
-        </span>
-      </Cartao>
+        }
+      />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Atalho
+      <div className="mb-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <CartaoDeAcao
+          cor="roxo"
           icone={UserPlus}
           selo="Equipe"
           titulo="Cadastrar Novo Usuário"
@@ -45,7 +53,8 @@ export function PainelDeGerencia() {
           para="/usuarios/novo"
           acao="Cadastrar membro"
         />
-        <Atalho
+        <CartaoDeAcao
+          cor="ciano"
           icone={Building2}
           selo="Espaços"
           titulo="Cadastrar Ambiente / Sala"
@@ -53,7 +62,8 @@ export function PainelDeGerencia() {
           para="/ambientes/novo"
           acao="Novo local físico"
         />
-        <Atalho
+        <CartaoDeAcao
+          cor="verde"
           icone={KeyRound}
           selo="Segurança"
           titulo="Controle de Acessos"
@@ -61,8 +71,9 @@ export function PainelDeGerencia() {
           para="/usuarios"
           acao="Gerenciar credenciais"
         />
-        <Atalho
-          icone={DatabaseBackup}
+        <CartaoDeAcao
+          cor="laranja"
+          icone={ChartNoAxesCombined}
           selo="Exportar"
           titulo="Relatórios"
           texto="Consulte o resultado de cada conferência realizada."
@@ -95,45 +106,15 @@ export function PainelDeGerencia() {
       </div>
 
       <div>
-        <Cartao as="section" className="space-y-3 p-6">
-          <h2 className="flex items-center gap-2 font-semibold text-cead-900">
-            <Users className="size-4" /> Membros da Equipe com Acesso
+        <Cartao as="section" className="secao-destaque tom-roxo space-y-4 p-5 sm:p-6">
+          <h2 className="flex items-center gap-3 text-xl font-bold tracking-tight text-cead-900 sm:text-base sm:font-semibold">
+            <Users className="acao-destaque size-6" /> Membros da Equipe com Acesso
           </h2>
           {/* Desativado: A lista de membros, o último acesso e a ativação de cada pessoa dependem da gestão de usuários na API (tarefa 3.3). */}
-          <Desativado />
+          <Desativado icone={Users} />
         </Cartao>
       </div>
     </>
-  )
-}
-
-function Atalho({
-  icone: Icone,
-  selo,
-  titulo,
-  texto,
-  para,
-  acao,
-}: {
-  icone: LucideIcon
-  selo: string
-  titulo: string
-  texto: string
-  para: string
-  acao: string
-}) {
-  return (
-    <Cartao as={Link} to={para} className="flex flex-col p-5 transition hover:border-cead-600">
-      <span className="flex items-center justify-between">
-        <span className="rounded-lg bg-cead-50 p-2 text-cead-700">
-          <Icone className="size-4" />
-        </span>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{selo}</span>
-      </span>
-      <span className="mt-3 font-semibold text-cead-900">{titulo}</span>
-      <span className="mt-1 flex-1 text-xs text-slate-500">{texto}</span>
-      <span className="mt-4 text-xs font-semibold text-cead-700">{acao} →</span>
-    </Cartao>
   )
 }
 
@@ -186,15 +167,22 @@ function CadastroSimples<T extends ItemSimples>({
   }
 
   return (
-    <Cartao as="section" className="overflow-hidden">
-      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-        <h2 className="flex items-center gap-2 font-semibold text-cead-900">
-          <Icone className="size-4" /> {titulo}
+    <Cartao as="section" className="secao-destaque tom-azul overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-2">
+        <h2 className="flex items-center gap-3 text-xl font-bold tracking-tight text-cead-900 sm:text-base sm:font-semibold">
+          <Icone className="size-6" /> {titulo}
         </h2>
         <span className="text-xs text-slate-500">{lista.dados?.meta.total ?? '…'} cadastrados</span>
       </div>
-      <form onSubmit={adicionar} className="flex gap-2 border-b border-slate-100 p-4">
-        <Entrada placeholder="Nome do novo cadastro" value={nome} onChange={(e) => setNome(e.target.value)} required maxLength={120} />
+      <form onSubmit={adicionar} className="flex flex-col gap-3 px-5 pt-3 pb-5 sm:flex-row sm:gap-5">
+        <Entrada
+          aria-label="Nome do novo tipo de patrimônio"
+          placeholder="Nome do novo cadastro"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          required
+          maxLength={120}
+        />
         <Botao variante="primario" type="submit" className="shrink-0" disabled={ocupado}>
           <Plus className="size-4" /> Adicionar
         </Botao>

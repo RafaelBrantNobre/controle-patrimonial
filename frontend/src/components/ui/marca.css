@@ -1,0 +1,322 @@
+/* Identidade visual CEAD. Cores e superfícies compartilhadas entre as telas. */
+@layer base {
+  :root {
+    --fundo-marca: #f5f9fe;
+    --superficie-marca: #ffffff;
+    --texto-marca: #082653;
+    --borda-marca: #e5edf7;
+    --sombra-cartao: 0 3px 5px #12376406, 0 8px 24px #12376405;
+    --sombra-elevada: 0 8px 24px #12376412;
+  }
+  html[data-tema='escuro'] {
+    --fundo-marca: #0d182a;
+    --superficie-marca: #17263c;
+    --texto-marca: #e2edff;
+    --borda-marca: #2d415e;
+    --sombra-cartao: 0 3px 16px #00000020;
+    --sombra-elevada: 0 8px 24px #00000030;
+  }
+  a,
+  button,
+  summary {
+    -webkit-tap-highlight-color: transparent;
+  }
+  :focus-visible {
+    outline: 2px solid #0875c9;
+    outline-offset: 4px;
+  }
+}
+
+@layer components {
+  .layout-marca {
+    background: var(--fundo-marca);
+    color: var(--texto-marca);
+    isolation: isolate;
+  }
+  .header-marca {
+    position: relative;
+    z-index: 30;
+    background: var(--superficie-marca);
+    color: var(--texto-marca);
+    box-shadow: 0 2px 10px #143f7505;
+  }
+  .logo-marca {
+    display: block;
+    aspect-ratio: 2.25;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .logo-marca svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .logo-login {
+    border-radius: 12px;
+    background: #ffffff;
+  }
+  .faixa-marca {
+    height: 5px;
+    background: linear-gradient(
+      to right,
+      #ed0033 0% 16.666%,
+      #ff7100 16.666% 33.333%,
+      #ffc800 33.333% 50%,
+      #00a9d5 50% 66.666%,
+      #00ab80 66.666% 83.333%,
+      #9226a3 83.333% 100%
+    );
+  }
+  .item-menu {
+    @apply flex items-center gap-2.5 rounded-xl px-3 py-3 text-sm font-semibold whitespace-nowrap transition-colors;
+    color: var(--texto-marca);
+  }
+  .item-menu:hover {
+    background: #0865b50b;
+  }
+  .item-menu-ativo,
+  .item-menu-ativo:hover {
+    background: linear-gradient(135deg, #005ca8, #004487);
+    color: white;
+    box-shadow: 0 3px 8px #00478c18;
+  }
+  .controle-cabecalho {
+    color: var(--texto-marca);
+    @apply inline-flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors;
+  }
+  .controle-cabecalho:hover {
+    background: #0865b510;
+  }
+  .avatar-usuario {
+    @apply flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold text-white;
+    background: linear-gradient(135deg, #005ca8, #004487);
+  }
+  .perfil-usuario {
+    position: relative;
+  }
+  .perfil-usuario summary {
+    @apply flex cursor-pointer list-none items-center gap-3 rounded-xl;
+  }
+  .perfil-usuario summary::-webkit-details-marker {
+    display: none;
+  }
+  .perfil-usuario[open] summary > svg {
+    transform: rotate(180deg);
+  }
+  .menu-usuario {
+    @apply absolute top-full right-0 mt-4 w-64 rounded-2xl border p-4;
+    background: var(--superficie-marca);
+    border-color: var(--borda-marca);
+    box-shadow: var(--sombra-elevada);
+  }
+  .pular-conteudo {
+    @apply absolute -top-20 left-4 z-50 rounded-lg bg-cead-800 px-4 py-2 text-sm text-white;
+  }
+  .pular-conteudo:focus {
+    top: 8px;
+  }
+  .banner-pagina {
+    @apply relative flex flex-wrap items-center justify-between gap-5 overflow-hidden px-6 py-7 sm:px-6 sm:py-5;
+  }
+  .icone-banner {
+    @apply flex size-16 shrink-0 items-center justify-center rounded-2xl text-white sm:size-12 sm:rounded-xl;
+    background: linear-gradient(135deg, #005ca8, #004487);
+    box-shadow: inset 0 1px 2px #ffffff20;
+  }
+  .selo-perfil {
+    @apply inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold sm:py-2;
+    background: var(--superficie-marca);
+    box-shadow: 0 3px 9px #003c8010;
+  }
+  .grafismo-marca {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 42%;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0.85;
+  }
+  .grafismo-marca span {
+    position: absolute;
+    width: 270px;
+    height: 400px;
+    border-radius: 50%;
+    transform: rotate(40deg);
+  }
+  .grafismo-marca span:nth-child(1) {
+    background: #19a7ee26;
+    top: -165px;
+    right: 90px;
+  }
+  .grafismo-marca span:nth-child(2) {
+    background: #06b6ed35;
+    top: 90px;
+    right: 165px;
+    transform: rotate(70deg);
+  }
+  .grafismo-marca span:nth-child(3) {
+    background: #8558e82a;
+    top: 95px;
+    right: 15px;
+    transform: rotate(-50deg);
+  }
+  .tom-azul {
+    --destaque: #00549e;
+  }
+  .tom-roxo {
+    --destaque: #9525a6;
+  }
+  .tom-ciano {
+    --destaque: #00a3d5;
+    --destaque-texto: #007da8;
+  }
+  .tom-verde {
+    --destaque: #00a47b;
+    --destaque-texto: #008562;
+  }
+  .tom-laranja {
+    --destaque: #ff6800;
+    --destaque-texto: #d84e00;
+  }
+  .cartao-acao {
+    @apply flex min-h-58 flex-col p-5 transition-[transform,box-shadow] duration-200 sm:min-h-0;
+    border-bottom: 5px solid var(--destaque);
+  }
+  .cartao-acao:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--sombra-elevada);
+  }
+  .icone-acao {
+    @apply inline-flex size-14 items-center justify-center rounded-2xl text-white sm:size-10 sm:rounded-xl;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--destaque), white 6%), var(--destaque));
+    box-shadow: inset 0 1px 2px #ffffff30;
+  }
+  .selo-acao {
+    @apply rounded-full px-3 py-1 text-xs font-medium sm:px-2 sm:py-0.5 sm:text-[10px];
+    color: var(--texto-marca);
+    background: #0865b50b;
+  }
+  .acao-destaque {
+    color: var(--destaque-texto, var(--destaque));
+  }
+  .secao-destaque {
+    position: relative;
+  }
+  .secao-destaque::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 52px;
+    width: 4px;
+    border-radius: 16px 0 4px 0;
+    background: var(--destaque);
+  }
+  .estado-desativado {
+    @apply flex items-center justify-center gap-3 rounded-xl border border-dashed px-4 py-4 text-sm font-semibold;
+    color: #587098;
+    border-color: #b9cbe4;
+  }
+  .fundo-marca {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .fundo-marca::before,
+  .fundo-marca::after,
+  .fundo-marca span {
+    content: '';
+    position: absolute;
+    width: 470px;
+    height: 470px;
+    border-radius: 50%;
+  }
+  .fundo-marca::before {
+    left: -340px;
+    bottom: -240px;
+    background: #9b39bd13;
+  }
+  .fundo-marca::after {
+    left: -250px;
+    bottom: -390px;
+    background: #8544b71b;
+  }
+  .fundo-marca span:first-child {
+    right: -325px;
+    bottom: -210px;
+    background: #17b4f126;
+  }
+  .fundo-marca span:last-child {
+    right: -255px;
+    bottom: -365px;
+    background: #179ee92b;
+  }
+}
+
+@layer utilities {
+  html[data-tema='escuro'] .logo-marca .texto-marca {
+    fill: #ffffff;
+  }
+  html[data-tema='escuro'] .logo-login {
+    background: transparent;
+  }
+  html[data-tema='escuro'] .tom-roxo {
+    --destaque-texto: #e08cec;
+  }
+  html[data-tema='escuro'] .tom-ciano {
+    --destaque-texto: #5cd3f8;
+  }
+  html[data-tema='escuro'] .tom-verde {
+    --destaque-texto: #52dfb9;
+  }
+  html[data-tema='escuro'] .tom-laranja {
+    --destaque-texto: #ffad70;
+  }
+  html[data-tema='escuro'] .grafismo-marca {
+    opacity: 0.35;
+  }
+  html[data-tema='escuro'] .estado-desativado {
+    color: #a8bddc;
+    border-color: var(--borda-marca);
+  }
+}
+@media (max-width: 639px) {
+  .banner-pagina {
+    padding: 20px;
+  }
+  .banner-pagina .icone-banner {
+    display: none;
+  }
+  .grafismo-marca {
+    width: 60%;
+    opacity: 0.4;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cartao-acao {
+    transition: none;
+  }
+  .cartao-acao:hover {
+    transform: none;
+  }
+}
+@media print {
+  .layout-marca {
+    background: white;
+  }
+  .banner-pagina {
+    min-height: 0;
+  }
+  .grafismo-marca {
+    display: none;
+  }
+}
+
+@layer utilities {
+  html[data-tema='escuro'] .cartao-acao {
+    border-bottom-color: var(--destaque);
+  }
+}
