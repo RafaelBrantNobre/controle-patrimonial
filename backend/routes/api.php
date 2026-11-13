@@ -92,6 +92,7 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
         // Mudança de sala e de status, incluindo a baixa (2.8).
         Route::patch('/bens/{bem}/sala', [MudancaDeBemController::class, 'mudarSala']);
         Route::patch('/bens/{bem}/status', [MudancaDeBemController::class, 'alterarStatus']);
+        Route::patch('/bens/{bem}/conservacao', [MudancaDeBemController::class, 'alterarConservacao']);
 
         // Conferência dos bens: gerar, lançar a folha, concluir e cancelar.
         Route::post('/conferencias', [ConferenciaController::class, 'store']);

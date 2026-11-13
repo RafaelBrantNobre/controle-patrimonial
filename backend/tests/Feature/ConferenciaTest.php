@@ -352,7 +352,7 @@ test('mudar de sala, mudar a conservação, mudar o uso e dar baixa pela ficha g
     $bem = Bem::factory()->for($origem)->conservacao(EstadoConservacao::Bom)->create();
 
     $this->patchJson("/api/bens/{$bem->id}/sala", ['sala_id' => $destino->id])->assertOk();
-    $this->patchJson("/api/bens/{$bem->id}", ['estado_conservacao' => 'pessimo'])->assertOk();
+    $this->patchJson("/api/bens/{$bem->id}/conservacao", ['estado_conservacao' => 'pessimo'])->assertOk();
     $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'sem_uso'])->assertOk();
     $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'baixado', 'baixa_data' => '2026-11-05', 'baixa_observacao' => 'Processo 9'])
         ->assertOk()
@@ -516,7 +516,7 @@ test('mudança feita no bem depois do lançamento vale mais que a folha', functi
 
     $this->travel(1)->minutes();
     $this->patchJson("/api/bens/{$bem->id}/sala", ['sala_id' => $nova->id])->assertOk();
-    $this->patchJson("/api/bens/{$bem->id}", ['estado_conservacao' => 'sucata'])->assertOk();
+    $this->patchJson("/api/bens/{$bem->id}/conservacao", ['estado_conservacao' => 'sucata'])->assertOk();
 
     $this->travel(1)->minutes();
     $this->postJson("/api/conferencias/{$id}/concluir", ['realizada_em' => '2026-11-06'])->assertOk();

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Consultas\FiltroDeBens;
-use App\Enums\EstadoConservacao;
 use App\Http\Requests\BemRequest;
 use App\Http\Requests\ListarBensRequest;
 use App\Http\Resources\BemResource;
@@ -113,21 +112,12 @@ class BemController extends Controller
 
     /**
      * PUT ou PATCH /api/bens/{bem}
-     * Edita os dados do bem. Sala e status mudam pela tarefa 2.8.
+     * Edita os dados de identificação do bem. Sala, status e conservação
+     * mudam pela ficha (MudancaDeBemController), que grava a ocorrência.
      */
     public function update(BemRequest $request, Bem $bem): BemResource
     {
-        $dados = $request->safe()->except(['sala_id', 'status', 'estado_conservacao']);
-        $conservacao = $request->validated('estado_conservacao');
-
-        // A conservação muda por alterarConservacao(), que grava a ocorrência.
-        DB::transaction(function () use ($bem, $dados, $conservacao, $request) {
-            $bem->update($dados);
-
-            if ($conservacao !== null) {
-                $bem->alterarConservacao(EstadoConservacao::from($conservacao), $request->user());
-            }
-        });
+        $bem->update($request->safe()->except(['sala_id', 'status', 'estado_conservacao']));
 
         return new BemResource($bem->load(Bem::RELACOES_DA_FICHA));
     }
