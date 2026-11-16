@@ -37,7 +37,7 @@ export function Header({
         <nav
           id={idMenu}
           aria-label="Navegação principal"
-          className={`${aberto ? 'flex' : 'hidden'} order-last w-full flex-col gap-1 border-t border-slate-200 pt-3 xl:order-none xl:flex xl:w-auto xl:flex-1 xl:flex-row xl:justify-center xl:border-0 xl:pt-0`}
+          className={`${aberto ? 'flex' : 'hidden'} order-last w-full flex-col gap-1 border-t border-slate-200 pt-3 md:order-none md:flex md:w-auto md:flex-1 md:flex-row md:justify-center md:border-0 md:pt-0 xl:gap-1`}
         >
           {menu.map((item) => {
             const Icone = icones[item.para] ?? LayoutGrid
@@ -46,10 +46,12 @@ export function Header({
                 key={item.para}
                 to={item.para}
                 onClick={() => setAberto(false)}
+                title={item.rotulo}
                 className={({ isActive }) => `item-menu ${isActive ? 'item-menu-ativo' : ''}`}
               >
                 <Icone className="size-5 shrink-0" strokeWidth={1.8} />
-                {item.rotulo}
+                {/* Entre 768 e 1279px o menu mostra só os ícones; o nome fica no title e para leitor de tela. */}
+                <span className="md:sr-only xl:not-sr-only">{item.rotulo}</span>
               </NavLink>
             )
           })}
@@ -58,7 +60,7 @@ export function Header({
           <ThemeToggle />
           <PerfilUsuario usuario={usuario} aoSair={aoSair} />
           <Botao
-            className="controle-cabecalho xl:hidden"
+            className="controle-cabecalho md:hidden"
             aria-label={aberto ? 'Fechar menu' : 'Abrir menu'}
             aria-controls={idMenu}
             aria-expanded={aberto}
