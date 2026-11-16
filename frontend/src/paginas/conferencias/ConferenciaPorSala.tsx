@@ -176,7 +176,7 @@ export function ConferenciaPorSala() {
           {podeLancar && (
             <Botao
               type="button"
-              className="border border-red-200 bg-white text-red-700 hover:bg-red-50"
+              className="botao border border-red-200 bg-white text-red-700 hover:bg-red-50"
               onClick={() => setCancelando(true)}
             >
               <Ban className="size-4" /> Cancelar conferência
