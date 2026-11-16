@@ -11,9 +11,12 @@ const SEM_SALA = 'sem'
 export function FiltrosDeBens({
   filtro,
   mudarFiltro,
+  versaoTipos = 0,
 }: {
   filtro: (nome: string) => string
   mudarFiltro: (nome: string, valor: string) => void
+  // Sobe quando os tipos mudam no popup "Gerenciar tipos".
+  versaoTipos?: number
 }) {
   const [busca, setBusca] = useState(filtro('busca'))
 
@@ -27,7 +30,7 @@ export function FiltrosDeBens({
   }, [busca])
 
   const salas = useApi<Pagina<Sala>>('/salas?por_pagina=100')
-  const tipos = useApi<Pagina<TipoPatrimonio>>('/tipos-patrimonio?por_pagina=100')
+  const tipos = useApi<Pagina<TipoPatrimonio>>('/tipos-patrimonio?por_pagina=100', versaoTipos)
 
   return (
     <Cartao as="section" className="mb-6 space-y-4 p-4">

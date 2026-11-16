@@ -2,13 +2,13 @@ import { Header } from '../components/ui'
 import { Outlet } from 'react-router'
 import { useAutenticacao } from '../autenticacao/Autenticacao'
 
-// Menu do cabeçalho, como no wireframe. Painel de Gerência e Usuários só
-// aparecem para o administrador (RF03); a regra que vale é a do back-end.
+// Menu do cabeçalho, como no wireframe. Usuários só aparece para o
+// administrador (RF03); a regra que vale é a do back-end. O Painel de
+// Gerência foi retirado: os tipos de patrimônio ficam na tela de Bens.
 const MENU = [
   { para: '/bens', rotulo: 'Bens' },
   { para: '/ambientes', rotulo: 'Ambientes' },
   { para: '/conferencias', rotulo: 'Conferências' },
-  { para: '/gerencia', rotulo: 'Painel de Gerência', soAdministrador: true },
   { para: '/relatorios', rotulo: 'Relatórios' },
   { para: '/usuarios', rotulo: 'Usuários', soAdministrador: true },
 ]

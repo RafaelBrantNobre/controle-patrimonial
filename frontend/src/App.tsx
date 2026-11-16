@@ -12,7 +12,6 @@ import { ConferenciaPorSala } from './paginas/conferencias/ConferenciaPorSala'
 import { FormularioDeBem } from './paginas/bens/FormularioDeBem'
 import { ListaDeBens } from './paginas/bens/ListaDeBens'
 import { Login } from './paginas/Login'
-import { PainelDeGerencia } from './paginas/PainelDeGerencia'
 import { Relatorios } from './paginas/Relatorios'
 import { FormularioDeUsuario } from './paginas/usuarios/FormularioDeUsuario'
 import { ListaDeUsuarios } from './paginas/usuarios/ListaDeUsuarios'
@@ -64,7 +63,6 @@ function App() {
             <Route path="/conferencias" element={<Conferencias />} />
             <Route path="/conferencias/:id" element={<ConferenciaPorSala />} />
             <Route path="/relatorios" element={<Relatorios />} />
-            <Route path="/gerencia" element={<SoAdministrador><PainelDeGerencia /></SoAdministrador>} />
             <Route path="/usuarios" element={<SoAdministrador><ListaDeUsuarios /></SoAdministrador>} />
             <Route path="/usuarios/novo" element={<SoAdministrador><FormularioDeUsuario /></SoAdministrador>} />
             <Route path="*" element={<Navigate to="/bens" replace />} />

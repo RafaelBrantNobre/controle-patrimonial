@@ -538,15 +538,21 @@ As telas seguem os wireframes do Figma *CEAD - Gestão Patrimonial* (página Pro
 | `/conferencias` | Conferências e bens não localizados (seção 16) | administrador e consulta (as ações, só administrador) | `GET /conferencias`, `GET /pendencias` |
 | `/conferencias/{id}` | Conferência sala a sala | administrador e consulta (registrar, só administrador) | `/conferencias/{id}/itens` e as rotas da seção 16.1 |
 | `/relatorios` | Relatórios: as conferências concluídas | administrador e consulta | `GET /conferencias?situacao=concluida` |
-| `/gerencia` | Painel de Gerência, com o cadastro de tipos | administrador | `/tipos-patrimonio` |
 | `/usuarios`, `/usuarios/novo` | Usuários do Sistema e Cadastrar Novo Usuário | administrador | nenhuma ainda (tarefa 3.3) |
 | `/status` | Verificação do ambiente (seção 2.4) | todos | `GET /status` |
 
 O token do login fica no `sessionStorage` e some ao fechar o navegador. Com **Lembrar meu acesso** marcado, fica no `localStorage`. Quando a API responde 401, o front apaga o token e volta para o login.
 
-### 15.2 Exclusão
+### 15.2 Tipos de patrimônio
 
-Sala e tipo de patrimônio têm botão **Excluir**: o tipo no Painel de Gerência, a sala nos Detalhes da sala. A regra é a da API (seção 10.3): só se exclui o que está vazio.
+O Painel de Gerência foi retirado em 16/11/2026: era só atalhos para o que já está no menu e a lista de tipos. Os tipos ficam onde são usados, só para o administrador:
+
+- **Cadastro do bem:** o link **Novo tipo**, embaixo do campo Tipo, abre um popup que cadastra o tipo e já o deixa escolhido, sem perder o que foi preenchido.
+- **Tela de Bens:** o botão **Gerenciar tipos** abre a lista dos tipos, com cadastro, inativar e reativar, e excluir o tipo sem bens. Tipo inativo não aparece no cadastro de bens novos.
+
+### 15.3 Exclusão
+
+Sala e tipo de patrimônio têm botão **Excluir**: o tipo em **Gerenciar tipos**, na tela de Bens, e a sala nos Detalhes da sala. A regra é a da API (seção 10.3): só se exclui o que está vazio.
 
 - Se houver algo ligado (bens da sala ou do tipo), o popup lista o que está ligado e avisa que não é possível excluir. O caminho é mover os itens ou inativar.
 - Se estiver vazio, o popup avisa que a exclusão é permanente e só libera o botão depois que a pessoa digita o nome do item.
@@ -554,7 +560,7 @@ Sala e tipo de patrimônio têm botão **Excluir**: o tipo no Painel de Gerênci
 
 Bem não é excluído (RN07). O cadastro de bem avisa isso antes de salvar, e a saída do patrimônio é a baixa (seção 12).
 
-### 15.3 O que o wireframe pede e a API ainda não tem
+### 15.4 O que o wireframe pede e a API ainda não tem
 
 Essas partes aparecem nas telas numa caixa **Desativado** (componente `Desativado`), sem dado inventado e sem explicação para quem usa. O motivo fica em comentário no código, ao lado da caixa:
 
@@ -565,7 +571,7 @@ Essas partes aparecem nas telas numa caixa **Desativado** (componente `Desativad
 | Ambientes | código ou sigla da sala, tipo de espaço, responsável, capacidade e histórico da sala |
 | Relatórios | baixar cada conferência em planilha (XLSX), no formato da planilha de 2024 |
 | Conferências | iniciar a conferência a partir de um arquivo (planilha ou SIAD): depende do formato do arquivo |
-| Gerência e Usuários | listar, cadastrar, editar e desativar usuários (tarefa 3.3) |
+| Usuários | listar, cadastrar, editar e desativar usuários (tarefa 3.3) |
 
 Diferenças de nomes entre o wireframe e a API:
 

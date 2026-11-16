@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { apiPatch, apiPost, consulta, ErroDaApi } from '../../services/api'
 import { ROTULOS_CONSERVACAO, type Bem, type EstadoConservacao, type Pagina, type Sala, type TipoPatrimonio } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
+import { NovoTipo } from '../../componentes/TiposDePatrimonio'
 
 type Dados = {
   numero_patrimonio: string
@@ -70,7 +71,9 @@ function Formulario({ bem }: { bem?: Bem }) {
   const [salvando, setSalvando] = useState(false)
 
   // Sala e tipo inativos não recebem bens novos (README, 10.2).
-  const tipos = useApi<Pagina<TipoPatrimonio>>(`/tipos-patrimonio${consulta({ ativo: editando ? undefined : true, por_pagina: 100 })}`)
+  // Sobe quando um tipo é cadastrado pelo popup, para a lista vir com ele.
+  const [versaoTipos, setVersaoTipos] = useState(0)
+  const tipos = useApi<Pagina<TipoPatrimonio>>(`/tipos-patrimonio${consulta({ ativo: editando ? undefined : true, por_pagina: 100 })}`, versaoTipos)
   const salas = useApi<Pagina<Sala>>(editando ? null : '/salas?ativo=1&por_pagina=100')
 
   function mudar<C extends keyof Dados>(campo: C, valor: Dados[C]) {
@@ -147,16 +150,24 @@ function Formulario({ bem }: { bem?: Bem }) {
                   onChange={(e) => mudar('numero_patrimonio', e.target.value)}
                 />
               </Campo>
-              <Campo rotulo="Tipo / Categoria" obrigatorio erro={erro?.doCampo('tipo_patrimonio_id')}>
-                <Selecao value={dados.tipo_patrimonio_id} onChange={(e) => mudar('tipo_patrimonio_id', e.target.value)} required>
-                  <option value="">Selecione o tipo...</option>
-                  {tipos.dados?.data.map((tipo) => (
-                    <option key={tipo.id} value={tipo.id}>
-                      {tipo.nome}
-                    </option>
-                  ))}
-                </Selecao>
-              </Campo>
+              <div>
+                <Campo rotulo="Tipo / Categoria" obrigatorio erro={erro?.doCampo('tipo_patrimonio_id')}>
+                  <Selecao value={dados.tipo_patrimonio_id} onChange={(e) => mudar('tipo_patrimonio_id', e.target.value)} required>
+                    <option value="">Selecione o tipo...</option>
+                    {tipos.dados?.data.map((tipo) => (
+                      <option key={tipo.id} value={tipo.id}>
+                        {tipo.nome}
+                      </option>
+                    ))}
+                  </Selecao>
+                </Campo>
+                <NovoTipo
+                  aoCriar={(tipo) => {
+                    setVersaoTipos((v) => v + 1)
+                    mudar('tipo_patrimonio_id', String(tipo.id))
+                  }}
+                />
+              </div>
             </div>
             <Campo rotulo="Descrição do bem" erro={erro?.doCampo('descricao')}>
               <Entrada
