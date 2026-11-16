@@ -639,7 +639,8 @@ Tudo o que acontece com um bem fica no histórico de ocorrências dele (tabela `
 
 - Na tela: localize o bem em `/bens` (pelos filtros, como o de sala) e use **Registrar ocorrência**, na lista ou na ficha. A ficha mostra o histórico.
 - Na API, as ocorrências são gravadas pelas rotas que já mudam o bem: `PATCH /api/bens/{id}/sala`, `PATCH /api/bens/{id}/status` (seção 12) e `PATCH /api/bens/{id}` com `estado_conservacao`. A ficha (`GET /api/bens/{id}`) traz `ocorrencias`.
-- `GET /api/ocorrencias` lista as ocorrências de todos os bens, mais recentes primeiro, com o bem de cada uma (número, código, tipo e sala atual). Aceita os mesmos filtros de `GET /api/bens` (`busca`, `numero`, `sala_id`, `sem_sala`, `tipo_patrimonio_id`, `status`, `estado_conservacao`, `conferencia`), que valem para o bem; a sala é a atual do bem, não a da ocorrência. E os da própria ocorrência: `tipo` (`sala`, `conservacao`, `uso`, `baixa`, um ou vários separados por vírgula), `de` e `ate` (datas no formato `2026-11-01`). Paginada com `pagina` e `por_pagina`. A tela é a de **Ocorrências**, no menu.
 - A baixa não apaga o bem nem o histórico. Desfazer a baixa também vira ocorrência.
+
+**Lista geral.** `GET /api/ocorrencias` lista as ocorrências de todos os bens, mais recentes primeiro, com o bem de cada uma (número, código, tipo e sala atual). Aceita os mesmos filtros de `GET /api/bens` (`busca`, `numero`, `sala_id`, `sem_sala`, `tipo_patrimonio_id`, `status`, `estado_conservacao`, `conferencia`), que valem para o bem; a sala é a atual do bem, não a da ocorrência. E os da própria ocorrência: `tipo` (`sala`, `conservacao`, `uso`, `baixa`, um ou vários separados por vírgula), `de` e `ate` (datas no formato `2026-11-01`). Paginada com `pagina` e `por_pagina`. A tela é a de **Ocorrências**, no menu.
 
 A organização dos componentes visuais e exemplos de edição do frontend estão em [frontend/README.md](frontend/README.md).
