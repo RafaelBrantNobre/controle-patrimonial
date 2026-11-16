@@ -1,8 +1,10 @@
 import { Tooltip, LinkBotao, Cartao, RolagemTabela, Tabela, Aviso, Cabecalho, Carregando, Paginacao } from '../../components/ui'
 import { ClipboardList, Eye, FilePlus2, Pencil, Plus } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
 import { FiltrosDeBens } from '../../componentes/FiltrosDeBens'
+import { GerenciarTipos } from '../../componentes/TiposDePatrimonio'
 import { SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/SelosDeBem'
 import { useFiltrosDeBens } from '../../componentes/useFiltrosDeBens'
 import { consulta } from '../../services/api'
@@ -16,6 +18,7 @@ import { useApi } from '../../services/useApi'
 export function ListaDeBens() {
   const { usuario } = useAutenticacao()
   const { filtro, mudarFiltro, filtros, pagina } = useFiltrosDeBens()
+  const [versaoTipos, setVersaoTipos] = useState(0)
 
   const bens = useApi<Pagina<Bem>>(`/bens${consulta({ ...filtros, pagina, por_pagina: 25 })}`)
 
@@ -26,14 +29,17 @@ export function ListaDeBens() {
         subtitulo="Consulte, localize e filtre todos os equipamentos cadastrados no prédio."
         acoes={
           usuario?.pode_alterar && (
-            <LinkBotao variante="primario" to="/bens/novo">
-              <Plus className="size-4" /> Cadastrar Novo Bem
-            </LinkBotao>
+            <>
+              <GerenciarTipos aoMudar={() => setVersaoTipos((v) => v + 1)} />
+              <LinkBotao variante="primario" to="/bens/novo">
+                <Plus className="size-4" /> Cadastrar Novo Bem
+              </LinkBotao>
+            </>
           )
         }
       />
 
-      <FiltrosDeBens filtro={filtro} mudarFiltro={mudarFiltro} />
+      <FiltrosDeBens filtro={filtro} mudarFiltro={mudarFiltro} versaoTipos={versaoTipos} />
 
       <Cartao as="section" className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">

@@ -1,14 +1,15 @@
-import { Header } from '../components/ui'
+import { Header, FundoMarca } from '../components/ui'
 import { Outlet } from 'react-router'
 import { useAutenticacao } from '../autenticacao/Autenticacao'
 
-// Menu do cabeçalho, como no wireframe. Painel de Gerência e Usuários só
-// aparecem para o administrador (RF03); a regra que vale é a do back-end.
+// Menu do cabeçalho, como no wireframe. Usuários só aparece para o
+// administrador (RF03); a regra que vale é a do back-end. O Painel de
+// Gerência foi retirado: os tipos de patrimônio ficam na tela de Bens.
 const MENU = [
   { para: '/bens', rotulo: 'Bens' },
   { para: '/ambientes', rotulo: 'Ambientes' },
   { para: '/conferencias', rotulo: 'Conferências' },
-  { para: '/gerencia', rotulo: 'Painel de Gerência', soAdministrador: true },
+  { para: '/ocorrencias', rotulo: 'Ocorrências' },
   { para: '/relatorios', rotulo: 'Relatórios' },
   { para: '/usuarios', rotulo: 'Usuários', soAdministrador: true },
 ]
@@ -18,10 +19,11 @@ export function Layout() {
   if (!usuario) return null
 
   return (
-    <div className="min-h-screen">
+    <div className="layout-marca min-h-screen">
       <Header usuario={usuario} menu={MENU.filter((item) => !item.soAdministrador || usuario.pode_alterar)} aoSair={() => void sair()} />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <FundoMarca />
+      <main id="conteudo" tabIndex={-1} className="relative mx-auto max-w-[1480px] px-4 py-7 outline-none sm:px-6 lg:py-8">
         <Outlet />
       </main>
     </div>
