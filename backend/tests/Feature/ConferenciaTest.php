@@ -352,7 +352,7 @@ test('mudar de sala, mudar a conservação, mudar o uso e dar baixa pela ficha g
     $bem = Bem::factory()->for($origem)->conservacao(EstadoConservacao::Bom)->create();
 
     $this->patchJson("/api/bens/{$bem->id}/sala", ['sala_id' => $destino->id])->assertOk();
-    $this->patchJson("/api/bens/{$bem->id}", ['estado_conservacao' => 'pessimo'])->assertOk();
+    $this->patchJson("/api/bens/{$bem->id}/conservacao", ['estado_conservacao' => 'pessimo'])->assertOk();
     $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'sem_uso'])->assertOk();
     $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'baixado', 'baixa_data' => '2026-11-05', 'baixa_observacao' => 'Processo 9'])
         ->assertOk()
@@ -516,7 +516,7 @@ test('mudança feita no bem depois do lançamento vale mais que a folha', functi
 
     $this->travel(1)->minutes();
     $this->patchJson("/api/bens/{$bem->id}/sala", ['sala_id' => $nova->id])->assertOk();
-    $this->patchJson("/api/bens/{$bem->id}", ['estado_conservacao' => 'sucata'])->assertOk();
+    $this->patchJson("/api/bens/{$bem->id}/conservacao", ['estado_conservacao' => 'sucata'])->assertOk();
 
     $this->travel(1)->minutes();
     $this->postJson("/api/conferencias/{$id}/concluir", ['realizada_em' => '2026-11-06'])->assertOk();
@@ -701,12 +701,14 @@ test('a lista de bens filtra pela situação de conferência e mostra a conferê
     $encontrado = Bem::factory()->create(['data_ultima_conferencia' => '2026-10-01', 'resultado_ultima_conferencia' => 'encontrado']);
     $perdido = Bem::factory()->create(['data_ultima_conferencia' => '2026-10-01', 'resultado_ultima_conferencia' => 'nao_localizado']);
     $emAberto = Bem::factory()->create();
-    gerarConferencia([$emAberto], 'Em andamento');
+    $reconferido = Bem::factory()->create(['data_ultima_conferencia' => '2026-10-01', 'resultado_ultima_conferencia' => 'encontrado']);
+    gerarConferencia([$emAberto, $reconferido], 'Em andamento');
 
-    expect($this->getJson('/api/bens?conferencia=nunca')->json('data.*.id'))->toEqualCanonicalizing([$nunca->id, $emAberto->id])
+    // As situações não se sobrepõem: o bem em conferência aberta só aparece em "em_aberto".
+    expect($this->getJson('/api/bens?conferencia=nunca')->json('data.*.id'))->toBe([$nunca->id])
         ->and($this->getJson('/api/bens?conferencia=encontrado')->json('data.*.id'))->toBe([$encontrado->id])
         ->and($this->getJson('/api/bens?conferencia=nao_localizado')->json('data.*.id'))->toBe([$perdido->id])
-        ->and($this->getJson('/api/bens?conferencia=em_aberto')->json('data.*.id'))->toBe([$emAberto->id]);
+        ->and($this->getJson('/api/bens?conferencia=em_aberto')->json('data.*.id'))->toEqualCanonicalizing([$emAberto->id, $reconferido->id]);
 
     $this->getJson("/api/bens?numero={$emAberto->numero_patrimonio}")
         ->assertJsonPath('data.0.em_conferencia.nome', 'Em andamento');

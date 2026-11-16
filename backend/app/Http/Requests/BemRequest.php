@@ -91,7 +91,7 @@ class BemRequest extends FormRequest
 
                 $bem = $this->bemAtual();
 
-                // Edição: sala e status não mudam por aqui (tarefa 2.8).
+                // Edição: sala, status e conservação não mudam por aqui (tarefa 2.8).
                 if ($bem) {
                     if (! $erros->has('sala_id') && $this->filled('sala_id') && $this->integer('sala_id') !== $bem->sala_id) {
                         $erros->add('sala_id', 'A sala não muda na edição do bem. Use a opção de mudar o bem de sala.');
@@ -99,6 +99,10 @@ class BemRequest extends FormRequest
 
                     if (! $erros->has('status') && $this->filled('status') && $this->string('status')->toString() !== $bem->status->value) {
                         $erros->add('status', 'A situação não muda na edição do bem. Use a opção de alterar a situação.');
+                    }
+
+                    if (! $erros->has('estado_conservacao') && $this->filled('estado_conservacao') && $this->string('estado_conservacao')->toString() !== $bem->estado_conservacao->value) {
+                        $erros->add('estado_conservacao', 'O estado de conservação não muda na edição do bem. Use a opção de mudar a conservação na ficha.');
                     }
 
                     return;

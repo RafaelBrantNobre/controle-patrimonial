@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EstadoConservacao;
 use App\Enums\StatusBem;
+use App\Http\Requests\AlterarConservacaoRequest;
 use App\Http\Requests\AlterarStatusRequest;
 use App\Http\Requests\MudarSalaRequest;
 use App\Http\Resources\BemResource;
@@ -11,7 +13,7 @@ use App\Models\Sala;
 use Illuminate\Support\Facades\DB;
 
 /*
-| Mudança de sala e de status dos bens (tarefa 2.8).
+| Mudança de sala, de status e de conservação dos bens (tarefa 2.8).
 | RF17 mudar de sala, RF18 data da última mudança, RF19 alterar status,
 | RF20 dados da baixa, RN04 baixado não muda de sala, RN09 quem e quando.
 */
@@ -40,6 +42,20 @@ class MudancaDeBemController extends Controller
             $request->user(),
             $request->input('baixa_data'),
             $request->input('baixa_observacao'),
+        ));
+
+        return $this->resposta($bem);
+    }
+
+    /**
+     * PATCH /api/bens/{bem}/conservacao
+     * Corpo: {"estado_conservacao": "regular"}
+     */
+    public function alterarConservacao(AlterarConservacaoRequest $request, Bem $bem): BemResource
+    {
+        DB::transaction(fn () => $bem->alterarConservacao(
+            EstadoConservacao::from($request->string('estado_conservacao')->toString()),
+            $request->user(),
         ));
 
         return $this->resposta($bem);

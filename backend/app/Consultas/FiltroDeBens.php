@@ -50,12 +50,20 @@ class FiltroDeBens
             ->when($filtros['tipo_patrimonio_id'] ?? null, fn ($query, int $tipoId) => $query->where('bem.tipo_patrimonio_id', $tipoId))
             ->when($filtros['status'] ?? null, fn ($query, array $status) => $query->whereIn('bem.status', $status))
             ->when($filtros['estado_conservacao'] ?? null, fn ($query, array $estados) => $query->whereIn('bem.estado_conservacao', $estados))
+            // As quatro situações não se sobrepõem e seguem o selo da tela: o
+            // bem numa conferência aberta fica só em "em_aberto", mesmo que
+            // nunca tenha sido conferido ou tenha resultado de uma anterior.
             ->when($filtros['conferencia'] ?? null, fn ($query, string $situacao) => match ($situacao) {
-                'nunca' => $query->whereNull('bem.data_ultima_conferencia'),
-                'encontrado' => $query->where('bem.resultado_ultima_conferencia', ResultadoConferencia::Encontrado),
-                'nao_localizado' => $query->where('bem.resultado_ultima_conferencia', ResultadoConferencia::NaoLocalizado),
-                'em_aberto' => $query->whereHas('itensDeConferencia', fn ($query) => $query
-                    ->whereHas('conferencia', fn ($query) => $query->where('situacao', SituacaoConferencia::Aberta))),
+                'nunca' => $query->whereNull('bem.data_ultima_conferencia')->whereDoesntHave('itensDeConferencia', self::emConferenciaAberta(...)),
+                'encontrado' => $query->where('bem.resultado_ultima_conferencia', ResultadoConferencia::Encontrado)->whereDoesntHave('itensDeConferencia', self::emConferenciaAberta(...)),
+                'nao_localizado' => $query->where('bem.resultado_ultima_conferencia', ResultadoConferencia::NaoLocalizado)->whereDoesntHave('itensDeConferencia', self::emConferenciaAberta(...)),
+                'em_aberto' => $query->whereHas('itensDeConferencia', self::emConferenciaAberta(...)),
             });
+    }
+
+    /** Restringe os itens de conferência aos da conferência aberta. */
+    private static function emConferenciaAberta(Builder $query): void
+    {
+        $query->whereHas('conferencia', fn ($query) => $query->where('situacao', SituacaoConferencia::Aberta));
     }
 }

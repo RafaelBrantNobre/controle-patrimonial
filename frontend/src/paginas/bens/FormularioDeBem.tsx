@@ -89,9 +89,9 @@ function Formulario({ bem }: { bem?: Bem }) {
       marca: dados.marca.trim() || null,
       origem: dados.origem.trim() || null,
       quantidade: Number(dados.quantidade) || 1,
-      estado_conservacao: dados.estado_conservacao,
-      // Sem sala escolhida, o bem fica sem localização.
-      ...(editando ? {} : { sala_id: Number(dados.sala_id) || null, status: dados.status }),
+      // Sem sala escolhida, o bem fica sem localização. Na edição, sala,
+      // situação e conservação mudam pela ficha, que grava a ocorrência.
+      ...(editando ? {} : { sala_id: Number(dados.sala_id) || null, status: dados.status, estado_conservacao: dados.estado_conservacao }),
     }
 
     try {
@@ -187,8 +187,9 @@ function Formulario({ bem }: { bem?: Bem }) {
             {editando ? (
               <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
                 {bem?.sala ? 'Está em ' : 'Está '}
-                <strong>{bem?.sala?.nome ?? 'sem localização'}</strong>, situação <strong>{bem?.status_rotulo}</strong>. Para mudar de sala,
-                de situação ou dar baixa, use a{' '}
+                <strong>{bem?.sala?.nome ?? 'sem localização'}</strong>, situação{' '}
+                <strong>{bem?.status_rotulo}</strong>, conservação <strong>{bem?.estado_conservacao_rotulo}</strong>. Para mudar de sala, de
+                situação, de conservação ou dar baixa, use a{' '}
                 <Link to={`/bens/${id}`} className="font-semibold text-cead-700 hover:underline">
                   ficha do bem
                 </Link>
@@ -228,18 +229,18 @@ function Formulario({ bem }: { bem?: Bem }) {
                   </div>
                   {erro?.doCampo('status') && <span className="mt-1 block text-xs text-red-600">{erro.doCampo('status')}</span>}
                 </div>
+
+                <Campo rotulo="Estado de conservação" erro={erro?.doCampo('estado_conservacao')}>
+                  <Selecao value={dados.estado_conservacao} onChange={(e) => mudar('estado_conservacao', e.target.value as EstadoConservacao)}>
+                    {(Object.keys(ROTULOS_CONSERVACAO) as EstadoConservacao[]).map((estado) => (
+                      <option key={estado} value={estado}>
+                        {ROTULOS_CONSERVACAO[estado]}
+                      </option>
+                    ))}
+                  </Selecao>
+                </Campo>
               </>
             )}
-
-            <Campo rotulo="Estado de conservação" erro={erro?.doCampo('estado_conservacao')}>
-              <Selecao value={dados.estado_conservacao} onChange={(e) => mudar('estado_conservacao', e.target.value as EstadoConservacao)}>
-                {(Object.keys(ROTULOS_CONSERVACAO) as EstadoConservacao[]).map((estado) => (
-                  <option key={estado} value={estado}>
-                    {ROTULOS_CONSERVACAO[estado]}
-                  </option>
-                ))}
-              </Selecao>
-            </Campo>
           </Cartao>
         </div>
 

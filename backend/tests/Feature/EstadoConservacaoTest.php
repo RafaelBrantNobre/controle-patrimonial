@@ -65,16 +65,30 @@ test('avariado não é mais situação de uso', function () {
     $this->patchJson("/api/bens/{$bem->id}/status", ['status' => 'avariado'])->assertUnprocessable();
 });
 
-test('o estado de conservação muda pela edição do bem, sem contar como mudança de situação', function () {
-    $bem = Bem::factory()->create(['data_ultima_mudanca' => null]);
+test('o estado de conservação muda pela ficha, com ocorrência, sem contar como mudança de situação', function () {
+    $bem = Bem::factory()->conservacao(EstadoConservacao::Bom)->create(['data_ultima_mudanca' => null]);
 
-    $this->patchJson("/api/bens/{$bem->id}", ['estado_conservacao' => 'regular'])
+    $this->patchJson("/api/bens/{$bem->id}/conservacao", ['estado_conservacao' => 'regular'])
         ->assertOk()
         ->assertJsonPath('data.estado_conservacao', 'regular')
-        ->assertJsonPath('data.data_ultima_mudanca', null);
+        ->assertJsonPath('data.data_ultima_mudanca', null)
+        ->assertJsonPath('data.ocorrencias.0.valor_novo', EstadoConservacao::Regular->rotulo());
 
     expect($bem->fresh()->estado_conservacao)->toBe(EstadoConservacao::Regular)
         ->and($bem->fresh()->status)->toBe(StatusBem::EmUso);
+
+    $this->patchJson("/api/bens/{$bem->id}/conservacao", ['estado_conservacao' => 'regular'])
+        ->assertUnprocessable()->assertJsonValidationErrors('estado_conservacao');
+});
+
+test('a edição do bem não muda o estado de conservação', function () {
+    $bem = Bem::factory()->conservacao(EstadoConservacao::Bom)->create();
+
+    $this->patchJson("/api/bens/{$bem->id}", ['estado_conservacao' => 'bom', 'marca' => 'Carrier'])->assertOk();
+    $this->patchJson("/api/bens/{$bem->id}", ['estado_conservacao' => 'regular'])
+        ->assertUnprocessable()->assertJsonValidationErrors('estado_conservacao');
+
+    expect($bem->fresh()->estado_conservacao)->toBe(EstadoConservacao::Bom);
 });
 
 test('a consulta filtra e ordena pelo estado de conservação', function () {

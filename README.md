@@ -395,11 +395,11 @@ Não há rota para excluir bem. A saída do patrimônio é a baixa (RN07).
 | `descricao`, `marca`, `origem` | opcionais | podem mudar | em branco quando o bem não tem |
 | `quantidade` | opcional, padrão 1 | pode mudar | de 1 a 9999 (PD08) |
 | `status` | opcional, padrão `em_uso` | não muda | situação de uso. No cadastro: `em_uso` ou `sem_uso`. A baixa é registrada depois |
-| `estado_conservacao` | opcional, padrão `indeterminado` | pode mudar | condição física: `novo`, `bom`, `regular`, `pessimo`, `sucata` ou `indeterminado` |
+| `estado_conservacao` | opcional, padrão `indeterminado` | não muda (usar `PATCH /api/bens/{id}/conservacao`) | condição física: `novo`, `bom`, `regular`, `pessimo`, `sucata` ou `indeterminado` |
 
 O `codigo_interno` é gerado pelo sistema no formato `CP-000123` e não pode ser informado nem editado. Ele existe para todo bem, tenha ou não plaqueta (PD07).
 
-**Situação de uso e estado de conservação são independentes.** A situação diz se o bem está sendo usado (em uso, sem uso ou baixado). A conservação diz em que condição física ele está, na mesma escala da planilha de conferência. Um bem pode estar em uso e péssimo, ou sem uso e novo. Um bem quebrado fica `sem_uso` com conservação `pessimo` ou `sucata`. A conservação muda pela edição normal do bem e não conta como mudança de situação.
+**Situação de uso e estado de conservação são independentes.** A situação diz se o bem está sendo usado (em uso, sem uso ou baixado). A conservação diz em que condição física ele está, na mesma escala da planilha de conferência. Um bem pode estar em uso e péssimo, ou sem uso e novo. Um bem quebrado fica `sem_uso` com conservação `pessimo` ou `sucata`. A conservação muda pela ficha do bem (`PATCH /api/bens/{id}/conservacao`, corpo `{"estado_conservacao": "regular"}`), que grava a ocorrência, e não conta como mudança de situação. A edição do bem recusa a mudança, como faz com sala e situação.
 
 Na edição, `sala_id` e `status` podem vir no formulário desde que iguais aos atuais. Se forem diferentes, a resposta é 422, indicando a opção de mudar de sala ou de situação.
 
@@ -601,7 +601,7 @@ Fluxo:
 | `GET /api/pendencias` | administrador e consulta | os bens com pendência aberta, cada um uma vez, com a data da primeira conferência em que não foi localizado |
 | `POST /api/bens/{id}/pendencia` | administrador | fecha a pendência: `{"resolucao": "localizado", "sala_id": 5, "localizado_em": "2026-11-06"}` ou `{"resolucao": "processo_administrativo", "processo_numero": "123/2026"}` |
 
-`GET /api/bens` ganhou o filtro `?conferencia=nunca`, `encontrado`, `nao_localizado` ou `em_aberto`. A resposta de um bem traz `data_ultima_conferencia`, `resultado_ultima_conferencia` e, na lista, `em_conferencia` (a conferência aberta em que o bem está). A ficha traz também `pendencia` e `historico_conferencias`.
+`GET /api/bens` ganhou o filtro `?conferencia=nunca`, `encontrado`, `nao_localizado` ou `em_aberto`. As quatro situações não se sobrepõem: o bem que está numa conferência aberta só aparece em `em_aberto`, como no selo da tela. A resposta de um bem traz `data_ultima_conferencia`, `resultado_ultima_conferencia` e, na lista, `em_conferencia` (a conferência aberta em que o bem está). A ficha traz também `pendencia` e `historico_conferencias`.
 
 ### 16.2 Regras
 
@@ -631,7 +631,7 @@ Bem não localizado é grave: a gestora responde por ele e precisa abrir process
 Tudo o que acontece com um bem fica no histórico de ocorrências dele (tabela `ocorrencia`): mudança de sala, de estado de conservação, de condição de uso e baixa. Cada linha guarda o valor de antes e o de depois, a data, quem registrou e, quando veio de uma conferência, qual.
 
 - Na tela: localize o bem em `/bens` (pelos filtros, como o de sala) e use **Registrar ocorrência**, na lista ou na ficha. A ficha mostra o histórico.
-- Na API, as ocorrências são gravadas pelas rotas que já mudam o bem: `PATCH /api/bens/{id}/sala`, `PATCH /api/bens/{id}/status` (seção 12) e `PATCH /api/bens/{id}` com `estado_conservacao`. A ficha (`GET /api/bens/{id}`) traz `ocorrencias`.
+- Na API, as ocorrências são gravadas pelas rotas que já mudam o bem: `PATCH /api/bens/{id}/sala`, `PATCH /api/bens/{id}/status` (seção 12) e `PATCH /api/bens/{id}/conservacao`. A ficha (`GET /api/bens/{id}`) traz `ocorrencias`.
 - A baixa não apaga o bem nem o histórico. Desfazer a baixa também vira ocorrência.
 
 A organização dos componentes visuais e exemplos de edição do frontend estão em [frontend/README.md](frontend/README.md).

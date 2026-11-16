@@ -423,7 +423,7 @@ function MudarConservacao({ bem, aoCancelar, aoConcluir }: PropsDaAcao) {
       textoBotao="Confirmar"
       aoCancelar={aoCancelar}
       enviar={async () => {
-        const resposta = await apiPatch<{ data: Bem }>(`/bens/${bem.id}`, { estado_conservacao: estado })
+        const resposta = await apiPatch<{ data: Bem }>(`/bens/${bem.id}/conservacao`, { estado_conservacao: estado })
         aoConcluir(`Conservação alterada para ${resposta.data.estado_conservacao_rotulo.toLowerCase()}.`)
       }}
     >
