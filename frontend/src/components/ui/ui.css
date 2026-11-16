@@ -5,11 +5,18 @@
 
 @layer components {
   .cartao {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    @apply rounded-2xl border bg-white;
+    border-color: var(--borda-marca);
+    box-shadow: var(--sombra-cartao);
   }
 
   .botao-primario {
-    @apply botao bg-cead-800 text-white hover:bg-cead-700;
+    @apply botao text-white;
+    background: linear-gradient(135deg, #0060ab, #004487);
+    box-shadow: 0 3px 7px #00478c18;
+    &:hover {
+      background: linear-gradient(135deg, #0870bf, #00549e);
+    }
   }
 
   .botao-secundario {
@@ -25,7 +32,7 @@
   }
 
   .entrada {
-    @apply w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cead-600 focus:bg-white focus:ring-2 focus:ring-cead-100 disabled:opacity-60;
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cead-600 focus:bg-white focus:ring-2 focus:ring-cead-100 disabled:opacity-60;
   }
 
   .tabela {
@@ -170,6 +177,33 @@
   html[data-tema='escuro'] .bg-cead-50 {
     background-color: #152f50;
   }
+  /* Linhas da conferência: pendente (âmbar) e não localizado (vermelho). */
+  html[data-tema='escuro'] .bg-amber-50\/40 {
+    background-color: #fcd34d0d;
+  }
+  html[data-tema='escuro'] .bg-red-50\/60 {
+    background-color: #f871711a;
+  }
+  html[data-tema='escuro'] .bg-amber-100 {
+    background-color: #4a3a1c;
+  }
+  html[data-tema='escuro'] .hover\:bg-amber-100:hover {
+    background-color: #4a3a1c;
+  }
+  html[data-tema='escuro'] .hover\:bg-red-50:hover {
+    background-color: #421c27;
+  }
+  html[data-tema='escuro'] .border-red-100,
+  html[data-tema='escuro'] .border-red-200 {
+    border-color: #7f2a3a;
+  }
+  html[data-tema='escuro'] .border-amber-300,
+  html[data-tema='escuro'] .border-amber-400 {
+    border-color: #8a6a2a;
+  }
+  html[data-tema='escuro'] .border-cead-100 {
+    border-color: #1e3a5f;
+  }
 }
 @media print {
   html[data-tema] {
@@ -192,5 +226,7 @@
 }
 
 @layer utilities {
-  html[data-tema='escuro'] .text-cead-800 { color: #bfdbfe; }
+  html[data-tema='escuro'] .text-cead-800 {
+    color: #bfdbfe;
+  }
 }
