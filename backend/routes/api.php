@@ -4,6 +4,7 @@ use App\Http\Controllers\AutenticacaoController;
 use App\Http\Controllers\BemController;
 use App\Http\Controllers\ConferenciaController;
 use App\Http\Controllers\MudancaDeBemController;
+use App\Http\Controllers\OcorrenciaController;
 use App\Http\Controllers\PendenciaController;
 use App\Http\Controllers\SalaController;
 use App\Http\Controllers\TipoPatrimonioController;
@@ -71,6 +72,9 @@ Route::middleware(['auth:sanctum', 'ativo'])->group(function () {
     // Bens (2.6): consultar, filtrar, ver a ficha e listar os bens de uma sala.
     Route::apiResource('bens', BemController::class)->only(['index', 'show'])->parameters(['bens' => 'bem']);
     Route::get('/salas/{sala}/bens', [BemController::class, 'daSala']);
+
+    // Ocorrências de todos os bens, com os mesmos filtros da lista de bens.
+    Route::get('/ocorrencias', [OcorrenciaController::class, 'index']);
 
     // Conferência dos bens: acompanhar as conferências e as pendências.
     Route::get('/conferencias', [ConferenciaController::class, 'index']);
