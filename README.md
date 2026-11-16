@@ -537,6 +537,7 @@ As telas seguem os wireframes do Figma *CEAD - Gestão Patrimonial* (página Pro
 | `/ambientes/{id}` | Detalhes da sala | administrador e consulta | `GET /salas/{id}`, `GET /salas/{id}/bens` |
 | `/conferencias` | Conferências e bens não localizados (seção 16) | administrador e consulta (as ações, só administrador) | `GET /conferencias`, `GET /pendencias` |
 | `/conferencias/{id}` | Conferência sala a sala | administrador e consulta (registrar, só administrador) | `/conferencias/{id}/itens` e as rotas da seção 16.1 |
+| `/ocorrencias` | Ocorrências de todos os bens, com os filtros da lista de bens | administrador e consulta | `GET /ocorrencias` |
 | `/relatorios` | Relatórios: as conferências concluídas | administrador e consulta | `GET /conferencias?situacao=concluida` |
 | `/usuarios`, `/usuarios/novo` | Usuários do Sistema e Cadastrar Novo Usuário | administrador | nenhuma ainda (tarefa 3.3) |
 | `/status` | Verificação do ambiente (seção 2.4) | todos | `GET /status` |
@@ -638,6 +639,7 @@ Tudo o que acontece com um bem fica no histórico de ocorrências dele (tabela `
 
 - Na tela: localize o bem em `/bens` (pelos filtros, como o de sala) e use **Registrar ocorrência**, na lista ou na ficha. A ficha mostra o histórico.
 - Na API, as ocorrências são gravadas pelas rotas que já mudam o bem: `PATCH /api/bens/{id}/sala`, `PATCH /api/bens/{id}/status` (seção 12) e `PATCH /api/bens/{id}` com `estado_conservacao`. A ficha (`GET /api/bens/{id}`) traz `ocorrencias`.
+- `GET /api/ocorrencias` lista as ocorrências de todos os bens, mais recentes primeiro, com o bem de cada uma (número, código, tipo e sala atual). Aceita os mesmos filtros de `GET /api/bens` (`busca`, `numero`, `sala_id`, `sem_sala`, `tipo_patrimonio_id`, `status`, `estado_conservacao`, `conferencia`), que valem para o bem; a sala é a atual do bem, não a da ocorrência. E os da própria ocorrência: `tipo` (`sala`, `conservacao`, `uso`, `baixa`, um ou vários separados por vírgula), `de` e `ate` (datas no formato `2026-11-01`). Paginada com `pagina` e `por_pagina`. A tela é a de **Ocorrências**, no menu.
 - A baixa não apaga o bem nem o histórico. Desfazer a baixa também vira ocorrência.
 
 A organização dos componentes visuais e exemplos de edição do frontend estão em [frontend/README.md](frontend/README.md).

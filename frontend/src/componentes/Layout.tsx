@@ -9,6 +9,7 @@ const MENU = [
   { para: '/bens', rotulo: 'Bens' },
   { para: '/ambientes', rotulo: 'Ambientes' },
   { para: '/conferencias', rotulo: 'Conferências' },
+  { para: '/ocorrencias', rotulo: 'Ocorrências' },
   { para: '/relatorios', rotulo: 'Relatórios' },
   { para: '/usuarios', rotulo: 'Usuários', soAdministrador: true },
 ]
