@@ -1,7 +1,7 @@
+import { LinkBotao, Cartao, RolagemTabela, Tabela, Cabecalho, Desativado, Indicador, Selo } from '../../components/ui'
 import { Plus, ScanLine, ShieldCheck, Users } from 'lucide-react'
-import { Link } from 'react-router'
+
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
-import { Cabecalho, Desativado, Indicador, Selo } from '../../componentes/ui'
 
 // Usuários do Sistema (wireframe).
 // A API ainda não lista nem gerencia usuários (tarefa 3.3): ela só diz quem
@@ -17,9 +17,9 @@ export function ListaDeUsuarios() {
         titulo="Equipe e Usuários do Sistema"
         subtitulo="Gestão simplificada das permissões de acesso dos operadores internos do CEAD."
         acoes={
-          <Link to="/usuarios/novo" className="botao-primario">
+          <LinkBotao variante="primario" to="/usuarios/novo">
             <Plus className="size-4" /> Adicionar Usuário
-          </Link>
+          </LinkBotao>
         }
       />
 
@@ -34,13 +34,13 @@ export function ListaDeUsuarios() {
         <Desativado />
       </div>
 
-      <section className="cartao overflow-hidden">
+      <Cartao as="section" className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <h2 className="text-sm font-semibold text-slate-700">Usuários autorizados</h2>
           <span className="text-xs text-slate-500">Acesso restrito à equipe interna do CEAD</span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="tabela">
+        <RolagemTabela>
+          <Tabela>
             <thead>
               <tr>
                 <th>Nome / Usuário</th>
@@ -64,10 +64,10 @@ export function ListaDeUsuarios() {
                 </td>
               </tr>
             </tbody>
-          </table>
-        </div>
+          </Tabela>
+        </RolagemTabela>
         <p className="px-4 py-3 text-xs text-slate-500">Exibindo só o usuário conectado</p>
-      </section>
+      </Cartao>
     </>
   )
 }

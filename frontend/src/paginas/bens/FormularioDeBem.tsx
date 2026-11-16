@@ -1,16 +1,9 @@
+import { Titulo, Cartao, Entrada, Selecao, Radio, Botao, LinkBotao, Aviso, Campo, Carregando, Desativado } from '../../components/ui'
 import { Camera, CheckCircle2, MapPin, RotateCcw, Save, Tag } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { Aviso, Campo, Carregando, Desativado } from '../../componentes/ui'
 import { apiPatch, apiPost, consulta, ErroDaApi } from '../../services/api'
-import {
-  ROTULOS_CONSERVACAO,
-  type Bem,
-  type EstadoConservacao,
-  type Pagina,
-  type Sala,
-  type TipoPatrimonio,
-} from '../../services/tipos'
+import { ROTULOS_CONSERVACAO, type Bem, type EstadoConservacao, type Pagina, type Sala, type TipoPatrimonio } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
 
 type Dados = {
@@ -102,9 +95,7 @@ function Formulario({ bem }: { bem?: Bem }) {
     }
 
     try {
-      const resposta = editando
-        ? await apiPatch<{ data: Bem }>(`/bens/${id}`, corpo)
-        : await apiPost<{ data: Bem }>('/bens', corpo)
+      const resposta = editando ? await apiPatch<{ data: Bem }>(`/bens/${id}`, corpo) : await apiPost<{ data: Bem }>('/bens', corpo)
       navegar(`/bens/${resposta.data.id}`, { state: { mensagem: editando ? 'Bem atualizado.' : 'Bem cadastrado.' } })
     } catch (e) {
       setErro(e instanceof ErroDaApi ? e : new ErroDaApi(0, 'Não foi possível salvar.'))
@@ -125,7 +116,7 @@ function Formulario({ bem }: { bem?: Bem }) {
         </Link>{' '}
         / {editando ? 'Editar bem' : 'Cadastrar bem'}
       </p>
-      <h1 className="mt-1 text-2xl font-bold text-cead-900">{editando ? 'Editar Bem' : 'Cadastrar Novo Bem'}</h1>
+      <Titulo className="mt-1">{editando ? 'Editar Bem' : 'Cadastrar Novo Bem'}</Titulo>
       <p className="mt-1 mb-6 text-sm text-slate-500">
         Preencha os dados essenciais para {editando ? 'atualizar o' : 'cadastrar o'} item no patrimônio do CEAD.
       </p>
@@ -138,7 +129,7 @@ function Formulario({ bem }: { bem?: Bem }) {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <section className="cartao space-y-4 p-6">
+          <Cartao as="section" className="space-y-4 p-6">
             <h2 className="flex items-center gap-2 font-semibold text-cead-900">
               <Tag className="size-4" /> Identificação do Bem
             </h2>
@@ -148,8 +139,8 @@ function Formulario({ bem }: { bem?: Bem }) {
                 erro={erro?.doCampo('numero_patrimonio')}
                 ajuda="Em branco quando o bem não tem plaqueta: o sistema gera o código interno."
               >
-                <input
-                  className="entrada font-mono"
+                <Entrada
+                  className="font-mono"
                   maxLength={20}
                   placeholder="ex: 1634456-1"
                   value={dados.numero_patrimonio}
@@ -157,24 +148,18 @@ function Formulario({ bem }: { bem?: Bem }) {
                 />
               </Campo>
               <Campo rotulo="Tipo / Categoria" obrigatorio erro={erro?.doCampo('tipo_patrimonio_id')}>
-                <select
-                  className="entrada"
-                  value={dados.tipo_patrimonio_id}
-                  onChange={(e) => mudar('tipo_patrimonio_id', e.target.value)}
-                  required
-                >
+                <Selecao value={dados.tipo_patrimonio_id} onChange={(e) => mudar('tipo_patrimonio_id', e.target.value)} required>
                   <option value="">Selecione o tipo...</option>
                   {tipos.dados?.data.map((tipo) => (
                     <option key={tipo.id} value={tipo.id}>
                       {tipo.nome}
                     </option>
                   ))}
-                </select>
+                </Selecao>
               </Campo>
             </div>
             <Campo rotulo="Descrição do bem" erro={erro?.doCampo('descricao')}>
-              <input
-                className="entrada"
+              <Entrada
                 maxLength={120}
                 placeholder="ex: vermelha, giratória com braços"
                 value={dados.descricao}
@@ -183,25 +168,18 @@ function Formulario({ bem }: { bem?: Bem }) {
             </Campo>
             <div className="grid gap-4 sm:grid-cols-3">
               <Campo rotulo="Marca" erro={erro?.doCampo('marca')}>
-                <input className="entrada" maxLength={80} value={dados.marca} onChange={(e) => mudar('marca', e.target.value)} />
+                <Entrada maxLength={80} value={dados.marca} onChange={(e) => mudar('marca', e.target.value)} />
               </Campo>
               <Campo rotulo="Origem" erro={erro?.doCampo('origem')} ajuda="ex: Convênio, UAB">
-                <input className="entrada" maxLength={120} value={dados.origem} onChange={(e) => mudar('origem', e.target.value)} />
+                <Entrada maxLength={120} value={dados.origem} onChange={(e) => mudar('origem', e.target.value)} />
               </Campo>
               <Campo rotulo="Quantidade" erro={erro?.doCampo('quantidade')}>
-                <input
-                  className="entrada"
-                  type="number"
-                  min={1}
-                  max={9999}
-                  value={dados.quantidade}
-                  onChange={(e) => mudar('quantidade', e.target.value)}
-                />
+                <Entrada type="number" min={1} max={9999} value={dados.quantidade} onChange={(e) => mudar('quantidade', e.target.value)} />
               </Campo>
             </div>
-          </section>
+          </Cartao>
 
-          <section className="cartao space-y-4 p-6">
+          <Cartao as="section" className="space-y-4 p-6">
             <h2 className="flex items-center gap-2 font-semibold text-cead-900">
               <MapPin className="size-4" /> Localização e Situação
             </h2>
@@ -219,15 +197,19 @@ function Formulario({ bem }: { bem?: Bem }) {
               </p>
             ) : (
               <>
-                <Campo rotulo="Sala / Ambiente" erro={erro?.doCampo('sala_id')} ajuda="Deixe sem localização quando ainda não se sabe onde o bem está.">
-                  <select className="entrada" value={dados.sala_id} onChange={(e) => mudar('sala_id', e.target.value)}>
+                <Campo
+                  rotulo="Sala / Ambiente"
+                  erro={erro?.doCampo('sala_id')}
+                  ajuda="Deixe sem localização quando ainda não se sabe onde o bem está."
+                >
+                  <Selecao value={dados.sala_id} onChange={(e) => mudar('sala_id', e.target.value)}>
                     <option value="">Sem localização</option>
                     {salas.dados?.data.map((sala) => (
                       <option key={sala.id} value={sala.id}>
                         {sala.nome}
                       </option>
                     ))}
-                  </select>
+                  </Selecao>
                 </Campo>
 
                 <div>
@@ -240,12 +222,7 @@ function Formulario({ bem }: { bem?: Bem }) {
                           dados.status === status ? 'border-emerald-400 bg-emerald-50' : 'border-slate-200'
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name="status"
-                          checked={dados.status === status}
-                          onChange={() => mudar('status', status)}
-                        />
+                        <Radio name="status" checked={dados.status === status} onChange={() => mudar('status', status)} />
                         {status === 'em_uso' ? 'Em uso' : 'Sem uso / Reserva'}
                       </label>
                     ))}
@@ -254,25 +231,21 @@ function Formulario({ bem }: { bem?: Bem }) {
                 </div>
 
                 <Campo rotulo="Estado de conservação" erro={erro?.doCampo('estado_conservacao')}>
-                  <select
-                    className="entrada"
-                    value={dados.estado_conservacao}
-                    onChange={(e) => mudar('estado_conservacao', e.target.value as EstadoConservacao)}
-                  >
+                  <Selecao value={dados.estado_conservacao} onChange={(e) => mudar('estado_conservacao', e.target.value as EstadoConservacao)}>
                     {(Object.keys(ROTULOS_CONSERVACAO) as EstadoConservacao[]).map((estado) => (
                       <option key={estado} value={estado}>
                         {ROTULOS_CONSERVACAO[estado]}
                       </option>
                     ))}
-                  </select>
+                  </Selecao>
                 </Campo>
               </>
             )}
-          </section>
+          </Cartao>
         </div>
 
         <aside className="space-y-6">
-          <section className="cartao p-5">
+          <Cartao as="section" className="p-5">
             <h2 className="mb-3 text-xs font-semibold tracking-wide text-slate-500 uppercase">Prévia da etiqueta</h2>
             <div className="rounded-lg border-2 border-dashed border-slate-300 p-4">
               <p className="text-[10px] font-semibold tracking-wider text-slate-500">UNIMONTES • CEAD</p>
@@ -284,39 +257,44 @@ function Formulario({ bem }: { bem?: Bem }) {
                 {tipoEscolhido?.nome ?? 'Tipo'} · {salaEscolhida?.nome ?? 'Sem localização'}
               </p>
             </div>
-          </section>
+          </Cartao>
 
-          <section className="cartao space-y-3 p-5">
+          <Cartao as="section" className="space-y-3 p-5">
             <h2 className="flex items-center gap-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
               <Camera className="size-4" /> Foto do equipamento
             </h2>
             {/* Desativado: O cadastro de foto, modelo, número de série e a impressão da etiqueta ainda não existem na API. */}
             <Desativado />
-          </section>
+          </Cartao>
         </aside>
       </div>
 
       {!editando && (
         <div className="mt-6">
           <Aviso tipo="info">
-            <strong>Atenção: um bem cadastrado não pode ser excluído.</strong> Confira o tombamento, o tipo e a sala antes de salvar. Se o bem sair do
-            patrimônio depois, registre a baixa na ficha dele.
+            <strong>Atenção: um bem cadastrado não pode ser excluído.</strong> Confira o tombamento, o tipo e a sala antes de salvar. Se o
+            bem sair do patrimônio depois, registre a baixa na ficha dele.
           </Aviso>
         </div>
       )}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <button type="button" className="botao text-slate-500 hover:text-slate-700" onClick={() => setDados(bem ? dadosDoBem(bem) : VAZIO)}>
+        <Botao
+          variante="simples"
+          type="button"
+          className="text-slate-500 hover:text-slate-700"
+          onClick={() => setDados(bem ? dadosDoBem(bem) : VAZIO)}
+        >
           <RotateCcw className="size-4" /> Limpar formulário
-        </button>
+        </Botao>
         <div className="flex gap-2">
-          <Link to={editando ? `/bens/${id}` : '/bens'} className="botao-secundario">
+          <LinkBotao variante="secundario" to={editando ? `/bens/${id}` : '/bens'}>
             Cancelar
-          </Link>
-          <button type="submit" className="botao-primario" disabled={salvando}>
+          </LinkBotao>
+          <Botao variante="primario" type="submit" disabled={salvando}>
             {editando ? <Save className="size-4" /> : <CheckCircle2 className="size-4" />}
             {salvando ? 'Salvando...' : 'Salvar Bem Patrimonial'}
-          </button>
+          </Botao>
         </div>
       </div>
     </form>

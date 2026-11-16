@@ -1,3 +1,4 @@
+import { Titulo, Entrada, Botao, Checkbox } from '../components/ui'
 import { Eye, EyeOff, Lock, LogIn, Mail, ShieldCheck } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router'
@@ -50,8 +51,8 @@ export function Login() {
           </span>
           <h2 className="text-2xl font-semibold">Gestão de Ativos &amp; Tombamento</h2>
           <p className="text-sm leading-relaxed text-white/75">
-            Ambiente exclusivo para registro, conciliação, transferências e auditoria de bens permanentes e
-            equipamentos do Centro de Educação a Distância.
+            Ambiente exclusivo para registro, conciliação, transferências e auditoria de bens permanentes e equipamentos do Centro de
+            Educação a Distância.
           </p>
         </section>
 
@@ -60,18 +61,22 @@ export function Login() {
             <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-slate-500 uppercase">
               <ShieldCheck className="size-4" /> Faça seu login
             </p>
-            <h1 className="mt-1 text-2xl font-bold text-cead-900">Acesso Restrito - Controle Patrimonial</h1>
+            <Titulo className="mt-1">Acesso Restrito - Controle Patrimonial</Titulo>
           </div>
 
-          {erro && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{erro}</p>}
+          {erro && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+              {erro}
+            </p>
+          )}
 
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-slate-700">E-mail Institucional</span>
             <span className="relative block">
               <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-              <input
+              <Entrada
                 type="email"
-                className="entrada pl-9"
+                className="pl-9"
                 placeholder="seu.email@cead.unimontes.br"
                 autoComplete="username"
                 value={email}
@@ -84,47 +89,47 @@ export function Login() {
           <label className="block">
             <span className="mb-1 flex items-center justify-between text-sm font-medium text-slate-700">
               Senha de Acesso
-              <button
+              <Botao
                 type="button"
                 className="text-xs font-semibold text-cead-600 hover:underline"
                 onClick={() => setAviso('Para trocar a senha, procure a gestora do patrimônio ou o suporte de TI.')}
               >
                 Esqueci minha senha
-              </button>
+              </Botao>
             </span>
             <span className="relative block">
               <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-              <input
+              <Entrada
                 type={mostrarSenha ? 'text' : 'password'}
-                className="entrada px-9"
+                className="px-9"
                 placeholder="Insira sua senha"
                 autoComplete="current-password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 required
               />
-              <button
+              <Botao
                 type="button"
                 className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 onClick={() => setMostrarSenha((v) => !v)}
                 aria-label={mostrarSenha ? 'Esconder senha' : 'Mostrar senha'}
               >
                 {mostrarSenha ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-              </button>
+              </Botao>
             </span>
           </label>
 
           {aviso && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">{aviso}</p>}
 
           <label className="flex items-center gap-2 text-sm text-slate-600">
-            <input type="checkbox" checked={lembrar} onChange={(e) => setLembrar(e.target.checked)} />
+            <Checkbox checked={lembrar} onChange={(e) => setLembrar(e.target.checked)} />
             Lembrar meu acesso
           </label>
 
-          <button type="submit" className="botao-primario py-3" disabled={enviando}>
+          <Botao variante="primario" type="submit" className="py-3" disabled={enviando}>
             <LogIn className="size-4" />
             {enviando ? 'Entrando...' : 'Entrar no Sistema'}
-          </button>
+          </Botao>
         </form>
       </div>
     </div>

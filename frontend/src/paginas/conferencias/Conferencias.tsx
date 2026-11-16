@@ -1,8 +1,20 @@
+import {
+  Botao,
+  Cartao,
+  LinkBotao,
+  RolagemTabela,
+  Tabela,
+  Aviso,
+  Cabecalho,
+  Carregando,
+  Paginacao,
+  Selo,
+  type CorSelo,
+} from '../../components/ui'
 import { AlertTriangle, ArrowRight, ClipboardCheck, FileText, MapPin, Play } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { useAutenticacao } from '../../autenticacao/Autenticacao'
-import { Aviso, Cabecalho, Carregando, Paginacao, Selo, type CorSelo } from '../../componentes/ui'
 import { consulta } from '../../services/api'
 import { formatarData, plural } from '../../services/formatos'
 import type { Bem, Conferencia, Pagina } from '../../services/tipos'
@@ -35,36 +47,41 @@ export function Conferencias() {
           usuario?.pode_alterar &&
           abertas.dados &&
           !aberta && (
-            <button type="button" className="botao-primario" onClick={() => setIniciando(true)}>
+            <Botao variante="primario" type="button" onClick={() => setIniciando(true)}>
               <Play className="size-4" /> Iniciar conferência
-            </button>
+            </Botao>
           )
         }
       />
 
       {aberta && (
-        <section className="cartao mb-6 flex flex-wrap items-center justify-between gap-4 border-cead-100 bg-cead-50 p-5">
+        <Cartao as="section" className="mb-6 flex flex-wrap items-center justify-between gap-4 border-cead-100 bg-cead-50 p-5">
           <div>
             <p className="text-xs font-semibold tracking-wide text-cead-700 uppercase">Conferência em andamento</p>
             <p className="mt-1 text-lg font-bold text-cead-900">{aberta.nome}</p>
             {aberta.totais && (
               <p className="text-sm text-slate-600">
-                {aberta.totais.itens - aberta.totais.pendentes} de {plural(aberta.totais.itens, 'bem verificado', 'bens verificados')}. Só pode haver uma
-                conferência aberta por vez.
+                {aberta.totais.itens - aberta.totais.pendentes} de {plural(aberta.totais.itens, 'bem verificado', 'bens verificados')}. Só
+                pode haver uma conferência aberta por vez.
               </p>
             )}
           </div>
-          <Link to={`/conferencias/${aberta.id}`} className="botao-primario">
+          <LinkBotao variante="primario" to={`/conferencias/${aberta.id}`}>
             {usuario?.pode_alterar ? 'Continuar conferência' : 'Acompanhar'} <ArrowRight className="size-4" />
-          </Link>
-        </section>
+          </LinkBotao>
+        </Cartao>
       )}
 
       {iniciando && <IniciarConferencia aoFechar={() => setIniciando(false)} />}
 
-      <Pendencias bens={pendencias.dados?.data} erro={pendencias.erro} podeResolver={Boolean(usuario?.pode_alterar)} aoResolver={() => setVersaoPendencias((v) => v + 1)} />
+      <Pendencias
+        bens={pendencias.dados?.data}
+        erro={pendencias.erro}
+        podeResolver={Boolean(usuario?.pode_alterar)}
+        aoResolver={() => setVersaoPendencias((v) => v + 1)}
+      />
 
-      <section className="cartao overflow-hidden">
+      <Cartao as="section" className="overflow-hidden">
         <div className="border-b border-slate-200 px-4 py-3">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
             <ClipboardCheck className="size-4" /> Histórico de conferências
@@ -75,8 +92,8 @@ export function Conferencias() {
             <Aviso>{conferencias.erro}</Aviso>
           </div>
         )}
-        <div className="overflow-x-auto">
-          <table className="tabela">
+        <RolagemTabela>
+          <Tabela>
             <thead>
               <tr>
                 <th>Conferência</th>
@@ -103,7 +120,9 @@ export function Conferencias() {
                       <>
                         {conferencia.totais.itens - conferencia.totais.pendentes} de {conferencia.totais.itens} verificados
                         {conferencia.totais.nao_localizados > 0 && (
-                          <span className="block text-red-700">{plural(conferencia.totais.nao_localizados, 'não localizado', 'não localizados')}</span>
+                          <span className="block text-red-700">
+                            {plural(conferencia.totais.nao_localizados, 'não localizado', 'não localizados')}
+                          </span>
                         )}
                       </>
                     )}
@@ -113,10 +132,10 @@ export function Conferencias() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Tabela>
           {conferencias.carregando && !conferencias.dados && <Carregando />}
           {conferencias.dados?.data.length === 0 && <Carregando texto="Nenhuma conferência iniciada ainda." />}
-        </div>
+        </RolagemTabela>
         {conferencias.dados && conferencias.dados.meta.total > 0 && (
           <Paginacao
             pagina={conferencias.dados.meta.current_page}
@@ -127,27 +146,37 @@ export function Conferencias() {
             aoMudar={setPagina}
           />
         )}
-      </section>
+      </Cartao>
     </>
   )
 }
 
-function Pendencias({ bens, erro, podeResolver, aoResolver }: { bens?: Bem[]; erro: string | null; podeResolver: boolean; aoResolver: () => void }) {
+function Pendencias({
+  bens,
+  erro,
+  podeResolver,
+  aoResolver,
+}: {
+  bens?: Bem[]
+  erro: string | null
+  podeResolver: boolean
+  aoResolver: () => void
+}) {
   const [resolvendo, setResolvendo] = useState<{ bem: Bem; jeito: 'localizado' | 'processo_administrativo' } | null>(null)
 
   if (erro) return <Aviso>{erro}</Aviso>
   if (!bens || bens.length === 0) return null
 
   return (
-    <section className="cartao mb-6 overflow-hidden border-red-200">
+    <Cartao as="section" className="mb-6 overflow-hidden border-red-200">
       <div className="flex items-center justify-between border-b border-red-100 bg-red-50 px-4 py-3">
         <h2 className="flex items-center gap-2 text-sm font-semibold text-red-800">
           <AlertTriangle className="size-4" /> Bens não localizados ({bens.length})
         </h2>
         <span className="text-xs text-red-700">A pendência fecha quando o bem aparece ou com o número do processo administrativo.</span>
       </div>
-      <div className="overflow-x-auto">
-        <table className="tabela">
+      <RolagemTabela>
+        <Tabela>
           <thead>
             <tr>
               <th>Tombamento</th>
@@ -174,23 +203,29 @@ function Pendencias({ bens, erro, podeResolver, aoResolver }: { bens?: Bem[]; er
                 </td>
                 {podeResolver && (
                   <td className="text-right whitespace-nowrap">
-                    <button type="button" className="botao-secundario px-3 py-1 text-xs" onClick={() => setResolvendo({ bem, jeito: 'localizado' })}>
-                      <MapPin className="size-3.5" /> Localizado
-                    </button>{' '}
-                    <button
+                    <Botao
+                      variante="secundario"
                       type="button"
-                      className="botao-secundario px-3 py-1 text-xs"
+                      className="px-3 py-1 text-xs"
+                      onClick={() => setResolvendo({ bem, jeito: 'localizado' })}
+                    >
+                      <MapPin className="size-3.5" /> Localizado
+                    </Botao>{' '}
+                    <Botao
+                      variante="secundario"
+                      type="button"
+                      className="px-3 py-1 text-xs"
                       onClick={() => setResolvendo({ bem, jeito: 'processo_administrativo' })}
                     >
                       <FileText className="size-3.5" /> Processo
-                    </button>
+                    </Botao>
                   </td>
                 )}
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </Tabela>
+      </RolagemTabela>
       {resolvendo && (
         <ResolverPendencia
           bem={resolvendo.bem}
@@ -202,6 +237,6 @@ function Pendencias({ bens, erro, podeResolver, aoResolver }: { bens?: Bem[]; er
           }}
         />
       )}
-    </section>
+    </Cartao>
   )
 }

@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './components/ui/ui.css';
 
 /* Cores do wireframe do Figma (CEAD - Gestão Patrimonial). */
 @theme {
@@ -14,49 +15,6 @@
 @layer base {
   body {
     @apply bg-slate-50 text-slate-800 antialiased;
-  }
-}
-
-/* Base dos botões. É @utility para os outros botões poderem usar com @apply. */
-@utility botao {
-  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
-}
-
-@layer components {
-  .cartao {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
-  }
-
-  .botao-primario {
-    @apply botao bg-cead-800 text-white hover:bg-cead-700;
-  }
-
-  .botao-secundario {
-    @apply botao border border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
-  }
-
-  .botao-verde {
-    @apply botao bg-emerald-700 text-white hover:bg-emerald-600;
-  }
-
-  .rotulo {
-    @apply mb-1 block text-xs font-semibold tracking-wide text-slate-600 uppercase;
-  }
-
-  .entrada {
-    @apply w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-cead-600 focus:bg-white focus:ring-2 focus:ring-cead-100 disabled:opacity-60;
-  }
-
-  .tabela {
-    @apply w-full text-left text-sm;
-  }
-
-  .tabela th {
-    @apply border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase;
-  }
-
-  .tabela td {
-    @apply border-b border-slate-100 px-4 py-3 align-middle;
   }
 }
 

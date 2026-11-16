@@ -633,3 +633,5 @@ Tudo o que acontece com um bem fica no histórico de ocorrências dele (tabela `
 - Na tela: localize o bem em `/bens` (pelos filtros, como o de sala) e use **Registrar ocorrência**, na lista ou na ficha. A ficha mostra o histórico.
 - Na API, as ocorrências são gravadas pelas rotas que já mudam o bem: `PATCH /api/bens/{id}/sala`, `PATCH /api/bens/{id}/status` (seção 12) e `PATCH /api/bens/{id}/conservacao`. A ficha (`GET /api/bens/{id}`) traz `ocorrencias`.
 - A baixa não apaga o bem nem o histórico. Desfazer a baixa também vira ocorrência.
+
+A organização dos componentes visuais e exemplos de edição do frontend estão em [frontend/README.md](frontend/README.md).
