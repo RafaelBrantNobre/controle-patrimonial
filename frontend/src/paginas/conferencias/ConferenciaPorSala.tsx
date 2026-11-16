@@ -240,7 +240,7 @@ export function ConferenciaPorSala() {
       </nav>
 
       {mensagem && (
-        <p className="mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">
+        <p className="mb-4 rounded-lg border border-emerald-700 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">
           {mensagem}
         </p>
       )}
