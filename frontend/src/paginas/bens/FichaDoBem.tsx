@@ -6,7 +6,7 @@ import { useAutenticacao } from '../../autenticacao/Autenticacao'
 import { SeloConferencia, SeloConservacao, SeloStatus } from '../../componentes/SelosDeBem'
 import { ResolverPendencia } from '../conferencias/ResolverPendencia'
 import { apiPatch, ErroDaApi } from '../../services/api'
-import { formatarData, hojeIso } from '../../services/formatos'
+import { formatarData, formatarDataHora, hojeIso } from '../../services/formatos'
 import { ROTULOS_CONSERVACAO, type Bem, type EstadoConservacao, type Pagina, type Sala } from '../../services/tipos'
 import { useApi } from '../../services/useApi'
 
@@ -164,10 +164,10 @@ export function FichaDoBem() {
             <Dado rotulo="Registrada por">{bem.usuario_ultima_mudanca?.nome}</Dado>
             <Dado rotulo="Última mudança de sala">
               {bem.ultima_movimentacao
-                ? `${bem.ultima_movimentacao.sala_origem?.nome ?? 'sem sala de origem'} → ${bem.ultima_movimentacao.sala_destino?.nome}, em ${formatarData(bem.ultima_movimentacao.data)}`
+                ? `${bem.ultima_movimentacao.sala_origem?.nome ?? 'sem sala de origem'} → ${bem.ultima_movimentacao.sala_destino?.nome}, em ${formatarDataHora(bem.ultima_movimentacao.data)}`
                 : 'nunca mudou de sala'}
             </Dado>
-            <Dado rotulo="Cadastrado em">{formatarData(bem.cadastrado_em)}</Dado>
+            <Dado rotulo="Cadastrado em">{formatarDataHora(bem.cadastrado_em)}</Dado>
           </dl>
         </Cartao>
       </div>
